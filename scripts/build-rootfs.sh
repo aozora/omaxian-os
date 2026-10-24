@@ -106,7 +106,13 @@ LIVE_LOCALES="$DEFAULT_LOCALE"
 LIVE_KEYBOARD_MODEL="pc105"
 LIVE_KEYBOARD_LAYOUTS="us,it"
 LIVE_KEYBOARD_OPTIONS="grp:alt_shift_toggle"
+LIVE_TIMEZONE="$DEFAULT_TIMEZONE"
+LIVE_UTC="yes"
 EOC
+	# default clock: $DEFAULT_TIMEZONE, hardware clock in UTC (Calamares overrides on install)
+	echo "$DEFAULT_TIMEZONE" > "$R/etc/timezone"
+	ln -sf "/usr/share/zoneinfo/$DEFAULT_TIMEZONE" "$R/etc/localtime"
+	printf '0.0 0 0.0\n0\nUTC\n' > "$R/etc/adjtime"
 	# live-only X session tweaks (no idle lock / screen blanking)
 	install -m 0644 "$TOPDIR/config/live/37omaxian-live" "$R/etc/X11/Xsession.d/37omaxian-live"
 	# remove any default games that slipped in (they are pinned -1 as well)
