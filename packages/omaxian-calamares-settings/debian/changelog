@@ -1,3 +1,13 @@
+omaxian-calamares-settings (0.1.1) excalibur; urgency=medium
+
+  * Run shellprocess@omaxian-post before the packages module, which purges
+    this package (calamares-post was gone -> exit 127).
+  * Keyboard: guess the default layout from the (geoip) installer language
+    instead of keeping the live X layout.
+  * calamares-post: drop the live-only Xsession tweaks on the target.
+
+ -- Omaxian OS <build@omaxian.org>  Sat, 24 Oct 2026 21:35:00 +0200
+
 omaxian-calamares-settings (0.1.0) excalibur; urgency=medium
 
   * Initial release.
