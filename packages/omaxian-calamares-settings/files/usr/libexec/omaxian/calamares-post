@@ -1,5 +1,6 @@
 #!/bin/sh
-# Runs inside the target (chroot) after the live packages were removed.
+# Runs inside the target (chroot) BEFORE the packages module purges the live
+# packages (this script ships in omaxian-calamares-settings, which is purged too).
 set -u
 # live-config leftovers
 rm -f /etc/sudoers.d/live /etc/lightdm/lightdm.conf.d/*live* /etc/live/config.conf.d/* 2>/dev/null
