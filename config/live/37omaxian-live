@@ -1,5 +1,6 @@
-# /etc/X11/Xsession.d/37omaxian-live-noidle  (sourced by /etc/X11/Xsession)
-# Live session only: no idle lock, no screensaver, no DPMS blanking.
+# /etc/X11/Xsession.d/37omaxian-live  (sourced by /etc/X11/Xsession)
+# Live session only: US keyboard (IT one Alt+Shift away), no idle lock,
+# no screensaver, no DPMS blanking.
 # The installed system keeps the Omarchy/XFCE defaults (this file is
 # removed by calamares-post and is a no-op without boot=live anyway).
 if grep -qw 'boot=live' /proc/cmdline 2>/dev/null; then
@@ -23,6 +24,9 @@ if grep -qw 'boot=live' /proc/cmdline 2>/dev/null; then
 </channel>
 XML
 	unset _x
+	# keyboard: US first for the live session, Italian kept as 2nd group
+	command -v setxkbmap >/dev/null 2>&1 && \
+		setxkbmap -layout us,it -option '' -option grp:alt_shift_toggle 2>/dev/null || true
 	command -v xset >/dev/null 2>&1 && { xset s off; xset s noblank; xset -dpms; } || true
 	# re-assert after the session daemons came up (xss-lock/xfpm start late)
 	( sleep 20; xset s off; xset s noblank; xset -dpms
