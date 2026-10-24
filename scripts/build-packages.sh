@@ -26,6 +26,22 @@ BASE="Devuan $DEVUAN_SUITE"
 OMAXIAN_SHELL="$OMAXIAN_SHELL_REF"
 HOME_URL="https://omaxian.org"
 EOR
+	# os-release branding; base-files' copy is diverted by omaxian-base.preinst
+	local vid=${OMAXIAN_VERSION//\~/-}
+	mkdir -p "$f/usr/lib"
+	cat > "$f/usr/lib/os-release" <<EOR
+PRETTY_NAME="Omaxian OS $OMAXIAN_VERSION ($OMAXIAN_CODENAME)"
+NAME="Omaxian OS"
+VERSION_ID="$vid"
+VERSION="$OMAXIAN_VERSION ($OMAXIAN_CODENAME)"
+VERSION_CODENAME="$DEVUAN_SUITE"
+ID=omaxian
+ID_LIKE="devuan debian"
+HOME_URL="https://omaxian.org/"
+SUPPORT_URL="https://omaxian.org/support"
+BUG_REPORT_URL="https://github.com/aozora/omaxian/issues"
+LOGO=omaxian
+EOR
 }
 prep_omaxian-branding() {
 	[ -d "$OMX" ] || "$TOPDIR/scripts/fetch-omaxian.sh"

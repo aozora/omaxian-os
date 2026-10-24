@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+# Take over /usr/lib/os-release from base-files (Omaxian OS branding);
+# base-files upgrades then write /usr/lib/os-release.devuan instead.
+if [ "$1" = install ] || [ "$1" = upgrade ]; then
+	dpkg-divert --package omaxian-base --add --rename \
+		--divert /usr/lib/os-release.devuan /usr/lib/os-release
+fi
+#DEBHELPER#
+exit 0
