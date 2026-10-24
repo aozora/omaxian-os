@@ -1,0 +1,23 @@
+#!/bin/sh
+set -e
+SRC=/usr/share/omaxian/src
+if [ "$1" = configure ]; then
+	# Quickshell must reach the session bus (Omaxian setup.sh does the same)
+	OPTS=/etc/X11/Xsession.options
+	if [ -f "$OPTS" ] && ! grep -qxF use-session-dbus "$OPTS"; then
+		echo use-session-dbus >> "$OPTS"
+	fi
+	# omarchy-dns re-execs this root-owned path under sudo/pkexec
+	if [ -f "$SRC/omaxian/.local/share/omarchy/bin/omarchy-dns" ]; then
+		install -D -o root -g root -m 0755 "$SRC/omaxian/.local/share/omarchy/bin/omarchy-dns" \
+			/usr/local/libexec/omaxian/omarchy-dns
+	fi
+	# Seed /etc/skel (new users get the Omaxian defaults, owned by them).
+	# cp -n: never clobber what the admin put there.
+	if [ -d /usr/share/omaxian/home-template ]; then
+		cp -a -n /usr/share/omaxian/home-template/. /etc/skel/
+		chown -R root:root /etc/skel
+	fi
+fi
+#DEBHELPER#
+exit 0

@@ -1,0 +1,43 @@
+#!/bin/bash
+# Omaxian OS first-boot provisioning (root). Log: /var/log/omaxian-firstboot.log
+#   --boot        called from /etc/init.d/omaxian-firstboot (waits for network)
+#   --now         run immediately (e.g. after connecting Wi-Fi)
+set -u
+LOG=/var/log/omaxian-firstboot.log
+STATE=/var/lib/omaxian
+CACHE=$STATE/appimages
+FLATPAKS=/usr/share/omaxian/flatpaks.list
+MANIFEST=/usr/share/omaxian/appimages.manifest
+mkdir -p "$STATE" "$CACHE"
+exec >>"$LOG" 2>&1
+echo "== $(date -Is) omaxian-firstboot $*"
+
+online() { curl -fsS --max-time 8 -o /dev/null https://dl.flathub.org/repo/summary.idx 2>/dev/null || curl -fsS --max-time 8 -o /dev/null https://github.com 2>/dev/null; }
+
+if [ "${1:-}" = --boot ]; then
+	for _ in $(seq 1 60); do online && break; sleep 10; done
+fi
+if ! online; then echo "offline: will retry at next boot (or run: sudo omaxian-firstboot --now)"; exit 0; fi
+
+rc=0
+# 1. Flatpaks (system-wide). Already present on the full ISO -> no-op.
+if command -v flatpak >/dev/null; then
+	flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || rc=1
+	mapfile -t apps < <(grep -vE '^\s*(#|$)' "$FLATPAKS")
+	for a in "${apps[@]}"; do
+		if flatpak info --system "$a" >/dev/null 2>&1; then echo "flatpak $a: present"; continue; fi
+		flatpak install --system -y --noninteractive flathub "$a" || { echo "!! flatpak $a failed"; rc=1; }
+	done
+	# full ISO: preinstalled apps come from the offline payload -> update them now
+	flatpak update --system -y --noninteractive || true
+fi
+
+# 2. Fresh AppImages into the system cache; users integrate them at login
+/usr/bin/omaxian-appimage-fetch "$CACHE" || rc=1
+
+if [ $rc -eq 0 ]; then
+	date -Is > "$STATE/firstboot.done"; echo "first boot provisioning complete"
+else
+	echo "some steps failed: will retry at next boot"
+fi
+exit 0

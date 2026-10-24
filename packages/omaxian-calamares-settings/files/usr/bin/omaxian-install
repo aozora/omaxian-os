@@ -1,0 +1,3 @@
+#!/bin/sh
+# Launch Calamares as root from the live session.
+exec pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" calamares "$@"

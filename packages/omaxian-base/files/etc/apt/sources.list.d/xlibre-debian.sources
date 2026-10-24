@@ -1,0 +1,7 @@
+# XLibre X server for Devuan (third party). Replaces xserver-xorg-core.
+Types: deb
+URIs: https://xlibre-debian.github.io/devuan/
+Suites: main
+Components: stable
+Architectures: amd64
+Signed-By: /usr/share/keyrings/NexusSfan.pgp

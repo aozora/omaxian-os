@@ -1,0 +1,33 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          omaxian-firstboot
+# Required-Start:    $remote_fs $syslog $network network-manager
+# Required-Stop:
+# Should-Start:      dbus
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Omaxian OS first-boot provisioning (Flatpaks, AppImages)
+# Description:       On the first boots of an installed (non-live) system, when
+#                    online: add Flathub, install the Omaxian Flatpak set and
+#                    fetch fresh AppImages. Retries on later boots until done.
+### END INIT INFO
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+. /lib/lsb/init-functions
+case "$1" in
+  start)
+	# never on the live medium
+	grep -qw 'boot=live' /proc/cmdline && exit 0
+	[ -e /var/lib/omaxian/firstboot.done ] && exit 0
+	log_daemon_msg "Omaxian first boot provisioning (background)" "omaxian-firstboot"
+	# background so a slow network never delays the greeter
+	start-stop-daemon --start --background --make-pidfile --pidfile /run/omaxian-firstboot.pid \
+		--exec /usr/sbin/omaxian-firstboot -- --boot
+	log_end_msg 0
+	;;
+  stop|restart|force-reload) exit 0 ;;
+  status)
+	[ -e /var/lib/omaxian/firstboot.done ] && { echo "done"; exit 0; }
+	echo "pending"; exit 3 ;;
+  *) echo "Usage: $0 {start|status}" >&2; exit 3 ;;
+esac
+exit 0

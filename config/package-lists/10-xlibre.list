@@ -1,0 +1,10 @@
+# XLibre X server (third-party repo xlibre-debian.github.io/devuan)
+xlibre
+xlibre-archive-keyring
+xserver-xlibre
+xserver-xlibre-core
+xserver-xlibre-input-all
+xserver-xlibre-video-all
+xinit
+x11-xserver-utils
+mesa-utils

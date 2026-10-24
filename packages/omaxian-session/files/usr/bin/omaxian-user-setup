@@ -1,0 +1,29 @@
+#!/bin/sh
+# Seed the Omaxian dotfiles into $HOME when they are missing.
+# Runs as the user (never as root), so every file is owned by the user
+# (fixes the root-owned ~/.local seen with upstream setup.sh on fresh homes).
+#   omaxian-user-setup          seed only if not seeded yet (idempotent)
+#   omaxian-user-setup --force  re-copy, overwriting Omaxian defaults
+#                                (keeps ~/.config/omarchy/shell.json)
+set -e
+TEMPLATE=/usr/share/omaxian/home-template
+[ "$(id -u)" -eq 0 ] && exit 0
+[ -d "$TEMPLATE" ] || exit 0
+[ -n "$HOME" ] && [ -d "$HOME" ] && [ -w "$HOME" ] || exit 0
+STATE="$HOME/.local/state/omaxian"
+VER=$(cat /usr/share/omaxian/src/version 2>/dev/null || echo unknown)
+FORCE=0; [ "${1:-}" = --force ] && FORCE=1
+if [ $FORCE -eq 0 ] && [ -x "$HOME/.local/share/omarchy/bin/omarchy-launch-shell" ] && [ -f "$HOME/.xsessionrc" ]; then
+	exit 0
+fi
+mkdir -p "$STATE"
+if [ $FORCE -eq 1 ]; then
+	[ -f "$HOME/.config/omarchy/shell.json" ] && cp -a "$HOME/.config/omarchy/shell.json" "$STATE/shell.json.keep"
+	cp -a "$TEMPLATE/." "$HOME/"
+	[ -f "$STATE/shell.json.keep" ] && mv -f "$STATE/shell.json.keep" "$HOME/.config/omarchy/shell.json"
+else
+	cp -a -n "$TEMPLATE/." "$HOME/"
+fi
+command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update || true
+command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1 || true
+echo "$VER" > "$STATE/seeded"

@@ -1,0 +1,4 @@
+# Omaxian OS: per-user AppImage/OpenRA provisioning, in the background.
+if [ -x /usr/bin/omaxian-user-firstrun ] && [ "$(id -u)" -ne 0 ]; then
+	( sleep 20; /usr/bin/omaxian-user-firstrun ) >/dev/null 2>&1 &
+fi

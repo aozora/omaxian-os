@@ -1,0 +1,55 @@
+# Core system: sysvinit, eudev, elogind (no systemd)
+sysvinit-core
+sysv-rc
+orphan-sysvinit-scripts
+eudev
+elogind
+libpam-elogind
+dbus
+dbus-x11
+polkitd
+pkexec
+locales
+console-setup
+keyboard-configuration
+tzdata
+sudo
+cron
+logrotate
+less
+bash-completion
+man-db
+ca-certificates
+gnupg
+apt-transport-https
+openssh-client
+# kernel 7.2.x from excalibur-backports (pinned, prio 600)
+linux-image-amd64
+initramfs-tools
+# firmware
+firmware-linux-free
+firmware-misc-nonfree
+firmware-realtek
+firmware-amd-graphics
+firmware-iwlwifi
+# boot (both firmwares; Calamares runs grub-install for the booted one)
+grub2-common
+grub-pc-bin
+grub-efi-amd64-bin
+efibootmgr
+os-prober
+plymouth
+plymouth-themes
+# storage
+cryptsetup
+cryptsetup-initramfs
+lvm2
+btrfs-progs
+dosfstools
+e2fsprogs
+ntfs-3g
+# network
+network-manager
+network-manager-gnome
+wpasupplicant
+iw

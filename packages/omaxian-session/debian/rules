@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_installinit:
+	dh_installinit --name=power-profiles-daemon --no-start
+
+# vendored tree: keep upstream permissions/scripts as they are
+override_dh_fixperms:
+	dh_fixperms -X usr/share/omaxian
+override_dh_strip_nondeterminism:
+override_dh_dwz:
+override_dh_strip:
+override_dh_shlibdeps:

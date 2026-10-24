@@ -1,0 +1,4 @@
+files/usr/* usr/
+files/etc/* etc/
+vendor/src usr/share/omaxian/
+vendor/home-template usr/share/omaxian/

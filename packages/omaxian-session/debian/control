@@ -1,0 +1,37 @@
+Source: omaxian-session
+Section: x11
+Priority: optional
+Maintainer: Marcello Palmitessa <marcello@omaxian.org>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://github.com/aozora/omaxian
+Rules-Requires-Root: no
+
+Package: omaxian-session
+Architecture: all
+Depends: ${misc:Depends},
+ git, rsync, ca-certificates, curl, jq, i3-wm, picom, dbus-x11, x11-utils,
+ x11-xserver-utils, x11-xkb-utils, kitty, dunst, libnotify-bin, network-manager,
+ bluez, rfkill, pulseaudio-utils, brightnessctl, upower, feh, hsetroot, i3lock,
+ xss-lock, xdotool, xclip, xsettingsd, python3, python3-xlib, python3-i3ipc,
+ inotify-tools, mate-polkit, psmisc, procps, xdg-user-dirs,
+ qml6-module-qtquick-layouts, qml6-module-qtquick-controls,
+ qml6-module-qtquick-shapes, qml6-module-qt-labs-folderlistmodel,
+ qml6-module-qtquick-effects, fontconfig, fonts-jetbrains-mono,
+ fonts-noto-color-emoji, papirus-icon-theme, elogind, libpam-elogind,
+ quickshell, pipewire, pipewire-pulse, wireplumber
+Recommends: playerctl, maim, flameshot, viewnior, imagemagick, tesseract-ocr,
+ tesseract-ocr-eng, zbar-tools, slop, zenity, blueman, network-manager-gnome,
+ acpi, qrencode, gpick, redshift, xfce4-power-manager,
+ i3lock-fancy, xbacklight, light, fastfetch, xdg-terminal-exec, neovim,
+ spice-vdagent, thunar, power-profiles-daemon, openresolv, lightdm,
+ omaxian-branding
+Suggests: radeontop, intel-gpu-tools
+Description: Omaxian desktop session (Omarchy for X11: i3 + Quickshell)
+ Vendored Omaxian (port of Omarchy to Devuan/X11/i3) with its pinned Omarchy
+ upstream, so no network access is needed at install time.
+ .
+ Provides the "Omaxian" X session (default on Omaxian OS), a pre-rendered home
+ template that is seeded into /etc/skel and into any home that lacks it at
+ first login, the root-owned omarchy-dns helper and a sysvinit script for
+ power-profiles-daemon.

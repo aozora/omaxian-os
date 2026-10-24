@@ -1,0 +1,10 @@
+#!/bin/sh
+# Start the per-user PipeWire stack once (sysvinit: no systemd --user).
+# Omaxian's i3_audio does the same; this is for XFCE / other sessions.
+for p in pipewire wireplumber pipewire-pulse; do
+	command -v "$p" >/dev/null 2>&1 || continue
+	pgrep -u "$(id -u)" -x "$p" >/dev/null 2>&1 && continue
+	"$p" >/dev/null 2>&1 &
+	[ "$p" = pipewire ] && sleep 1
+done
+exit 0

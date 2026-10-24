@@ -1,0 +1,15 @@
+Source: omaxian-calamares-settings
+Section: admin
+Priority: optional
+Maintainer: Marcello Palmitessa <marcello@omaxian.org>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: omaxian-calamares-settings
+Architecture: all
+Depends: ${misc:Depends}, calamares, omaxian-branding, pkexec, rsync
+Description: Calamares configuration for Omaxian OS live media
+ sysvinit-aware module sequence (shellprocess + update-rc.d instead of
+ services-systemd), removal of the live packages after install, GRUB for UEFI
+ and BIOS, the Omaxian branding and an "Install Omaxian OS" launcher.

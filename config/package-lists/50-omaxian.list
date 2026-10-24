@@ -1,0 +1,6 @@
+# Omaxian OS own packages (local repo during build, apt.omaxian.org later)
+omaxian-base
+omaxian-branding
+omaxian-session
+omaxian-strata
+omaxian-firstboot

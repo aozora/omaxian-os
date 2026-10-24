@@ -1,0 +1,4 @@
+# Omaxian OS own packages win over anything else with the same name.
+Package: *
+Pin: release o=apt.omaxian.org
+Pin-Priority: 700

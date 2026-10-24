@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+if [ "$1" = purge ]; then
+	rm -rf /usr/local/libexec/omaxian
+fi
+#DEBHELPER#
+exit 0

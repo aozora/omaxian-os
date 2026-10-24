@@ -1,0 +1,27 @@
+# Omaxian OS AppImage manifest (managed by Gear Lever after integration).
+# Columns (TAB separated):
+#   id  payload-glob  method  source
+# method:
+#   github   source = owner/repo|asset-regex      (latest release asset)
+#   json     source = url|jq-filter               (URL returning JSON with download URL)
+#   url      source = direct stable download URL
+#   payload  no known upstream URL: only the bundled copy (full ISO) is used
+# payload-glob matches the file name in payload/appimages/ (case-insensitive).
+# Researched 2026-10-24; "payload" rows need an upstream URL from Marcello.
+bleachbit	*bleachbit*	github	bleachbit/bleachbit|BleachBit-.*-x86_64\.AppImage$
+cursor	*cursor*	json	https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable|.downloadUrl
+elecwhat	*elecwhat*	github	piec/elecwhat|elecwhat-.*\.AppImage$
+grok_bot	*grok*	payload	UNKNOWN (no public AppImage URL found)
+localsend	*localsend*	github	localsend/localsend|LocalSend-.*-linux-x86-64\.AppImage$
+marktext	*marktext*	github	marktext/marktext|marktext-linux-.*\.AppImage$
+obsidian	*obsidian*	github	obsidianmd/obsidian-releases|Obsidian-[0-9.]+\.AppImage$
+onlyoffice	*desktopeditors*	github	ONLYOFFICE/appimage-desktopeditors|DesktopEditors-x86_64\.AppImage$
+openra-d2k	*dune*	github	OpenRA/OpenRA|OpenRA-Dune-2000-x86_64\.AppImage$
+openra-ra	*red*alert*	github	OpenRA/OpenRA|OpenRA-Red-Alert-x86_64\.AppImage$
+openra-td	*tiberian*	github	OpenRA/OpenRA|OpenRA-Tiberian-Dawn-x86_64\.AppImage$
+openspot	*openspot*	github	BlackHatDevX/openspot-music-app|OpenSpot-.*\.AppImage$
+rebased	*rebased*	github	DetachHead/rebased|Rebased-x86_64\.AppImage$
+rustdesk	*rustdesk*	github	rustdesk/rustdesk|rustdesk-.*-x86_64\.AppImage$
+shotcut	*shotcut*	github	mltframework/shotcut|shotcut-linux-x86_64-.*\.AppImage$
+task_manager_tmog	*task*manager*	url	https://www.tmog.org/downloads/TaskManagerOG-1.0.0-x86_64.AppImage
+teams_for_linux	*teams*	github	IsmaelMartinez/teams-for-linux|teams-for-linux-.*\.AppImage$

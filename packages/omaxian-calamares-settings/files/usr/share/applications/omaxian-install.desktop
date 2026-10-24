@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Install Omaxian OS
+GenericName=System Installer
+Comment=Install Omaxian OS to this computer
+Exec=/usr/bin/omaxian-install
+Icon=calamares
+Terminal=false
+Categories=System;
+Keywords=installer;calamares;system;

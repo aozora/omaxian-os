@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Omaxian
+Comment=Omarchy on X11: i3 + Quickshell (Omaxian)
+Exec=/usr/bin/omaxian-session
+TryExec=/usr/bin/omaxian-session
+Type=Application
+DesktopNames=Omaxian;i3
+Keywords=tiling;wm;windowmanager;i3;omarchy;

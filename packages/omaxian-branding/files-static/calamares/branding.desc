@@ -1,0 +1,40 @@
+---
+componentName: omaxian
+welcomeStyleCalamares: false
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 900px,640px
+windowPlacement: center
+sidebar: widget
+navigation: widget
+
+strings:
+    productName:         "Omaxian OS"
+    shortProductName:    "Omaxian"
+    version:             "@VERSION@"
+    shortVersion:        "@VERSION@"
+    versionedName:       "Omaxian OS @VERSION@"
+    shortVersionedName:  "Omaxian @VERSION@"
+    bootloaderEntryName: "Omaxian"
+    productUrl:          "https://omaxian.org/"
+    supportUrl:          "https://github.com/aozora/omaxian/issues"
+    knownIssuesUrl:      "https://github.com/aozora/omaxian/issues"
+    releaseNotesUrl:     "https://omaxian.org/"
+    donateUrl:           ""
+
+images:
+    productLogo:         "logo.png"
+    productIcon:         "icon.png"
+    productWelcome:      "welcome.png"
+
+slideshow:               "show.qml"
+slideshowAPI:            2
+
+style:
+   SidebarBackground:        "#0b0f14"
+   SidebarText:              "#eafffb"
+   SidebarTextCurrent:       "#0b0f14"
+   SidebarBackgroundCurrent: "#3fd0c0"
+
+uploadServer :
+    type :    "none"

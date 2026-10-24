@@ -1,0 +1,15 @@
+Source: omaxian-branding
+Section: misc
+Priority: optional
+Maintainer: Marcello Palmitessa <marcello@omaxian.org>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: omaxian-branding
+Architecture: all
+Depends: ${misc:Depends}, plymouth, plymouth-label
+Recommends: lightdm-gtk-greeter, papirus-icon-theme, gnome-themes-extra
+Description: Omaxian OS artwork: Plymouth, GRUB, LightDM, Calamares, wallpapers
+ Plymouth theme "omaxian", GRUB theme (BIOS and UEFI), LightDM GTK greeter
+ configuration, Calamares branding "omaxian" and the Omaxian wallpapers.

@@ -1,0 +1,8 @@
+# PipeWire (backports, pinned) – per-user, started from the session
+pipewire
+pipewire-pulse
+pipewire-alsa
+wireplumber
+pulseaudio-utils
+pavucontrol
+alsa-utils

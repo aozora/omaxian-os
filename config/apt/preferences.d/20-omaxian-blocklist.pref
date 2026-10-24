@@ -1,0 +1,20 @@
+# Never install these on Omaxian OS.
+# - systemd as init (Devuan = sysvinit + elogind)
+# - PulseAudio daemon (PipeWire + pipewire-pulse instead; pulseaudio-utils is fine)
+# - Xorg server (XLibre provides xorg-server ABI; xserver-xorg* names are virtual there)
+# - Firefox (Brave + LibreWolf instead)
+Package: systemd systemd-sysv libpam-systemd systemd-timesyncd systemd-resolved
+Pin: release *
+Pin-Priority: -1
+
+Package: pulseaudio pulseaudio-module-*
+Pin: release *
+Pin-Priority: -1
+
+Package: xserver-xorg xserver-xorg-core xserver-xorg-legacy xserver-xorg-video-* xserver-xorg-input-* xorg
+Pin: release *
+Pin-Priority: -1
+
+Package: firefox firefox-esr firefox-l10n-* firefox-esr-l10n-*
+Pin: release *
+Pin-Priority: -1

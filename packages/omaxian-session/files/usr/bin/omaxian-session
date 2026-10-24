@@ -1,0 +1,14 @@
+#!/bin/sh
+# Omaxian X session entry point (LightDM -> /etc/X11/Xsession -> here).
+# /etc/X11/Xsession.d/35omaxian-user-setup has already seeded $HOME and set
+# LANG; ~/.xsessionrc has set OMARCHY_PATH/PATH. Repeat both defensively for
+# startx users.
+: "${LANG:=en_US.UTF-8}"
+export LANG
+[ -x /usr/bin/omaxian-user-setup ] && /usr/bin/omaxian-user-setup || true
+export OMARCHY_PATH="${OMARCHY_PATH:-$HOME/.local/share/omarchy}"
+case ":$PATH:" in *":$OMARCHY_PATH/bin:"*) ;; *) PATH="$OMARCHY_PATH/bin:$HOME/.local/bin:$PATH" ;; esac
+export PATH
+export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-i3}"
+export XDG_SESSION_DESKTOP=omaxian
+exec i3

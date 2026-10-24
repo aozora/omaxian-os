@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Omaxian
+Description=Omaxian OS boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/omaxian
+ScriptFile=/usr/share/plymouth/themes/omaxian/omaxian.script

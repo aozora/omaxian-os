@@ -1,0 +1,21 @@
+# Display manager + greeter (themed by omaxian-branding)
+lightdm
+lightdm-gtk-greeter
+# Omaxian (i3 + Quickshell) – pulled in fully by omaxian-session Depends
+i3-wm
+quickshell
+# XFCE as alternative session (no task-xfce-desktop: it drags games/extras)
+xfce4
+xfce4-terminal
+xfce4-power-manager
+xfce4-screenshooter
+xfce4-taskmanager
+xfce4-whiskermenu-plugin
+xfce4-pulseaudio-plugin
+xfce4-notifyd
+thunar-archive-plugin
+mousepad
+ristretto
+xdg-user-dirs-gtk
+xdg-desktop-portal-gtk
+gnome-keyring

@@ -1,0 +1,15 @@
+# excalibur-backports Release has Suite=stable-backports, Codename=excalibur-backports:
+# pin with n= (codename); a=excalibur-backports silently matches nothing.
+Package: linux-image-amd64 linux-image-7.* linux-headers-amd64 linux-headers-7.* linux-kbuild-7.* linux-libc-dev linux-base
+Pin: release n=excalibur-backports
+Pin-Priority: 600
+
+Package: pipewire pipewire-* libpipewire-* libspa-* gstreamer1.0-pipewire wireplumber wireplumber-* libwireplumber-* gir1.2-wp-*
+Pin: release n=excalibur-backports
+Pin-Priority: 600
+
+Package: quickshell quickshell-*
+Pin: release n=excalibur-backports
+Pin-Priority: 600
+
+# rustup itself comes from main; toolchains are per-user via rustup.

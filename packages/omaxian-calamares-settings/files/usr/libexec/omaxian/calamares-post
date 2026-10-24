@@ -1,0 +1,20 @@
+#!/bin/sh
+# Runs inside the target (chroot) after the live packages were removed.
+set -u
+# live-config leftovers
+rm -f /etc/sudoers.d/live /etc/lightdm/lightdm.conf.d/*live* /etc/live/config.conf.d/* 2>/dev/null
+deluser --remove-home omaxian-live >/dev/null 2>&1 || true
+# default locale fallback (Calamares localecfg writes /etc/default/locale)
+grep -q '^LANG=' /etc/default/locale 2>/dev/null || echo 'LANG=en_US.UTF-8' >> /etc/default/locale
+# BIOS + UEFI GRUB packages: keep the non-bin package matching this firmware
+# so update-grub keeps working on kernel upgrades.
+if [ -d /sys/firmware/efi ]; then FW=efi; else FW=bios; fi
+if [ -d /var/cache/omaxian/grub-debs ]; then
+	if [ $FW = efi ]; then DEBIAN_FRONTEND=noninteractive dpkg -i /var/cache/omaxian/grub-debs/grub-efi-amd64_*.deb 2>/dev/null || true
+	else DEBIAN_FRONTEND=noninteractive dpkg -i /var/cache/omaxian/grub-debs/grub-pc_*.deb 2>/dev/null || true; fi
+fi
+rm -rf /var/cache/omaxian/grub-debs
+# make sure the first-boot provisioning runs on the installed system
+rm -f /var/lib/omaxian/firstboot.done
+update-rc.d omaxian-firstboot defaults >/dev/null 2>&1 || true
+exit 0

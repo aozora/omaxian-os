@@ -1,0 +1,23 @@
+Source: omaxian-strata
+Section: utils
+Priority: optional
+Maintainer: Marcello Palmitessa <marcello@omaxian.org>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://github.com/lgse/strata
+Rules-Requires-Root: no
+
+Package: omaxian-strata
+Architecture: amd64
+Depends: ${misc:Depends}, ${shlibs:Depends}, bubblewrap, desktop-file-utils,
+ ffmpeg, ffmpegthumbnailer, fontconfig, gstreamer1.0-libav,
+ gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, libgtk-4-1 (>= 4.12),
+ libgtksourceview-5-0, gvfs, gvfs-backends, libpoppler-glib8t64 | libpoppler-glib8,
+ xdg-utils, shared-mime-info
+Provides: strata
+Description: Strata file manager (upstream signed release binary)
+ Strata (io.github.lgse.Strata) is a GTK4 file manager. This package wraps the
+ upstream release binary verified at build time (Ed25519-signed manifest +
+ SHA-256), installs it as /usr/bin/strata, registers its desktop entry and the
+ org.freedesktop.FileManager1 D-Bus service, and makes it the default handler
+ for inode/directory.

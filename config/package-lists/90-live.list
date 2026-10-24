@@ -1,0 +1,6 @@
+# Live-only (removed by Calamares after install)
+live-boot
+live-config
+live-config-sysvinit
+calamares
+omaxian-calamares-settings

@@ -1,0 +1,8 @@
+upstream/strata usr/bin/
+upstream/io.github.lgse.Strata.desktop usr/share/applications/
+upstream/io.github.lgse.Strata.svg usr/share/icons/hicolor/scalable/apps/
+upstream/io.github.lgse.Strata.FileManager1.service usr/share/dbus-1/services/
+mimeapps.list etc/xdg/
+upstream/LICENSE usr/share/doc/omaxian-strata/
+upstream/UnRAR.txt usr/share/doc/omaxian-strata/
+upstream/docs/portal-file-chooser.md usr/share/doc/omaxian-strata/

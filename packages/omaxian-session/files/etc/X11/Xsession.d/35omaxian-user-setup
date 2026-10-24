@@ -1,0 +1,11 @@
+# Omaxian OS: sourced by /etc/X11/Xsession before ~/.xsessionrc (40x11-common).
+# - default LANG (i3lock-omaxian and other helpers use set -u)
+# - seed Omaxian dotfiles for users created without /etc/skel
+if [ -z "${LANG:-}" ]; then
+	[ -r /etc/default/locale ] && . /etc/default/locale
+	LANG="${LANG:-en_US.UTF-8}"
+	export LANG
+fi
+if [ -x /usr/bin/omaxian-user-setup ]; then
+	/usr/bin/omaxian-user-setup >/dev/null 2>&1 || true
+fi

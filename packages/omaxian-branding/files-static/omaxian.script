@@ -1,0 +1,63 @@
+// Omaxian OS Plymouth theme (script module)
+Window.SetBackgroundTopColor(0.043, 0.059, 0.078);
+Window.SetBackgroundBottomColor(0.020, 0.031, 0.043);
+
+sw = Window.GetWidth(); sh = Window.GetHeight();
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+logo.sprite.SetPosition(sw / 2 - logo.image.GetWidth() / 2, sh / 2 - logo.image.GetHeight() / 2 - 60, 10);
+
+wm.image = Image("wordmark.png");
+wm.scaled = wm.image.Scale(wm.image.GetWidth() / 2, wm.image.GetHeight() / 2);
+wm.sprite = Sprite(wm.scaled);
+wm.sprite.SetPosition(sw / 2 - wm.scaled.GetWidth() / 2, sh / 2 + 90, 10);
+
+bar.bg = Image("progress-bg.png");
+bar.fg = Image("progress-fg.png");
+bar.x = sw / 2 - bar.bg.GetWidth() / 2; bar.y = sh / 2 + 190;
+bar.bgs = Sprite(bar.bg); bar.bgs.SetPosition(bar.x, bar.y, 10);
+bar.fgs = Sprite(); bar.fgs.SetPosition(bar.x, bar.y, 11);
+
+fun progress_cb(duration, progress) {
+	w = Math.Int(bar.fg.GetWidth() * progress);
+	if (w < 1) w = 1;
+	bar.fgs.SetImage(bar.fg.Scale(w, bar.fg.GetHeight()));
+}
+Plymouth.SetBootProgressFunction(progress_cb);
+
+// pulse the logo while waiting
+t = 0;
+fun refresh_cb() {
+	t++;
+	logo.sprite.SetOpacity(0.75 + 0.25 * Math.Sin(t / 20));
+}
+Plymouth.SetRefreshFunction(refresh_cb);
+
+// password prompt (cryptsetup)
+entry.image = Image("entry.png");
+bullet.image = Image("bullet.png");
+prompt.sprite = Sprite(); entry.sprite = Sprite(); bullets = [];
+fun password_cb(prompt_text, count) {
+	prompt.sprite.SetImage(Image.Text(prompt_text, 0.92, 1, 0.98));
+	prompt.sprite.SetPosition(sw / 2 - prompt.sprite.GetImage().GetWidth() / 2, sh / 2 + 230, 20);
+	entry.sprite.SetImage(entry.image);
+	entry.sprite.SetPosition(sw / 2 - entry.image.GetWidth() / 2, sh / 2 + 260, 20);
+	for (i = 0; bullets[i] || i < count; i++) {
+		if (!bullets[i]) bullets[i] = Sprite(bullet.image);
+		bullets[i].SetPosition(sw / 2 - entry.image.GetWidth() / 2 + 14 + i * 16, sh / 2 + 275, 21);
+		bullets[i].SetOpacity(i < count);
+	}
+}
+Plymouth.SetDisplayPasswordFunction(password_cb);
+fun normal_cb() {
+	prompt.sprite.SetOpacity(0); entry.sprite.SetOpacity(0);
+	for (i = 0; bullets[i]; i++) bullets[i].SetOpacity(0);
+}
+Plymouth.SetDisplayNormalFunction(normal_cb);
+
+msg.sprite = Sprite();
+fun message_cb(text) {
+	msg.sprite.SetImage(Image.Text(text, 0.62, 0.70, 0.69));
+	msg.sprite.SetPosition(sw / 2 - msg.sprite.GetImage().GetWidth() / 2, sh - 60, 20);
+}
+Plymouth.SetMessageFunction(message_cb);

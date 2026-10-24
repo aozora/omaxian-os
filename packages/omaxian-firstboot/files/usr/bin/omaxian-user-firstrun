@@ -1,0 +1,46 @@
+#!/bin/bash
+# Per-user first run (from /etc/X11/Xsession.d/36omaxian-user-firstrun, in background):
+#  - AppImages: copy into ~/AppImages and integrate with Gear Lever.
+#    Source preference: fresh system cache (/var/lib/omaxian/appimages, filled
+#    by omaxian-firstboot when online), else the offline payload of the full
+#    ISO (/usr/share/omaxian/payload/appimages).
+#  - OpenRA: seed ~/.config/openra (Content + maps) from the payload.
+# Re-runs (e.g. when the cache was empty at first login) until all done.
+set -u
+STATE="$HOME/.local/state/omaxian"; mkdir -p "$STATE"
+LOG="$STATE/user-firstrun.log"; exec >>"$LOG" 2>&1
+[ -e "$STATE/user-firstrun.done" ] && exit 0
+grep -qw 'boot=live' /proc/cmdline && exit 0
+echo "== $(date -Is) user firstrun"
+PAYLOAD=/usr/share/omaxian/payload
+CACHE=/var/lib/omaxian/appimages
+MANIFEST=/usr/share/omaxian/appimages.manifest
+APPDIR="$HOME/AppImages"; mkdir -p "$APPDIR"
+pending=0
+
+# OpenRA data (never overwrite an existing profile)
+if [ -d "$PAYLOAD/openra" ] && [ ! -e "$HOME/.config/openra/.omaxian-seeded" ]; then
+	mkdir -p "$HOME/.config/openra"
+	cp -a -n "$PAYLOAD/openra/." "$HOME/.config/openra/" && date -Is > "$HOME/.config/openra/.omaxian-seeded"
+	echo "seeded ~/.config/openra"
+fi
+
+gearlever() { flatpak run it.mijorus.gearlever "$@"; }
+have_gl=0; flatpak info it.mijorus.gearlever >/dev/null 2>&1 && have_gl=1
+shopt -s nullglob nocaseglob
+while IFS=$'\t' read -r id glob method source; do
+	[[ -z $id || $id == \#* ]] && continue
+	src=""
+	for f in "$CACHE/$id"/*.AppImage; do src=$f; done
+	if [ -z "$src" ]; then for f in "$PAYLOAD"/appimages/$glob; do src=$f; break; done; fi
+	if [ -z "$src" ]; then echo "-- $id: not available yet"; pending=1; continue; fi
+	dst="$APPDIR/$(basename "$src")"
+	[ -e "$dst" ] || { cp "$src" "$dst"; chmod +x "$dst"; }
+	if [ $have_gl = 1 ]; then
+		gearlever --integrate "$dst" -y </dev/null && echo "ok $id integrated" || { echo "!! $id: gearlever failed"; pending=1; }
+	else
+		echo "-- $id: copied, Gear Lever not installed yet"; pending=1
+	fi
+done < "$MANIFEST"
+[ $pending -eq 0 ] && date -Is > "$STATE/user-firstrun.done"
+exit 0

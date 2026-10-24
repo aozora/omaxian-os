@@ -1,0 +1,39 @@
+#!/bin/bash
+# Download the latest upstream AppImages listed in the Omaxian manifest.
+#   omaxian-appimage-fetch <destdir> [--list]
+# Rows with method "payload" have no known upstream URL and are only reported.
+set -uo pipefail
+MANIFEST=${OMAXIAN_APPIMAGE_MANIFEST:-/usr/share/omaxian/appimages.manifest}
+DEST=${1:?destdir}; mkdir -p "$DEST"
+UA="Omaxian-OS-firstboot"
+fail=0
+resolve() { # method source -> URL on stdout
+	local m=$1 s=$2 repo re api
+	case "$m" in
+	github)
+		repo=${s%%|*}; re=${s#*|}
+		curl -fsSL -A "$UA" "https://api.github.com/repos/$repo/releases/latest" \
+			| jq -r '.assets[].browser_download_url' | grep -E "/${re}" | grep -viE 'aarch64|arm64|armv7|zsync' | sort -V | tail -1 ;;
+	json)  api=${s%%|*}; curl -fsSL -A "$UA" "$api" | jq -r "${s#*|}" ;;
+	url)   echo "$s" ;;
+	*)     return 1 ;;
+	esac
+}
+while IFS=$'\t' read -r id glob method source; do
+	[[ -z $id || $id == \#* ]] && continue
+	if [ "$method" = payload ]; then echo "?? $id: no upstream URL known (bundled copy only)"; continue; fi
+	url=$(resolve "$method" "$source") || url=""
+	if [ -z "$url" ] || [ "$url" = null ]; then echo "!! $id: could not resolve download URL"; fail=1; continue; fi
+	name=$(basename "${url%%\?*}")
+	case "$name" in *.AppImage|*.appimage) ;; *) name="$id.AppImage" ;; esac
+	if [ -s "$DEST/$id/$name" ]; then echo "== $id: $name already cached"; continue; fi
+	mkdir -p "$DEST/$id"
+	if curl -fL --retry 3 -A "$UA" -o "$DEST/$id/$name.part" "$url"; then
+		mv "$DEST/$id/$name.part" "$DEST/$id/$name"; chmod 0755 "$DEST/$id/$name"
+		find "$DEST/$id" -maxdepth 1 -type f ! -name "$name" -delete
+		echo "ok $id: $name"
+	else
+		rm -f "$DEST/$id/$name.part"; echo "!! $id: download failed ($url)"; fail=1
+	fi
+done < "$MANIFEST"
+exit $fail

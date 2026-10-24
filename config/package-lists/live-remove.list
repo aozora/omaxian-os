@@ -1,0 +1,8 @@
+# Purged from the installed system by Calamares (packages module)
+live-boot
+live-boot-initramfs-tools
+live-config
+live-config-sysvinit
+live-tools
+calamares
+omaxian-calamares-settings

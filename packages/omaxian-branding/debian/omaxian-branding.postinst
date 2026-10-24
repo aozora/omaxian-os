@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+if [ "$1" = configure ]; then
+	# GRUB reads its theme from /boot (which may be a separate partition)
+	mkdir -p /boot/grub/themes
+	rm -rf /boot/grub/themes/omaxian
+	cp -r /usr/share/grub/themes/omaxian /boot/grub/themes/omaxian
+	if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+		plymouth-set-default-theme omaxian || true
+	fi
+	if command -v update-initramfs >/dev/null 2>&1 && ls /boot/initrd.img-* >/dev/null 2>&1; then
+		update-initramfs -u || true
+	fi
+	if [ -x /usr/sbin/update-grub ] && [ -e /boot/grub/grub.cfg ]; then
+		update-grub || true
+	fi
+fi
+#DEBHELPER#
+exit 0

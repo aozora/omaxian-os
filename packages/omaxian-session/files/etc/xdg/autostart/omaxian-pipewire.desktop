@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=PipeWire (Omaxian OS)
+Comment=Start PipeWire, WirePlumber and pipewire-pulse for this session
+Exec=/usr/libexec/omaxian/pipewire-session
+NoDisplay=true
+OnlyShowIn=XFCE;
+X-XFCE-Autostart-Override=true

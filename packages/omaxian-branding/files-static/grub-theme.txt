@@ -1,0 +1,52 @@
+# Omaxian OS GRUB theme
+title-text: ""
+desktop-image: "background.png"
+desktop-image-scale-method: "stretch"
+desktop-color: "#0b0f14"
+terminal-font: "Omaxian Regular 16"
+terminal-box: "select_*.png"
+
++ image {
+	top = 12%
+	left = 50%-64
+	width = 128
+	height = 128
+	file = "logo.png"
+}
+
++ label {
+	top = 12%+140
+	left = 0
+	width = 100%
+	align = "center"
+	text = "Omaxian OS"
+	font = "Omaxian Bold 24"
+	color = "#eafffb"
+}
+
++ boot_menu {
+	left = 30%
+	top = 42%
+	width = 40%
+	height = 36%
+	item_font = "Omaxian Regular 16"
+	item_color = "#9fb3b0"
+	selected_item_color = "#eafffb"
+	selected_item_font = "Omaxian Regular 16"
+	item_height = 32
+	item_padding = 12
+	item_spacing = 6
+	selected_item_pixmap_style = "select_*.png"
+	scrollbar = false
+}
+
++ label {
+	top = 90%
+	left = 0
+	width = 100%
+	align = "center"
+	id = "__timeout__"
+	text = "Booting in %d seconds"
+	font = "Omaxian Regular 16"
+	color = "#3fd0c0"
+}

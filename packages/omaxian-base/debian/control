@@ -1,0 +1,17 @@
+Source: omaxian-base
+Section: admin
+Priority: optional
+Maintainer: Marcello Palmitessa <marcello@omaxian.org>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://omaxian.org
+Rules-Requires-Root: no
+
+Package: omaxian-base
+Architecture: all
+Depends: ${misc:Depends}, sysvinit-core, eudev, elogind, libpam-elogind, ca-certificates
+Description: Omaxian OS base configuration
+ Apt sources (Devuan Excalibur + backports, XLibre, apt.omaxian.org),
+ apt pinning (backports kernel/PipeWire/Quickshell; systemd, PulseAudio,
+ Xorg server, Firefox and default games blocked), keyrings, GRUB
+ distributor name and /etc/omaxian-release.

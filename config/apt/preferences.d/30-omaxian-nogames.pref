@@ -1,0 +1,4 @@
+# Devuan desktop tasks/recommends pull GNOME/KDE/XFCE games: keep them out.
+Package: task-games gnome-games aisleriot gnome-mines gnome-sudoku gnome-chess gnome-mahjongg gnome-nibbles gnome-robots gnome-klotski gnome-taquin gnome-tetravex gnome-2048 quadrapassel four-in-a-row five-or-more hitori iagno lightsoff swell-foop tali atomix kpat kmines kmahjongg ksudoku kpatience knights xboard xbill lbreakout2 pysolfc
+Pin: release *
+Pin-Priority: -1
