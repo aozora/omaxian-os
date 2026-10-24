@@ -104,6 +104,8 @@ LIVE_USER_FULLNAME="Omaxian Live"
 LIVE_USER_DEFAULT_GROUPS="audio cdrom dip floppy video plugdev netdev powerdev scanner bluetooth lpadmin sudo kvm libvirt"
 LIVE_LOCALES="$DEFAULT_LOCALE"
 EOC
+	# live-only X session tweaks (no idle lock / screen blanking)
+	install -m 0644 "$TOPDIR/config/live/37omaxian-live-noidle" "$R/etc/X11/Xsession.d/37omaxian-live-noidle"
 	# remove any default games that slipped in (they are pinned -1 as well)
 	local games; games=$(awk '/^Package:/{for(i=2;i<=NF;i++)print $i}' "$TOPDIR/config/apt/preferences.d/30-omaxian-nogames.pref")
 	local inst_games; inst_games=$(CH dpkg-query -W -f '${Package} ${Status}\n' $games 2>/dev/null | awk '/ installed$/{print $1}' || true)

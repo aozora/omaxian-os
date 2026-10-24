@@ -1,0 +1,30 @@
+# /etc/X11/Xsession.d/37omaxian-live-noidle  (sourced by /etc/X11/Xsession)
+# Live session only: no idle lock, no screensaver, no DPMS blanking.
+# The installed system keeps the Omarchy/XFCE defaults (this file is
+# removed by calamares-post and is a no-op without boot=live anyway).
+if grep -qw 'boot=live' /proc/cmdline 2>/dev/null; then
+	# omarchy-idle-lock-apply honours the stay-awake indicator (no xss-lock idle)
+	mkdir -p "$HOME/.local/state/omarchy/indicators"
+	echo 1 > "$HOME/.local/state/omarchy/indicators/stay-awake"
+	# xfce4-power-manager: DPMS + blanking off before xfconfd starts
+	_x="$HOME/.config/xfce4/xfconf/xfce-perchannel-xml"
+	mkdir -p "$_x"
+	cat > "$_x/xfce4-power-manager.xml" <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-power-manager" version="1.0">
+  <property name="xfce4-power-manager" type="empty">
+    <property name="dpms-enabled" type="bool" value="false"/>
+    <property name="blank-on-ac" type="int" value="0"/>
+    <property name="blank-on-battery" type="int" value="0"/>
+    <property name="lock-screen-suspend-hibernate" type="bool" value="false"/>
+    <property name="inactivity-on-ac" type="uint" value="0"/>
+    <property name="inactivity-on-battery" type="uint" value="0"/>
+  </property>
+</channel>
+XML
+	unset _x
+	command -v xset >/dev/null 2>&1 && { xset s off; xset s noblank; xset -dpms; } || true
+	# re-assert after the session daemons came up (xss-lock/xfpm start late)
+	( sleep 20; xset s off; xset s noblank; xset -dpms
+	  pkill -u "$(id -u)" -x xss-lock 2>/dev/null ) >/dev/null 2>&1 &
+fi
