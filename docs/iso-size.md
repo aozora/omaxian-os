@@ -54,6 +54,5 @@ Directory view: usr/share/fonts 881M, usr/share/locale 608M, usr/share/omaxian 4
 7. **Firmware.** Keep it, since users expect wifi to work. Alternatively, ship
    firmware-iwlwifi only on full: about 60 MiB.
 8. **Compression.** Use `mksquashfs -comp xz -Xbcj x86 -b 1M` (see build-iso.sh), or zstd
-   level 19 for faster boot at a slightly larger size.
 
 Points 1, 3, 4 and 5 together should bring the base ISO to about **1.8 to 2.0 GiB**.
