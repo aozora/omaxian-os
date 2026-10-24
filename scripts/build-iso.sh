@@ -20,7 +20,7 @@ echo "$KV" > "$IMG/live/kernel-version"
 msg "squashfs (zstd)"
 mksquashfs "$R" "$IMG/live/filesystem.squashfs" -noappend -comp zstd -Xcompression-level 15 \
 	-b 1M -mem "${SQUASHFS_MEM:-1G}" -processors "${SQUASHFS_CPUS:-6}" \
-	-e proc sys dev run tmp -wildcards -e 'var/cache/apt/archives/*.deb' >/dev/null
+	-wildcards -e 'proc/*' 'sys/*' 'dev/*' 'run/*' 'tmp/*' 'var/cache/apt/archives/*.deb' >/dev/null
 du -b "$IMG/live/filesystem.squashfs" | cut -f1 > "$IMG/live/filesystem.size"
 (cd "$IMG/live" && sha256sum filesystem.squashfs vmlinuz initrd.img > SHA256SUMS)
 
