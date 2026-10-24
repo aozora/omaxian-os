@@ -19,5 +19,15 @@ if grep -rIl --exclude-dir=themes "$T/home" "$T/home" 2>/dev/null | head -5 | gr
 	grep -rIl --exclude-dir=themes "$T/home" "$T/home" | head; die "home template contains build paths"
 fi
 rm -rf "$OUT"; mkdir -p "$(dirname "$OUT")"; mv "$T/home" "$OUT"
+# fastfetch 2.40 (Devuan excalibur) has no "#rrggbb" colours: the themed
+# config failed with "invalid color code found: b5" (e.g. accent #8773b5).
+# Emit an ANSI truecolor token ({{ key_ansi }} -> 38;2;r;g;b) and use it.
+TS="$OUT/.local/share/omarchy/bin/omarchy-theme-set-templates"
+FT="$OUT/.config/omarchy/themed/fastfetch.jsonc.tpl"
+if [ -f "$TS" ] && ! grep -q '_ansi }}' "$TS"; then
+	sed -i '/printf .s|{{ %s_rgb }}|%s|g\\n. "\$key" "\$rgb" >>"\$sed_script"/a\    printf '"'"'s|{{ %s_ansi }}|38;2;%s|g\\n'"'"' "$key" "${rgb//,/;}" >>"$sed_script"' "$TS"
+	grep -q '_ansi }}' "$TS" || die "fastfetch colour patch did not apply to $TS"
+fi
+[ -f "$FT" ] && sed -i -E 's/\{\{ ([a-z_]+) \}\}/{{ \1_ansi }}/g' "$FT"
 rm -rf "$T"
 msg "home template: $(du -sh "$OUT" | cut -f1) in $OUT"
