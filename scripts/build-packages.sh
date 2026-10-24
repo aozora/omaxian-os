@@ -16,7 +16,6 @@ prep_omaxian-base() {
 	mkdir -p "$f/etc/apt/preferences.d" "$f/etc/apt/apt.conf.d" "$f/usr/share/keyrings"
 	cp "$TOPDIR"/config/apt/preferences.d/*.pref "$f/etc/apt/preferences.d/"
 	cp "$TOPDIR"/config/apt/apt.conf.d/* "$f/etc/apt/apt.conf.d/"
-	cp "$TOPDIR/config/apt/keys/NexusSfan.pgp" "$f/usr/share/keyrings/"
 	[ -f "$TOPDIR/keys/public/omaxian-archive-keyring.pgp" ] || "$TOPDIR/scripts/gen-test-key.sh"
 	cp "$TOPDIR/keys/public/omaxian-archive-keyring.pgp" "$f/usr/share/keyrings/"
 	cat > "$f/etc/omaxian-release" <<EOR

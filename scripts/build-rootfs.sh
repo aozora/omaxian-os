@@ -74,7 +74,7 @@ s_base()    { inst 00-base.list; }
 s_xlibre()  { inst 10-xlibre.list 20-audio.list; }
 s_desktop() { inst 30-desktop.list; }
 s_user()    { inst 40-user.list; }
-s_omaxian() { inst 50-omaxian.list; }
+s_omaxian() { CH apt-get update; inst 50-omaxian.list; }
 s_extrepo() {
 	CH extrepo enable brave_release
 	CH extrepo enable librewolf

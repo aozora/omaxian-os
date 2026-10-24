@@ -9,7 +9,7 @@ Rules-Requires-Root: no
 
 Package: omaxian-base
 Architecture: all
-Depends: ${misc:Depends}, sysvinit-core, eudev, elogind, libpam-elogind, ca-certificates
+Depends: ${misc:Depends}, nexussfan-archive-keyring, sysvinit-core, eudev, elogind, libpam-elogind, ca-certificates
 Description: Omaxian OS base configuration
  Apt sources (Devuan Excalibur + backports, XLibre, apt.omaxian.org),
  apt pinning (backports kernel/PipeWire/Quickshell; systemd, PulseAudio,
