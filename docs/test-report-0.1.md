@@ -203,3 +203,15 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
 - Plymouth patch made idempotent (cd194b3), so the reused rootfs, already patched with `--retain-splash`, also gets the fix.
 - Packages: omaxian-calamares-settings_0.2.7 built, repo-local re-signed (gpgv: Good signature, real subkey).
 - Base rootfs rebuild started 22:11 (stamps apt-setup, upgrade, configure, finalize removed; the other stages reused). Full rootfs and both ISOs follow.
+- Builds (22:11 to 22:33): base rootfs (stages from apt-setup), base ISO, full rootfs (from scratch on top of base; flatpaks: 8 apps, Zoom still fails extra-data as before → firstboot installs it online; payload 17 AppImages + OpenRA cnc/d2k/ra + maps; optional pool 328 debs) and full ISO, all EXIT 0. Checked in both rootfs: /etc/init.d/plymouth has `plymouth --ping; then /usr/bin/plymouth quit || true; fi` (no --retain-splash), omaxian-calamares-settings 0.2.7, SUPPORTED diversion active, omaxianlocale module present and in exec, omaxian-base 0.1.6, no build-mirror sources left.
+
+### Round 7 live boots (untouched default GRUB entry, no serial console, no network, TCG)
+| ISO | Firmware | Boot | Result | Shot |
+|---|---|---|---|---|
+| base | UEFI | 1 | PASS, desktop in < 2.5 min | shots/r7-base-uefi-1.png |
+| base | BIOS | 1 | PASS | shots/r7-base-bios-1.png |
+| base | BIOS | 2 | PASS | shots/r7-base-bios-2.png |
+| full | BIOS | 1 | PASS (hung 3/3 before the fix) | shots/r7-full-bios-1.png |
+| full | BIOS | 2 | PASS | shots/r7-full-bios-2.png |
+| full | BIOS | 3 | PASS | shots/r7-full-bios-3.png |
+| full | UEFI | 1 (install VM i7) | PASS | shots/i7-01-live.png |
