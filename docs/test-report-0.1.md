@@ -215,3 +215,9 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
 | full | BIOS | 2 | PASS | shots/r7-full-bios-2.png |
 | full | BIOS | 3 | PASS | shots/r7-full-bios-3.png |
 | full | UEFI | 1 (install VM i7) | PASS | shots/i7-01-live.png |
+
+### Round 7 offline install (full ISO, UEFI, `-nic none`, 40 GB virtio disk, keyboard only), started 22:44
+- Live tweak (test only, no mouse in the VM): `initialPartitioningChoice: erase` in the live /etc/calamares/modules/partition.conf.
+- Live: /usr/share/i18n/SUPPORTED has the bare `en UTF-8` entry (the diversion is active).
+- **Location page, time zone Europe/Rome, language American English: "The numbers and dates locale will be set to American English (United States)."** The Summary says the same (shots/i7-05-location.png, i7-11-summary.png). The old ISOs said "italiano (Italia)" here. Locale bug fixed in the UI.
+- Users: Tester / tester / tester-standardpc, throwaway password. Applications: all 6 groups checked (offline pool).
