@@ -85,3 +85,9 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
 - d4 (15:39 CET): installed disk only, no ISO, **new OVMF vars** (so no NVRAM entry). The firmware loaded "UEFI Misc Device" (the fallback \EFI\BOOT\BOOTX64.EFI) and went **straight to GRUB → kernel → Plymouth with no grub> prompt** (shots/d4-boot30.png). The UEFI fallback fix (calamares-settings 0.2.3) is verified.
 - d4 15:43: LightDM greeter shows "Test User" on host omaxian-test. Login with tester → i3 + bar (bar shows US) at 15:44 (shots/d4-boot-b.png, d4-login.png).
 - d4 15:47: Super+Enter opens a terminal. `setxkbmap -query` → **layout us** (no it,ru). ~/.config/omarchy/keyboard.json = `{"layouts":[{"layout":"us","variant":""}],"toggle":""}`, seeded from /etc/default/keyboard (XKBLAYOUT="us"). The keyboard fix is verified (shots/d4-term.png). /var/lib/omaxian at this point: optional-packages.list, optional-pending.list, no firstboot.done yet.
+
+### d4: boot log and firstboot (15:49–15:55 CET)
+- `/var/log/boot` is **0 lines**. The `bootlogd` package is in dpkg state `rc` (removed, config left), so nothing writes `/var/log/boot`. The file is an empty image-time leftover (14:47). An empty grep there proves nothing.
+- The real boot transcript is `/var/log/boot.log` (2242 bytes, 15:40, written by plymouth). The startpar check was redone against that file (result below).
+- At 15:50 firstboot was stuck in `apt-get install thunderbird`: `Could not wait for server fd ... [IP: 198.18.0.1 443]` (the sandbox proxy) for packages.devuan.org.
+- **The host mirror override was applied** at about 15:52. The sources were rewritten to `http://10.0.2.2:8099/merged`, the stuck firstboot/apt was killed, and `sudo omaxian-firstboot --now` was re-run. This is a sandbox workaround, not a product fix.
