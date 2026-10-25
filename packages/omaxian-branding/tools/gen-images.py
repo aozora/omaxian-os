@@ -40,5 +40,6 @@ wm = Image.open(f"{br}/omaxian-wordmark.png").convert("RGBA")
 welcome.alpha_composite(wm, ((640 - wm.width) // 2, (200 - wm.height) // 2))
 welcome.save(f"{cal}/welcome.png")
 sl = ImageEnhance.Brightness(w.resize((800, 450))).enhance(0.8).convert("RGBA")
-sl.alpha_composite(wm.resize((wm.width * 2 // 3, wm.height * 2 // 3)), (40, 330))
+# top-left sky: the wallpaper already carries its own small wordmark bottom-left
+sl.alpha_composite(wm.resize((wm.width * 2 // 3, wm.height * 2 // 3)), (40, 40))
 sl.save(f"{cal}/slide1.png")
