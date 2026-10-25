@@ -1,0 +1,39 @@
+#!/bin/sh
+# live-installer-hint setup|notify   (live session only, see 38omaxian-live-installer)
+#   setup : hide the stock "Install System" (calamares.desktop) so a launcher
+#           search for "install" shows "Install Omaxian OS" first; i3 keybinding
+#           Super+Shift+I; a desktop shortcut in ~/Desktop.
+#   notify: one-time notification (per live user home) with an Install action.
+set -u
+H=${HOME:?}
+case ${1:-} in
+setup)
+	mkdir -p "$H/.local/share/applications"
+	# user-level override of the same desktop id wins over /usr/share
+	printf '[Desktop Entry]\nType=Application\nName=Install System\nExec=/usr/bin/omaxian-install\nNoDisplay=true\n' \
+		> "$H/.local/share/applications/calamares.desktop"
+	if [ -d "$H/.config/i3/config.d" ] || [ -e "$H/.config/i3/config" ]; then
+		mkdir -p "$H/.config/i3/config.d"
+		cat > "$H/.config/i3/config.d/90-omaxian-live-installer.conf" <<'EOC'
+## live session only: Super+Shift+I = Install Omaxian OS
+bindsym Mod4+Shift+i exec --no-startup-id /usr/bin/omaxian-install
+EOC
+	fi
+	d=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$H/Desktop")
+	[ "$d" = "$H" ] && d="$H/Desktop"
+	mkdir -p "$d" && install -m 0755 /usr/share/applications/omaxian-install.desktop "$d/omaxian-install.desktop"
+	command -v gio >/dev/null 2>&1 && gio set "$d/omaxian-install.desktop" metadata::trusted true 2>/dev/null
+	;;
+notify)
+	f="$H/.local/state/omaxian/live-installer-hint.done"
+	[ -e "$f" ] && exit 0
+	mkdir -p "${f%/*}" && : > "$f"
+	command -v notify-send >/dev/null 2>&1 || exit 0
+	body="To install, open the app launcher (Super+Space) and type \"install\", press Super+Shift+I, or middle-click this notification."
+	a=$(notify-send -a "Omaxian OS" -i calamares -u normal -t 60000 \
+		-A install="Install Omaxian OS" "Welcome to the Omaxian OS live session" "$body" 2>/dev/null) || \
+		{ notify-send -a "Omaxian OS" -i calamares -t 60000 "Welcome to the Omaxian OS live session" "$body"; exit 0; }
+	[ "$a" = install ] && exec /usr/bin/omaxian-install
+	;;
+*) echo "usage: $0 setup|notify" >&2; exit 2 ;;
+esac

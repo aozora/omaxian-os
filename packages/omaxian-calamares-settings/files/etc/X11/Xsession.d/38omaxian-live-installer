@@ -1,0 +1,7 @@
+# /etc/X11/Xsession.d/38omaxian-live-installer  (sourced by /etc/X11/Xsession)
+# Live session only (shipped in omaxian-calamares-settings, which is purged
+# from the installed system): make "Install Omaxian OS" easy to find.
+if grep -qw 'boot=live' /proc/cmdline 2>/dev/null && [ -x /usr/libexec/omaxian/live-installer-hint ]; then
+	/usr/libexec/omaxian/live-installer-hint setup 2>/dev/null || true
+	( sleep 12; /usr/libexec/omaxian/live-installer-hint notify ) >/dev/null 2>&1 &
+fi

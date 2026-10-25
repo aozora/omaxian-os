@@ -7,4 +7,4 @@ Exec=/usr/bin/omaxian-install
 Icon=calamares
 Terminal=false
 Categories=System;
-Keywords=installer;calamares;system;
+Keywords=install;installer;setup;calamares;system;disk;

@@ -1,3 +1,13 @@
+omaxian-calamares-settings (0.2.5) excalibur; urgency=medium
+
+  * Live session: "Install Omaxian OS" is the first hit for "install" in the
+    launcher (stock "Install System" hidden), Super+Shift+I, a ~/Desktop shortcut
+    and a one-time welcome notification with an Install action
+    (/etc/X11/Xsession.d/38omaxian-live-installer, boot=live only; purged with
+    this package on the installed system).
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 20:34:35 +0100
+
 omaxian-calamares-settings (0.2.4) excalibur; urgency=medium
 
   * calamares-locale-formats (run from calamares-post): formats (LC_*) follow
