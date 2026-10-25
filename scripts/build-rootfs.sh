@@ -204,7 +204,14 @@ s_full_from_base() {
 	printf '#!/bin/sh\nexit 101\n' > "$R/usr/sbin/policy-rc.d"; chmod +x "$R/usr/sbin/policy-rc.d"
 	# Flatpaks preinstalled system-wide (firstboot only updates them)
 	CH flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-	CH flatpak install --system -y --noninteractive flathub $(read_list "$TOPDIR/config/flatpaks.list")
+	# One app at a time: "extra-data" apps (e.g. Zoom) run apply_extra under
+	# bwrap, which fails where the build host forbids new namespaces; those are
+	# left to omaxian-firstboot (it installs every missing app when online).
+	local a missing=()
+	for a in $(read_list "$TOPDIR/config/flatpaks.list"); do
+		CH flatpak install --system -y --noninteractive flathub "$a" || missing+=("$a")
+	done
+	[ ${#missing[@]} = 0 ] || warn "flatpaks NOT preinstalled (firstboot installs them online): ${missing[*]}"
 	# offline payload (user supplies payload/appimages/*.AppImage, payload/openra/{Content,maps})
 	mkdir -p "$R/usr/share/omaxian/payload"
 	cp -a "$PAYLOADDIR/appimages" "$PAYLOADDIR/openra" "$R/usr/share/omaxian/payload/"
