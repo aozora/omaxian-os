@@ -1,0 +1,16 @@
+#!/bin/bash
+# The Omaxian live image ships without man pages, /usr/share/doc and
+# non-en/it translations (smaller ISO). Reinstall the packages whose files
+# were stripped so the installed system gets them back (needs network).
+#   sudo omaxian-restore-docs [--dry-run]
+set -eu
+[ "$(id -u)" -eq 0 ] || { echo "run as root" >&2; exit 1; }
+[ -e /etc/dpkg/dpkg.cfg.d/90omaxian-live-excludes ] && { echo "live excludes still active (live session?)" >&2; exit 1; }
+mapfile -t pkgs < <(dpkg-query -W -f '${binary:Package}\n' | while read -r p; do
+	dpkg -L "$p" 2>/dev/null | grep -E '^/usr/share/(man|doc|info|help|locale)/' | head -50 |
+	while read -r f; do [ -e "$f" ] || { echo "$p"; break; }; done
+done | sort -u)
+echo "${#pkgs[@]} packages to reinstall"
+[ "${1:-}" = --dry-run ] && { printf '%s\n' "${pkgs[@]}"; exit 0; }
+apt-get update
+apt-get -y install --reinstall "${pkgs[@]}"

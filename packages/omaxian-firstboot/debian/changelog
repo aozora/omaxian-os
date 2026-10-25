@@ -1,3 +1,9 @@
+omaxian-firstboot (0.2.0) excalibur; urgency=medium
+
+  * Install pending optional apt groups (idempotent, logged); add omaxian-restore-docs.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 10:00:29 +0100
+
 omaxian-firstboot (0.1.0) excalibur; urgency=medium
 
   * Initial release.
