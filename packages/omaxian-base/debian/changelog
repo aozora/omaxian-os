@@ -1,6 +1,6 @@
-omaxian-base (0.1.4) excalibur; urgency=medium
+omaxian-base (0.1.5) excalibur; urgency=medium
 
-  * Release 0.1 "Transiberian Shaman": os-release VERSION/VERSION_CODENAME/PRETTY_NAME, DEVUAN_CODENAME/DEBIAN_CODENAME; backports pin for mesa (XLibre drivers).
+  * Release 0.1 "Trans-Siberian Shaman": os-release VERSION/VERSION_CODENAME/PRETTY_NAME, DEVUAN_CODENAME/DEBIAN_CODENAME; backports pin for mesa (XLibre drivers).
 
  -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 10:28:52 +0100
 

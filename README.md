@@ -1,7 +1,7 @@
 # Omaxian OS
 
-**Release 0.1 "Transiberian Shaman"** (os-release `VERSION="0.1 (Transiberian Shaman)"`,
-`VERSION_CODENAME=transiberian-shaman`; the Devuan base codename is in
+**Release 0.1 "Trans-Siberian Shaman"** (os-release `VERSION="0.1 (Trans-Siberian Shaman)"`,
+`VERSION_CODENAME=trans-siberian-shaman`; the Devuan base codename is in
 `DEVUAN_CODENAME=excalibur` / `DEBIAN_CODENAME=trixie`, apt keeps using its own
 sources).
 
@@ -14,8 +14,8 @@ Two images are made:
 
 | ISO | Contents |
 |---|---|
-| `omaxian-base-0.1-transiberian-shaman-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Telegram, Containers, Virtualization) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot |
-| `omaxian-full-0.1-transiberian-shaman-amd64.iso` | same plus an offline pool for the optional groups, Flatpaks preinstalled and `payload/` (AppImages, OpenRA content) bundled for offline install |
+| `omaxian-base-0.1-trans-siberian-shaman-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Telegram, Containers, Virtualization) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot |
+| `omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | same plus an offline pool for the optional groups, Flatpaks preinstalled and `payload/` (AppImages, OpenRA content) bundled for offline install |
 
 The live image has no man pages/docs and only en/it translations (dpkg
 path-excludes, live only); installed systems get the normal dpkg policy back,

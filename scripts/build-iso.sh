@@ -63,7 +63,7 @@ if [ "\$grub_platform" = "efi" ]; then
 fi
 EOG
 echo "$LABEL $(date -u +%Y%m%d)" > "$IMG/.disk/info"
-grub-mkrescue -o "$ISO" "$IMG" -- -volid "$(echo "OMAXIAN_${V}_${OMAXIAN_CODENAME_ID}_$FLAVOR" | tr 'a-z.-' 'A-Z__' | cut -c1-32)" 2>&1 | grep -v '^xorriso : UPDATE' || true
+grub-mkrescue -o "$ISO" "$IMG" -- -volid "$(echo "OMAXIAN_${V}_${OMAXIAN_CODENAME_TAG}_$FLAVOR" | tr 'a-z.-' 'A-Z__' | cut -c1-32)" 2>&1 | grep -v '^xorriso : UPDATE' || true
 [ -s "$ISO" ] || die "grub-mkrescue failed"
 (cd "$OUTDIR" && sha256sum "$(basename "$ISO")" > "$(basename "$ISO").sha256")
 msg "ISO: $ISO ($(du -h "$ISO" | cut -f1))"
