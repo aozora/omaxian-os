@@ -1,3 +1,12 @@
+omaxian-firstboot (0.2.1) excalibur; urgency=medium
+
+  * Check the apt mirror and Flathub/GitHub separately: pending optional
+    packages install when only the distro mirror is reachable.
+  * An apt-get update error from one source (e.g. a third-party repo) no
+    longer skips the optional package install.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 11:24:00 +0100
+
 omaxian-firstboot (0.2.0) excalibur; urgency=medium
 
   * Install pending optional apt groups (idempotent, logged); add omaxian-restore-docs.

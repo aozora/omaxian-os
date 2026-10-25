@@ -12,32 +12,47 @@ mkdir -p "$STATE" "$CACHE"
 exec >>"$LOG" 2>&1
 echo "== $(date -Is) omaxian-firstboot $*"
 
+# Flathub/GitHub (Flatpaks, AppImages) and the apt mirror are checked
+# separately: a network that reaches the distro mirror but not Flathub (or the
+# other way round) still gets the steps it can do.
 online() { curl -fsS --max-time 8 -o /dev/null https://dl.flathub.org/repo/summary.idx 2>/dev/null || curl -fsS --max-time 8 -o /dev/null https://github.com 2>/dev/null; }
+apt_uri() {
+	local u
+	u=$(awk 'tolower($1)=="uris:"{print $2; exit}' /etc/apt/sources.list.d/devuan.sources 2>/dev/null)
+	[ -n "$u" ] || u=$(awk '$1=="deb"{for(i=2;i<=NF;i++) if($i ~ /^(https?|ftp):/){print $i; exit}}' /etc/apt/sources.list 2>/dev/null)
+	printf '%s' "$u"
+}
+# any HTTP answer from the main apt mirror counts as reachable
+apt_online() { local u; u=$(apt_uri); [ -n "$u" ] && [ "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 8 "${u%/}/dists/" 2>/dev/null)" != 000 ]; }
+SELECTED=$STATE/optional-packages.list
+PENDING=$STATE/optional-pending.list
+need_apt() { [ -s "$PENDING" ]; }
 
 if [ "${1:-}" = --boot ]; then
-	for _ in $(seq 1 60); do online && break; sleep 10; done
+	for _ in $(seq 1 60); do online && break; need_apt && apt_online && break; sleep 10; done
 fi
-if ! online; then echo "offline: will retry at next boot (or run: sudo omaxian-firstboot --now)"; exit 0; fi
+NET=0; online && NET=1
+APT=0; need_apt && apt_online && APT=1
+if [ $NET = 0 ] && [ $APT = 0 ]; then echo "offline: will retry at next boot (or run: sudo omaxian-firstboot --now)"; exit 0; fi
 
 rc=0
 # 0. Optional apt groups picked in the installer (Calamares netinstall page)
 #    that could not be installed then (base ISO, offline). Idempotent: only
 #    packages that are still missing are installed; the pending list shrinks.
-SELECTED=$STATE/optional-packages.list
-PENDING=$STATE/optional-pending.list
 installed() { [ "$(dpkg-query -W -f '${db:Status-Status}' "$1" 2>/dev/null)" = installed ]; }
-if [ -s "$PENDING" ]; then
+if need_apt && [ $APT = 0 ]; then
+	echo "!! apt mirror $(apt_uri) unreachable: optional packages stay pending"; rc=1
+elif need_apt; then
 	mapfile -t want < <(grep -vE '^\s*(#|$)' "$PENDING")
 	missing=(); for p in "${want[@]}"; do installed "$p" || missing+=("$p"); done
 	if [ ${#missing[@]} -gt 0 ]; then
 		echo "apt: installing optional packages: ${missing[*]}"
 		export DEBIAN_FRONTEND=noninteractive
 		APTI="apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install"
-		if apt-get update; then
-			$APTI "${missing[@]}" || for p in "${missing[@]}"; do $APTI "$p" || echo "!! apt $p failed"; done
-		else
-			echo "!! apt-get update failed"
-		fi
+		# one unreachable third-party source must not block the rest:
+		# go on with whatever lists apt could fetch
+		apt-get update || echo "!! apt-get update reported errors (continuing with the lists it got)"
+		$APTI "${missing[@]}" || for p in "${missing[@]}"; do $APTI "$p" || echo "!! apt $p failed"; done
 	fi
 	still=(); for p in "${want[@]}"; do installed "$p" || still+=("$p"); done
 	printf '%s\n' "${still[@]}" | grep . > "$PENDING.new" || true
@@ -48,8 +63,11 @@ if [ -s "$PENDING" ]; then
 	[ -x /etc/init.d/libvirtd ] && { update-rc.d libvirtd defaults >/dev/null 2>&1; service libvirtd start >/dev/null 2>&1 || true; }
 fi
 
+if [ $NET = 0 ]; then
+	echo "Flathub/GitHub unreachable: Flatpaks and AppImages wait for the next boot"; rc=1
+fi
 # 1. Flatpaks (system-wide). Already present on the full ISO -> no-op.
-if command -v flatpak >/dev/null; then
+if [ $NET = 1 ] && command -v flatpak >/dev/null; then
 	flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || rc=1
 	mapfile -t apps < <(grep -vE '^\s*(#|$)' "$FLATPAKS")
 	for a in "${apps[@]}"; do
@@ -64,7 +82,7 @@ if command -v flatpak >/dev/null; then
 fi
 
 # 2. Fresh AppImages into the system cache; users integrate them at login
-/usr/bin/omaxian-appimage-fetch "$CACHE" || rc=1
+[ $NET = 1 ] && { /usr/bin/omaxian-appimage-fetch "$CACHE" || rc=1; }
 
 if [ $rc -eq 0 ]; then
 	date -Is > "$STATE/firstboot.done"; echo "first boot provisioning complete"
