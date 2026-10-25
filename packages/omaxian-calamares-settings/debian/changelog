@@ -1,3 +1,9 @@
+omaxian-calamares-settings (0.2.1) excalibur; urgency=medium
+
+  * UEFI: after the bootloader job, mirror the stub grub.cfg from EFI/omaxian to EFI/debian and EFI/BOOT. The signed GRUB looks in /EFI/debian, so booting through the removable fallback stopped at a grub> prompt.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 11:48:10 +0100
+
 omaxian-calamares-settings (0.2.0) excalibur; urgency=medium
 
   * netinstall page with local optional app groups (preselected), offline pool support, omaxianoptional job records pending selections for firstboot.
