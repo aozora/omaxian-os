@@ -221,3 +221,5 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
 - Live: /usr/share/i18n/SUPPORTED has the bare `en UTF-8` entry (the diversion is active).
 - **Location page, time zone Europe/Rome, language American English: "The numbers and dates locale will be set to American English (United States)."** The Summary says the same (shots/i7-05-location.png, i7-11-summary.png). The old ISOs said "italiano (Italia)" here. Locale bug fixed in the UI.
 - Users: Tester / tester / tester-standardpc, throwaway password. Applications: all 6 groups checked (offline pool).
+- Progress (CET): 22:44 start; 22:56 31% unpacking; 22:59 76% "Install packages" (offline pool); 23:02 78%.
+- ISO checksums re-verified with `sha256sum -c` against the build's one-line .sha256 files: both OK.
