@@ -19,8 +19,8 @@ rm_rootfs() { local d=$1; [ -e "$d" ] || return 0
 	if awk -v r="$(realpath "$d")" '$2 == r || index($2, r "/") == 1 {f=1} END{exit !f}' /proc/mounts; then
 		die "$d still has mounts; refusing to delete it"; fi
 	rm -rf --one-file-system "$d"; }
-stage() { local n=$1; shift; if [ -e "$ST/$n" ]; then msg "stage $n: done"; return; fi
-	msg "stage $n"; "$@"; touch "$ST/$n"; }
+stage() { local _stg=$1; shift; if [ -e "$ST/$_stg" ]; then msg "stage $_stg: done"; return; fi
+	msg "stage $_stg"; "$@"; touch "$ST/$_stg"; }
 cleanup() { "$TOPDIR/scripts/umount-chroot.sh" "$R" >/dev/null 2>&1 || true
 	[ -n "${REPO_PID:-}" ] && kill "$REPO_PID" 2>/dev/null || true; }
 trap cleanup EXIT
@@ -228,7 +228,7 @@ s_full_from_base() {
 	cp -a "$PAYLOADDIR/appimages" "$PAYLOADDIR/openra" "$R/usr/share/omaxian/payload/"
 	find "$R/usr/share/omaxian/payload" -name .gitkeep -delete
 	for x in settings.yaml logs replays player.oraid; do rm -rf "$R/usr/share/omaxian/payload/openra/$x"; done
-	n=$(find "$R/usr/share/omaxian/payload/appimages" -maxdepth 1 -iname '*.AppImage' | wc -l)
+	local n; n=$(find "$R/usr/share/omaxian/payload/appimages" -maxdepth 1 -iname '*.AppImage' | wc -l)
 	[ "$n" -gt 0 ] || warn "payload/appimages is empty: the full ISO will have no offline AppImages"
 	s_optional_pool
 	rm -f "$R/usr/sbin/policy-rc.d"
@@ -283,4 +283,5 @@ else
 	stage configure s_configure
 	stage finalize s_finalize
 fi
-msg "rootfs $FLAVOR ready: $(du -sh "$R" | cut -f1)"
+"$TOPDIR/scripts/umount-chroot.sh" "$R" >/dev/null 2>&1 || true
+msg "rootfs $FLAVOR ready: $(du -sh --one-file-system "$R" | cut -f1)"
