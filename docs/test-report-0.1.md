@@ -26,3 +26,14 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
   hwclock job finished without an error dialog (i3-cala19.png) — PASS (indirect).
 - firstboot: on boot it ran and stalled in apt against https://packages.devuan.org through the sandbox proxy (sandbox artifact, shots/d3-fb1.png).
   Restarted with the mirror override http://10.0.2.2:8099/merged.
+- Greeter (lightdm, VT7) up after the manual grub boot; "Test User" preselected (shots/d3-greeter.png) — PASS.
+- First X login tester -> Omaxian desktop/bar (shots/d3-x1.png) — PASS.
+- Super+Enter opens terminal (shots/d3-x-term.png) — PASS.
+- Keyboard — **FAIL**: installer picked English (US) (i3-cala6-keyboard.png) and the system config is right
+  (/etc/X11/xorg.conf.d/00-keyboard.conf XkbLayout "us"), but the X session comes up as `it,ru` / `,phonetic` /
+  grp:alt_shift_toggle (shots/d3-x-xkb.png, d3-x-kbconf.png). Root cause: vendored
+  `~/.local/share/omarchy/bin/omarchy-keyboard-apply` has `DEFAULT_LAYOUT="it,ru"`, `DEFAULT_VARIANT=",phonetic"` and
+  uses them when `~/.config/omarchy/keyboard.json` is missing. The live session writes keyboard.json (config/live/37omaxian-live),
+  but an installed user gets none. Proposed fix (not done yet): in omaxian-session, seed keyboard.json on first login from
+  /etc/default/keyboard (XKBLAYOUT/XKBVARIANT/XKBOPTIONS), or fall back to the system layout instead of it,ru in
+  omarchy-keyboard-apply.
