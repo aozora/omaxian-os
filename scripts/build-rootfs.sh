@@ -12,6 +12,13 @@ FLAVOR=${1:-base}
 R="$BUILDDIR/rootfs-$FLAVOR"; ST="$R.stamps"; mkdir -p "$ST"
 LOG="$BUILDDIR/rootfs-$FLAVOR.log"
 CH() { "$TOPDIR/scripts/chroot-run.sh" "$R" "$@"; }
+# Remove a rootfs safely: a killed earlier run can leave /dev /proc /sys bind
+# mounts inside it, and a plain rm -rf would then delete the HOST's /dev nodes.
+rm_rootfs() { local d=$1; [ -e "$d" ] || return 0
+	"$TOPDIR/scripts/umount-chroot.sh" "$d" >/dev/null 2>&1 || true
+	if awk -v r="$(realpath "$d")" '$2 == r || index($2, r "/") == 1 {f=1} END{exit !f}' /proc/mounts; then
+		die "$d still has mounts; refusing to delete it"; fi
+	rm -rf --one-file-system "$d"; }
 stage() { local n=$1; shift; if [ -e "$ST/$n" ]; then msg "stage $n: done"; return; fi
 	msg "stage $n"; "$@"; touch "$ST/$n"; }
 cleanup() { "$TOPDIR/scripts/umount-chroot.sh" "$R" >/dev/null 2>&1 || true
@@ -27,7 +34,7 @@ serve_repo() { # local Omaxian repo over http, reachable from inside the chroot
 }
 
 s_bootstrap() {
-	rm -rf "$R"; mkdir -p "$BUILDDIR/keyring"
+	rm_rootfs "$R"; mkdir -p "$BUILDDIR/keyring"
 	cp "$TOPDIR/config/apt/keys/devuan-archive-keyring.pgp" "$BUILDDIR/keyring/devuan-archive-keyring.gpg"
 	mmdebstrap --mode=root --variant=minbase --arch="$ARCH" \
 		--keyring="$BUILDDIR/keyring" \
@@ -204,7 +211,7 @@ EOS
 
 s_full_from_base() {
 	[ -e "$BUILDDIR/rootfs-base.stamps/finalize" ] || die "build the base rootfs first"
-	rm -rf "$R"; cp -a "$BUILDDIR/rootfs-base" "$R"
+	rm_rootfs "$R"; cp -a "$BUILDDIR/rootfs-base" "$R"
 	printf '#!/bin/sh\nexit 101\n' > "$R/usr/sbin/policy-rc.d"; chmod +x "$R/usr/sbin/policy-rc.d"
 	# Flatpaks preinstalled system-wide (firstboot only updates them)
 	CH flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo

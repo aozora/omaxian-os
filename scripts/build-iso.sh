@@ -63,8 +63,10 @@ if [ "\$grub_platform" = "efi" ]; then
 fi
 EOG
 echo "$LABEL $(date -u +%Y%m%d)" > "$IMG/.disk/info"
-# -iso-level 3: the full squashfs is >4 GiB (ISO9660 multi-extent file)
-grub-mkrescue -o "$ISO" "$IMG" -- -iso-level 3 -volid "$(echo "OMAXIAN_${V}_${OMAXIAN_CODENAME_TAG}_$FLAVOR" | tr 'a-z.-' 'A-Z__' | cut -c1-32)" 2>&1 | grep -v '^xorriso : UPDATE' || true
+# iso_9660_level=3: the full squashfs is >4 GiB (ISO9660 multi-extent file);
+# args after -- go to xorriso in native mode, so no mkisofs-style -iso-level.
+rm -f "$ISO"
+grub-mkrescue -o "$ISO" "$IMG" -- -compliance iso_9660_level=3 -volid "$(echo "OMAXIAN_${V}_${OMAXIAN_CODENAME_TAG}_$FLAVOR" | tr 'a-z.-' 'A-Z__' | cut -c1-32)" 2>&1 | grep -v '^xorriso : UPDATE' || true
 [ -s "$ISO" ] || die "grub-mkrescue failed"
 (cd "$OUTDIR" && sha256sum "$(basename "$ISO")" > "$(basename "$ISO").sha256")
 msg "ISO: $ISO ($(du -h "$ISO" | cut -f1))"
