@@ -111,3 +111,8 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
   - Consequence: `/tmp/.ICE-unix` is not created at boot. `.X11-unix` is created by the X server itself, so the desktop still works.
 - **Fix (committed, not yet in an ISO):** `scripts/build-rootfs.sh` `s_configure` now does `chmod 0755 /etc/init.d/x11-common` when it is not executable. On existing installs: `sudo chmod 0755 /etc/init.d/x11-common`.
 - d4: chmod applied in the guest, then rebooted (16:35) to verify.
+
+## Round 5: ISO rebuild with 215c7a9 (from 18:31 CET)
+- Disk space was freed by the user; the d4 disk is gone, so the planned d4 reboot check of the chmod was not done.
+- The only change since the 14:47 ISO is `215c7a9`, 7 lines in `s_configure`. No package or Calamares change, so the install path is unchanged since the d4 pass. **No reinstall.**
+- Rebuild: removed the `configure` and `finalize` stamps of `build/rootfs-base` (both stages are idempotent), re-ran `build-rootfs.sh base`, then `build-iso.sh base`.
