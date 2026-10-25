@@ -141,7 +141,7 @@ EOC
 	CH update-initramfs -u -k all
 	# release files
 	cp "$R/etc/omaxian-release" "$R/etc/issue.omaxian" 2>/dev/null || true
-	printf 'Omaxian OS %s \\n \\l\n\n' "$OMAXIAN_VERSION" > "$R/etc/issue"
+	printf 'Omaxian OS %s (%s) \\n \\l\n\n' "$OMAXIAN_VERSION" "$OMAXIAN_CODENAME" > "$R/etc/issue"
 }
 
 strip_excluded() { # files unpacked before the dpkg excludes were in place (bootstrap)

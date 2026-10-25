@@ -8,7 +8,7 @@ FLAVOR=${1:-base}
 R="$BUILDDIR/rootfs-$FLAVOR"
 [ -e "$R.stamps/finalize" ] || [ -e "$R.stamps/full" ] || die "rootfs $FLAVOR not finished"
 V=$(echo "$OMAXIAN_VERSION" | tr '~' '-')
-ISO="$OUTDIR/omaxian-$FLAVOR-$V-$ARCH.iso"
+ISO="$OUTDIR/omaxian-$FLAVOR-$V-$OMAXIAN_CODENAME_ID-$ARCH.iso"
 IMG="$BUILDDIR/iso-$FLAVOR"; rm -rf "$IMG"; mkdir -p "$IMG/live" "$IMG/boot/grub" "$IMG/.disk"
 "$TOPDIR/scripts/umount-chroot.sh" "$R" >/dev/null 2>&1 || true
 
@@ -28,7 +28,7 @@ msg "grub (BIOS + UEFI) with Omaxian theme"
 cp -r "$R/usr/share/grub/themes/omaxian" "$IMG/boot/grub/themes-omaxian.tmp"
 mkdir -p "$IMG/boot/grub/themes"; mv "$IMG/boot/grub/themes-omaxian.tmp" "$IMG/boot/grub/themes/omaxian"
 cp /usr/share/grub/unicode.pf2 "$IMG/boot/grub/" 2>/dev/null || true
-LABEL="Omaxian OS $OMAXIAN_VERSION ($FLAVOR)"
+LABEL="Omaxian OS $OMAXIAN_VERSION ($OMAXIAN_CODENAME) $FLAVOR"
 ARGS="boot=live components username=$LIVE_USER hostname=$LIVE_HOSTNAME locales=$DEFAULT_LOCALE"
 cat > "$IMG/boot/grub/grub.cfg" <<EOG
 set default=0
@@ -63,7 +63,7 @@ if [ "\$grub_platform" = "efi" ]; then
 fi
 EOG
 echo "$LABEL $(date -u +%Y%m%d)" > "$IMG/.disk/info"
-grub-mkrescue -o "$ISO" "$IMG" -- -volid "OMAXIAN_$(echo "$FLAVOR" | tr a-z A-Z)" 2>&1 | grep -v '^xorriso : UPDATE' || true
+grub-mkrescue -o "$ISO" "$IMG" -- -volid "$(echo "OMAXIAN_${V}_${OMAXIAN_CODENAME_ID}_$FLAVOR" | tr 'a-z.-' 'A-Z__' | cut -c1-32)" 2>&1 | grep -v '^xorriso : UPDATE' || true
 [ -s "$ISO" ] || die "grub-mkrescue failed"
 (cd "$OUTDIR" && sha256sum "$(basename "$ISO")" > "$(basename "$ISO").sha256")
 msg "ISO: $ISO ($(du -h "$ISO" | cut -f1))"

@@ -19,7 +19,7 @@ terminal-box: "select_*.png"
 	left = 0
 	width = 100%
 	align = "center"
-	text = "Omaxian OS"
+	text = "Omaxian OS @VERSION@ - @CODENAME@"
 	font = "Omaxian Bold 24"
 	color = "#eafffb"
 }

@@ -22,6 +22,8 @@ prep_omaxian-base() {
 NAME="Omaxian OS"
 VERSION="$OMAXIAN_VERSION ($OMAXIAN_CODENAME)"
 VERSION_ID="$OMAXIAN_VERSION"
+VERSION_CODENAME="$OMAXIAN_CODENAME_ID"
+CODENAME="$OMAXIAN_CODENAME"
 BASE="Devuan $DEVUAN_SUITE"
 OMAXIAN_SHELL="$OMAXIAN_SHELL_REF"
 HOME_URL="https://omaxian.org"
@@ -34,7 +36,11 @@ PRETTY_NAME="Omaxian OS $OMAXIAN_VERSION ($OMAXIAN_CODENAME)"
 NAME="Omaxian OS"
 VERSION_ID="$vid"
 VERSION="$OMAXIAN_VERSION ($OMAXIAN_CODENAME)"
-VERSION_CODENAME="$DEVUAN_SUITE"
+VERSION_CODENAME="$OMAXIAN_CODENAME_ID"
+# apt uses its sources.list, not os-release; tools that need the base
+# release read these (cf. UBUNTU_CODENAME on Ubuntu derivatives).
+DEVUAN_CODENAME="$DEVUAN_SUITE"
+DEBIAN_CODENAME="trixie"
 ID=omaxian
 ID_LIKE="devuan debian"
 HOME_URL="https://omaxian.org/"
@@ -46,7 +52,10 @@ EOR
 prep_omaxian-branding() {
 	[ -d "$OMX" ] || "$TOPDIR/scripts/fetch-omaxian.sh"
 	bash "$1/tools/gen-assets.sh" "$OMX" "$1/assets"
-	sed -i "s/@VERSION@/$OMAXIAN_VERSION/g" "$1"/assets/usr/share/calamares/branding/omaxian/branding.desc
+	sed -i -e "s/@VERSION@/$OMAXIAN_VERSION/g" -e "s/@CODENAME@/$OMAXIAN_CODENAME/g" \
+		"$1"/assets/usr/share/calamares/branding/omaxian/branding.desc \
+		"$1"/assets/usr/share/plymouth/themes/omaxian/omaxian.script \
+		"$1"/assets/usr/share/grub/themes/omaxian/theme.txt
 }
 prep_omaxian-session() {
 	local d=$1

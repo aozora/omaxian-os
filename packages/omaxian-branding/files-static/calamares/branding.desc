@@ -11,9 +11,9 @@ navigation: widget
 strings:
     productName:         "Omaxian OS"
     shortProductName:    "Omaxian"
-    version:             "@VERSION@"
+    version:             "@VERSION@ (@CODENAME@)"
     shortVersion:        "@VERSION@"
-    versionedName:       "Omaxian OS @VERSION@"
+    versionedName:       "Omaxian OS @VERSION@ \u201c@CODENAME@\u201d"
     shortVersionedName:  "Omaxian @VERSION@"
     bootloaderEntryName: "Omaxian"
     productUrl:          "https://omaxian.org/"
