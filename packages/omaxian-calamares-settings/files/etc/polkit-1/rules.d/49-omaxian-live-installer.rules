@@ -1,0 +1,18 @@
+// Live session only: let the live user start the installer (omaxian-install =
+// pkexec env DISPLAY=... XAUTHORITY=... calamares) without a password prompt.
+// live-config only writes a legacy .pkla grant, which polkitd >= 121 ignores.
+// Shipped by omaxian-calamares-settings, which is purged from installed systems
+// (calamares-post also deletes this file); boot=live is re-checked at runtime.
+polkit.addRule(function(action, subject) {
+	if (action.id != "org.freedesktop.policykit.exec" || !subject.isInGroup("sudo"))
+		return polkit.Result.NOT_HANDLED;
+	if (action.lookup("program") != "/usr/bin/env" ||
+	    !/^\/usr\/bin\/env DISPLAY=\S* XAUTHORITY=\S* calamares( .*)?$/.test(action.lookup("command_line") || ""))
+		return polkit.Result.NOT_HANDLED;
+	try {
+		polkit.spawn(["/bin/grep", "-qw", "boot=live", "/proc/cmdline"]);
+	} catch (e) {
+		return polkit.Result.NOT_HANDLED;
+	}
+	return polkit.Result.YES;
+});

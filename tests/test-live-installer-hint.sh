@@ -25,6 +25,20 @@ HOME=$W/home PATH=$W/bin:/usr/bin:/bin "$W/hint" notify; HOME=$W/home PATH=$W/bi
 # Xsession hook is live-only and the installed system drops it
 grep -q "grep -qw 'boot=live' /proc/cmdline" "$P/etc/X11/Xsession.d/38omaxian-live-installer" && ok "hook gated on boot=live" || ko "hook gate"
 grep -q '38omaxian-live-installer' "$P/usr/libexec/omaxian/calamares-post" && ok "calamares-post removes the hook" || ko "calamares-post"
+# polkit: passwordless only for "env DISPLAY= XAUTHORITY= calamares", sudo group, boot=live
+RULE=$P/etc/polkit-1/rules.d/49-omaxian-live-installer.rules
+grep -q '49-omaxian-live-installer.rules' "$P/usr/libexec/omaxian/calamares-post" && ok "calamares-post removes the polkit rule" || ko "calamares-post polkit rule"
+if command -v node >/dev/null && [ -f "$RULE" ]; then
+	res=$(node -e '
+const s=require("fs").readFileSync(process.argv[1],"utf8"); let rule, live=true;
+const polkit={addRule:f=>rule=f,Result:{YES:"Y",NOT_HANDLED:"n"},spawn:a=>{if(!live) throw new Error("exit 1")}};
+eval(s);
+const a=(p,c)=>({id:"org.freedesktop.policykit.exec",lookup:k=>k=="program"?p:c}), sudo={isInGroup:g=>g=="sudo"}, other={isInGroup:g=>false};
+const C="/usr/bin/env DISPLAY=:0 XAUTHORITY=/home/omaxian/.Xauthority calamares";
+const out=[rule(a("/usr/bin/env",C),sudo), rule(a("/usr/bin/env","/usr/bin/env bash"),sudo), rule(a("/usr/bin/bash","/usr/bin/bash"),sudo), rule(a("/usr/bin/env",C),other)];
+live=false; out.push(rule(a("/usr/bin/env",C),sudo)); console.log(out.join(""));' "$RULE")
+	[ "$res" = Ynnnn ] && ok "polkit rule: installer yes; other programs, non-sudo, non-live no" || ko "polkit rule: $res"
+else echo "skip polkit rule (no node)"; fi
 # launcher ranking
 S=$T/build/src/omaxian/omaxian/.local/share/omarchy/shell/services
 if command -v node >/dev/null && [ -f "$S/AppSearch.js" ] && [ -f "$S/hidden-entries.sh" ]; then

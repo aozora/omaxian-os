@@ -4,7 +4,8 @@
 set -u
 # live-config leftovers
 rm -f /etc/sudoers.d/live /etc/lightdm/lightdm.conf.d/*live* /etc/live/config.conf.d/* \
-	/etc/X11/Xsession.d/37omaxian-live /etc/X11/Xsession.d/38omaxian-live-installer 2>/dev/null
+	/etc/X11/Xsession.d/37omaxian-live /etc/X11/Xsession.d/38omaxian-live-installer \
+	/etc/polkit-1/rules.d/49-omaxian-live-installer.rules 2>/dev/null
 deluser --remove-home omaxian-live >/dev/null 2>&1 || true
 # default locale fallback (Calamares localecfg writes /etc/default/locale)
 grep -q '^LANG=' /etc/default/locale 2>/dev/null || echo 'LANG=en_US.UTF-8' >> /etc/default/locale
