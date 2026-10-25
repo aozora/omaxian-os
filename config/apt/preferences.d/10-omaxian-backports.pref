@@ -13,3 +13,9 @@ Pin: release n=excalibur-backports
 Pin-Priority: 600
 
 # rustup itself comes from main; toolchains are per-user via rustup.
+
+# XLibre's video drivers (xserver-xlibre-video-amdgpu >= 25.10) need
+# mesa >= 25.2.6; trixie/excalibur has 25.0.x, backports has the new one.
+Package: mesa-* libgl1-mesa-dri libglx-mesa0 libegl-mesa0 libgbm1 libgbm-dev libosmesa6 libxatracker2 libd3dadapter9-mesa libdrm* libwayland-* libgallium*
+Pin: release n=excalibur-backports
+Pin-Priority: 600
