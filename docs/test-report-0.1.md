@@ -101,3 +101,5 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
   - rc2.d has S03virtlogd, S04libvirtd, S05libvirt-guests; `libvirtd` is running.
   - `optional-pending.list` is now empty.
   - Firstboot then moved on to the Flatpak stage (Flathub runtimes plus `ch.protonmail.protonmail-bridge`).
+- **firstboot.done** = `2026-10-25T16:12:54+01:00` (16:12 CET). The log ends with "first boot provisioning complete". The AppImage stage downloaded BleachBit 6.0.6, Cursor 3.27.12 and teams-for-linux 2.27.0 inside the guest from upstream; nothing was copied from the host. **Caveat: the apt stage only completed after the host mirror override (see above).**
+- 16:15: rebooting d4 once to see whether the x11-common startpar failure reproduces.
