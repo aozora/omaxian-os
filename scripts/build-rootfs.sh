@@ -167,7 +167,12 @@ EOC
 	if [ -f "$R/etc/init.d/plymouth" ] && grep -q '^[[:space:]]*/usr/bin/plymouth quit --retain-splash$' "$R/etc/init.d/plymouth"; then
 		sed -i 's|^\([[:space:]]*\)/usr/bin/plymouth quit --retain-splash$|\1if /usr/bin/plymouth --ping; then /usr/bin/plymouth quit \|\| true; fi|' \
 			"$R/etc/init.d/plymouth"
+	fi
+	# rootfs patched by an older build (quit --retain-splash behind --ping): drop the flag
+	if [ -f "$R/etc/init.d/plymouth" ]; then
+		sed -i 's#/usr/bin/plymouth quit --retain-splash || true; fi#/usr/bin/plymouth quit || true; fi#' "$R/etc/init.d/plymouth"
 		grep -q 'plymouth --ping; then /usr/bin/plymouth quit || true; fi' "$R/etc/init.d/plymouth" || warn "plymouth initscript not patched"
+		! grep -q -- '--retain-splash' "$R/etc/init.d/plymouth" || warn "plymouth initscript still uses --retain-splash"
 	fi
 	# - xlibre-x11-common takes over the /etc/init.d/x11-common conffile from
 	#   Debian's x11-common (removed, left in state rc); the takeover keeps the
