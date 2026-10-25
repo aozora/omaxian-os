@@ -267,6 +267,17 @@ EOS
 	# everything the groups need on top of the base system (the base already
 	# has the rest): download only, into the pool
 	CH apt-get "${O[@]}" -y --download-only -o Dir::Cache::archives="$pool" install $pk
+	# Calamares' packages module purges the live packages and autoremoves their
+	# dependencies BEFORE it installs the picked groups; group dependencies that
+	# only the live packages pulled in (krita: libxcb-res0, libqt6core5compat6)
+	# would then be missing offline. Put those into the pool as well.
+	local live gone need extra
+	live=$(sed -n 's/^ *- \([a-z0-9][a-z0-9.+-]*\)$/\1/p' "$TOPDIR/packages/omaxian-calamares-settings/files/etc/calamares/modules/packages.conf" | tr '\n' ' ')
+	gone=$(CH apt-get "${O[@]}" -s --purge remove --auto-remove $live | awk '$1=="Purg"||$1=="Remv"{print $2}' | sort -u)
+	need=$(CH apt-cache "${O[@]}" depends --recurse --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances $pk | grep -v '^[ <]' | sort -u)
+	extra=$(comm -12 <(echo "$gone") <(echo "$need") | tr '\n' ' ')
+	msg "optional pool: live-only dependencies added: ${extra:-none}"
+	[ -z "$extra" ] || CH sh -c "cd $pool && apt-get ${O[*]} download $extra"
 	rm -rf "$R$pool/partial" "$R$pool/lock"
 	cp -n "$R$pool"/*.deb "$BUILDDIR/dl/optional-pool/" 2>/dev/null || true
 	CH sh -c "cd $pool && apt-ftparchive packages . > Packages"

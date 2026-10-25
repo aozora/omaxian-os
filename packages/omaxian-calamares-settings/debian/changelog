@@ -1,3 +1,11 @@
+omaxian-calamares-settings (0.2.8) excalibur; urgency=medium
+
+  * postrm: apt purge runs postrm remove then purge; the second run deleted
+    the just-restored stock /usr/share/i18n/SUPPORTED on installed systems.
+    Only undo the diversion while it is still ours.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 23:20:00 +0100
+
 omaxian-calamares-settings (0.2.7) excalibur; urgency=medium
 
   * Formats follow the installer language unless changed on the Locale page:

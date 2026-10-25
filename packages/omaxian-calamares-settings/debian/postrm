@@ -1,9 +1,15 @@
 #!/bin/sh
 set -e
 S=/usr/share/i18n/SUPPORTED
-if [ "$1" = remove ] || [ "$1" = purge ] || [ "$1" = abort-install ] || [ "$1" = disappear ]; then
-	rm -f $S
-	dpkg-divert --package omaxian-calamares-settings --rename --divert $S.omaxian-orig --remove $S >/dev/null
-fi
+# apt purge runs postrm twice (remove, then purge): only undo the diversion while
+# it is still ours, or the second run deletes the restored stock file.
+case "$1" in
+remove|purge|abort-install|disappear)
+	if [ "$(dpkg-divert --listpackage $S)" = omaxian-calamares-settings ]; then
+		rm -f $S
+		dpkg-divert --package omaxian-calamares-settings --rename --divert $S.omaxian-orig --remove $S >/dev/null
+	fi
+	;;
+esac
 #DEBHELPER#
 exit 0

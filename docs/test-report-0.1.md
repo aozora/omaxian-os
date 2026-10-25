@@ -223,3 +223,29 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
 - Users: Tester / tester / tester-standardpc, throwaway password. Applications: all 6 groups checked (offline pool).
 - Progress (CET): 22:44 start; 22:56 31% unpacking; 22:59 76% "Install packages" (offline pool); 23:02 78%.
 - ISO checksums re-verified with `sha256sum -c` against the build's one-line .sha256 files: both OK.
+- 23:09 "All done." (shots/i7-19-progress.png): about 25 min for the offline install. The VM was stopped after Calamares unmounted the target (ACPI powerdown is ignored).
+- Installed disk, UEFI via the removable-media fallback (fresh OVMF vars, no NVRAM entry), `-nic none`: GRUB → firstboot init (shots/i7-20-firstboot.png) → greeter; login as tester → desktop at 23:15 (shots/i7-21-login.png); terminal `locale` (shots/i7-22-term.png, saved to ~/r7-locale.txt).
+- Offline inspection: the qcow2 was exported read-only with qemu-storage-daemon (FUSE), ext4 root mounted `ro,noload` at its GPT offset.
+
+### Round 7 installed-system results (VM i7, no network at any point)
+| Check | Result | Evidence |
+|---|---|---|
+| Install completes offline (full ISO, all 6 groups) | PASS | i7-19, 25 min |
+| Installed disk boots (UEFI fallback) | PASS | i7-20 |
+| First login reaches the desktop | PASS | i7-21 |
+| LANG/LC_* = en_US.UTF-8 (session `locale`, /etc/default/locale, /etc/locale.conf) | PASS | r7-locale.txt: every LC_* en_US.UTF-8; Europe/Rome time zone kept |
+| AppImages in ~/AppImages | PASS | 17/17, all "integrated" in user-firstrun.log |
+| OpenRA Content (ra/cnc/d2k) | PASS | 151/115/590 files |
+| OpenRA maps | PASS (note) | maps/{ra,cnc,d2k}/release-20250330 seeded; the dirs are empty in payload/ too (stock maps ship inside the AppImages) |
+| Flatpaks | PASS | 8 apps, Zoom included |
+| Optional apps installed offline from the pool | **FAIL (1 of 23)** | 22 installed (chromium, thunderbird, gimp, inkscape, telegram, podman stack, distrobox, qemu, libvirt, virt-manager, gnome-boxes, ...). **krita missing**, left in optional-pending.list |
+| /var/lib/omaxian/firstboot.done without network | **FAIL** | not written: krita pending, and by design firstboot exits "offline: will retry at next boot" when nothing is reachable |
+| Live-only packages purged (live-boot/-config/-tools, calamares, omaxian-calamares-settings), pool sources and pool removed | PASS | dpkg status, sources.list.d |
+| omaxian-base 0.1.6, plymouth initscript without --retain-splash | PASS | |
+| Stock /usr/share/i18n/SUPPORTED restored | **FAIL** | file missing on the target |
+
+### Root causes and fixes (source only; not in the round-7 ISOs)
+- **krita**: Calamares' apt `remove` operation is followed by `apt-get --purge autoremove`, which ran before the netinstall installs (history.log). It purged libxcb-res0 and libqt6core5compat6, which only Calamares had pulled in. The pool skips packages already in the rootfs, so they were not there and apt refused krita ("libkf5windowsystem5 Depends libxcb-res0 … not installable", reproduced offline on an overlay of the installed root). Fix: `s_optional_pool` now also downloads every group dependency that the live-package purge plus autoremove would remove. Computed on rootfs-full: libkf6guiaddons-bin libqt6core5compat6 libxcb-res0.
+- **SUPPORTED**: apt purge runs postrm twice (`remove`, then `purge`). The second `rm -f` deleted the stock file that the first run had just restored. Reproduced with tests/test-supported-diversion.sh (real dpkg-divert --root). Fix: omaxian-calamares-settings 0.2.8 postrm only acts while the diversion still belongs to the package. The test now passes. Impact on round-7 installs: `dpkg-reconfigure locales` has no list. Workaround: `apt-get install --reinstall locales`.
+- **firstboot.done offline**: unchanged (design decision needed). firstboot also refreshes Flatpaks/AppImages online, so it never marks done without network. Proposal: on the full ISO, when nothing is pending and all Flatpaks are present, write firstboot.done offline and leave updates to the normal updater.
+- Both fixes need a rebuild (calamares-settings 0.2.8 + full rootfs pool) to reach the ISOs.
