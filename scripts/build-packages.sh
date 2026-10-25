@@ -57,7 +57,7 @@ prep_omaxian-session() {
 	for x in scripts omaxian packaging version LICENSE README.md; do cp -a "$OMX/$x" "$d/vendor/src/"; done
 	bash "$TOPDIR/scripts/gen-home-template.sh" "$OMX" "$d/vendor/home-template"
 	cp "$OMX/packaging/sysvinit/power-profiles-daemon" "$d/debian/omaxian-session.power-profiles-daemon.init"
-	sed -i "1s/([^)]*)/($(cat "$OMX/version" 2>/dev/null | tr -d 'v\n' || echo 1.0.3)-1)/" "$d/debian/changelog" || true
+	sed -i "1s/([^)]*)/($(cat "$OMX/version" 2>/dev/null | tr -d 'v\n' || echo 1.0.3)-2)/" "$d/debian/changelog" || true
 }
 prep_omaxian-strata() {
 	"$TOPDIR/scripts/fetch-strata.sh" "$1/upstream"
@@ -66,7 +66,9 @@ prep_omaxian-firstboot() {
 	mkdir -p "$1/files/usr/share/omaxian"
 	cp "$TOPDIR/config/flatpaks.list" "$TOPDIR/config/appimages.manifest" "$1/files/usr/share/omaxian/"
 }
-prep_omaxian-calamares-settings() { :; }
+prep_omaxian-calamares-settings() {
+	bash "$TOPDIR/scripts/gen-netinstall.sh" "$TOPDIR/config/optional-groups.list" "$1/files/etc/calamares/modules/netinstall.conf"
+}
 
 for p in $PKGS; do
 	msg "== $p"

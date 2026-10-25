@@ -16,6 +16,21 @@ if [ -d /var/cache/omaxian/grub-debs ]; then
 	else DEBIAN_FRONTEND=noninteractive dpkg -i /var/cache/omaxian/grub-debs/grub-pc_*.deb 2>/dev/null || true; fi
 fi
 rm -rf /var/cache/omaxian/grub-debs
+# live image only: dpkg path-excludes (no docs/man, en+it locales only).
+# The installed system gets the normal dpkg policy back; omaxian-restore-docs
+# reinstalls the stripped docs/man pages/translations when wanted.
+rm -f /etc/dpkg/dpkg.cfg.d/90omaxian-live-excludes
+# GRUB: desktop-base leaves its own theme in /etc/default/grub; Omaxian's
+# theme/defaults live in /etc/default/grub.d (plus 00calamares.cfg from grubcfg)
+[ -f /etc/default/grub ] && sed -i '/desktop-base\/grub-themes/d' /etc/default/grub
+# Full ISO: offline apt pool for the optional (netinstall) groups. The
+# packages module installs from it; omaxianoptional removes it afterwards.
+POOL=/var/cache/omaxian/optional-pool
+if [ -f $POOL/Packages ]; then
+	echo "deb [trusted=yes] file:$POOL ./" > /etc/apt/sources.list.d/omaxian-optional-pool.list
+	apt-get update -o Dir::Etc::sourcelist=/etc/apt/sources.list.d/omaxian-optional-pool.list \
+		-o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0 >/dev/null 2>&1 || true
+fi
 # make sure the first-boot provisioning runs on the installed system
 rm -f /var/lib/omaxian/firstboot.done
 update-rc.d omaxian-firstboot defaults >/dev/null 2>&1 || true

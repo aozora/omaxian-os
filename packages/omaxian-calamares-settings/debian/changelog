@@ -1,3 +1,11 @@
+omaxian-calamares-settings (0.2.0) excalibur; urgency=medium
+
+  * netinstall page with local optional app groups (preselected), offline pool support, omaxianoptional job records pending selections for firstboot.
+  * users: create kvm/libvirt as system groups when missing.
+  * post: drop live dpkg excludes, desktop-base GRUB theme line.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 10:00:29 +0100
+
 omaxian-calamares-settings (0.1.1) excalibur; urgency=medium
 
   * Run shellprocess@omaxian-post before the packages module, which purges

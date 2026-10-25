@@ -1,0 +1,11 @@
+# Optional application groups: offered by Calamares (netinstall page, all
+# preselected), preinstalled nowhere on the base ISO, shipped as an offline
+# apt pool on the full ISO. Base ISO offline installs: the selection is
+# recorded and omaxian-firstboot installs it once the machine is online.
+# Format:  id|Name|Description|selected(true/false)|package package ...
+browser-chromium|Chromium|Chromium web browser (Brave and LibreWolf are always installed)|true|chromium
+mail-thunderbird|Thunderbird|Thunderbird mail and calendar|true|thunderbird
+graphics|Graphics|GIMP, Inkscape and Krita|true|gimp inkscape krita
+chat-telegram|Telegram|Telegram Desktop|true|telegram-desktop
+containers|Containers|Podman, Buildah, podman-docker, podman-compose, docker-compose, Distrobox (Podman Desktop comes from Flathub)|true|podman podman-docker podman-compose buildah docker-compose distrobox
+virtualization|Virtualization|QEMU/KVM, libvirt, virt-manager and GNOME Boxes|true|qemu-system-x86 qemu-system-gui qemu-utils libvirt-daemon-system libvirt-clients libvirt-daemon libvirt-daemon-driver-qemu bridge-utils virt-manager gnome-boxes spice-client-gtk
