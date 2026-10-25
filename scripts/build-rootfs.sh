@@ -136,6 +136,21 @@ EOC
 	for s in lightdm network-manager elogind dbus bluetooth cups libvirtd omaxian-firstboot; do
 		[ -e "$R/etc/init.d/$s" ] && CH update-rc.d "$s" defaults >/dev/null 2>&1 || true
 	done
+	# Boot without "startpar: service(s) returned failure: smartmontools plymouth":
+	# - smartd exits 17 when no disk supports SMART (VMs, virtio/NVMe without
+	#   SMART); -q nodev0 makes that a clean exit 0 (real disks are still monitored).
+	# - lightdm (S04) already quits plymouthd when X starts, so the plymouth
+	#   initscript's "plymouth quit --retain-splash" (S18, under set -e) fails
+	#   when no daemon is left; only quit when plymouthd still answers.
+	if [ -f "$R/etc/default/smartmontools" ] && ! grep -q '^smartd_opts=' "$R/etc/default/smartmontools"; then
+		printf '\n# Omaxian OS: exit 0 (not 17) when no SMART-capable disk is found (VMs)\nsmartd_opts="-q nodev0"\n' \
+			>> "$R/etc/default/smartmontools"
+	fi
+	if [ -f "$R/etc/init.d/plymouth" ] && grep -q '^[[:space:]]*/usr/bin/plymouth quit --retain-splash$' "$R/etc/init.d/plymouth"; then
+		sed -i 's|^\([[:space:]]*\)/usr/bin/plymouth quit --retain-splash$|\1if /usr/bin/plymouth --ping; then /usr/bin/plymouth quit --retain-splash \|\| true; fi|' \
+			"$R/etc/init.d/plymouth"
+		grep -q 'plymouth --ping; then /usr/bin/plymouth quit' "$R/etc/init.d/plymouth" || warn "plymouth initscript not patched"
+	fi
 	# Plymouth theme + initramfs (live-boot hooks are in now)
 	CH plymouth-set-default-theme omaxian || warn "plymouth theme not set"
 	CH update-initramfs -u -k all

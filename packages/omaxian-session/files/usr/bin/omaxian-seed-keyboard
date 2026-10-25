@@ -1,0 +1,52 @@
+#!/bin/sh
+# Omaxian OS: create ~/.config/omarchy/keyboard.json from the system keyboard
+# (/etc/default/keyboard: XKBLAYOUT / XKBVARIANT / XKBOPTIONS, written by the
+# installer) when the user has none. Without it, omarchy-keyboard-apply (run by
+# i3_autostart) falls back to its hard-coded it,ru phonetic default and the
+# installer's keyboard choice is lost. Never overwrites an existing file.
+#   omaxian-seed-keyboard [--force]
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/keyboard.json"
+SRC="${OMAXIAN_KEYBOARD_DEFAULTS:-/etc/default/keyboard}"
+[ -n "$HOME" ] && [ -d "$HOME" ] || exit 0
+[ "$(id -u)" -ne 0 ] || exit 0
+if [ -e "$CONF" ] || [ -L "$CONF" ]; then
+	[ "${1:-}" = --force ] || exit 0
+fi
+[ -r "$SRC" ] || exit 0
+
+# read the values without sourcing the file
+val() { sed -n "s/^[[:space:]]*$1=[\"']\{0,1\}\([^\"']*\)[\"']\{0,1\}[[:space:]]*\$/\1/p" "$SRC" | tail -n 1; }
+L=$(val XKBLAYOUT | tr 'A-Z' 'a-z' | tr -d ' ')
+V=$(val XKBVARIANT | tr 'A-Z' 'a-z' | tr -d ' ')
+O=$(val XKBOPTIONS | tr -d ' ')
+[ -n "$L" ] || exit 0
+
+# toggle: first grp: option that omarchy-keyboard-apply accepts
+T=""
+oldifs=$IFS; IFS=,
+for o in $O; do
+	case "$o" in
+	grp:alt_shift_toggle|grp:win_space_toggle|grp:caps_toggle|grp:shifts_toggle) T=$o; break ;;
+	esac
+done
+IFS=$oldifs
+nl=$(printf '%s' "$L" | tr ',' '\n' | grep -c .)
+[ -z "$T" ] && [ "$nl" -gt 1 ] && T=grp:alt_shift_toggle
+
+json='{"layouts":['
+i=1; sep=""
+for lay in $(printf '%s' "$L" | tr ',' ' '); do
+	var=$(printf '%s' "$V" | cut -d, -f"$i")
+	i=$((i + 1))
+	printf '%s' "$lay" | grep -Eq '^[a-z0-9_]+$' || continue
+	printf '%s' "$var" | grep -Eq '^[a-z0-9_-]*$' || var=""
+	json="$json$sep{\"layout\":\"$lay\",\"variant\":\"$var\"}"
+	sep=","
+	[ "$i" -gt 8 ] && break
+done
+[ -n "$sep" ] || exit 0
+json="$json],\"toggle\":\"$T\"}"
+
+mkdir -p "${CONF%/*}" || exit 0
+tmp="$CONF.tmp.$$"
+printf '%s\n' "$json" > "$tmp" && mv -f "$tmp" "$CONF"

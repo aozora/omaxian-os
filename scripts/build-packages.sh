@@ -66,7 +66,10 @@ prep_omaxian-session() {
 	for x in scripts omaxian packaging version LICENSE README.md; do cp -a "$OMX/$x" "$d/vendor/src/"; done
 	bash "$TOPDIR/scripts/gen-home-template.sh" "$OMX" "$d/vendor/home-template"
 	cp "$OMX/packaging/sysvinit/power-profiles-daemon" "$d/debian/omaxian-session.power-profiles-daemon.init"
-	sed -i "1s/([^)]*)/($(cat "$OMX/version" 2>/dev/null | tr -d 'v\n' || echo 1.0.3)-2)/" "$d/debian/changelog" || true
+	# upstream version from the Omaxian checkout, Debian revision from our changelog
+	local up rev; up=$(cat "$OMX/version" 2>/dev/null | tr -d 'v\n'); up=${up:-1.0.3}
+	rev=$(sed -n '1s/.*(\([^)]*\)).*/\1/p' "$d/debian/changelog"); rev=${rev##*-}
+	sed -i "1s/([^)]*)/($up-${rev:-2})/" "$d/debian/changelog" || true
 }
 prep_omaxian-strata() {
 	"$TOPDIR/scripts/fetch-strata.sh" "$1/upstream"

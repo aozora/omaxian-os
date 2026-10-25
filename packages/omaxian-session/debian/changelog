@@ -1,3 +1,12 @@
+omaxian-session (1.0.3-3) excalibur; urgency=medium
+
+  * omaxian-seed-keyboard (run from Xsession.d/25omaxian-home): create
+    ~/.config/omarchy/keyboard.json from /etc/default/keyboard (XKBLAYOUT,
+    XKBVARIANT, XKBOPTIONS) at first login, so the installer's keyboard
+    choice is used instead of omarchy-keyboard-apply's built-in it,ru.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 14:20:00 +0100
+
 omaxian-session (1.0.3-1) excalibur; urgency=medium
 
   * Package Omaxian v1.0.3 (Omarchy pinned by Omaxian's setup.sh).
