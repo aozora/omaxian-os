@@ -47,6 +47,10 @@ s_apt_setup() {
 	install -m644 "$TOPDIR"/config/apt/apt.conf.d/* "$R/etc/apt/apt.conf.d/"
 	install -m644 "$TOPDIR/config/apt/keys/NexusSfan.pgp" "$TOPDIR/keys/public/omaxian-archive-keyring.pgp" "$R/usr/share/keyrings/"
 	install -m644 "$TOPDIR/packages/omaxian-base/files/etc/apt/sources.list.d/xlibre-debian.sources" "$R/etc/apt/sources.list.d/"
+	if [ ! -s "$R/etc/apt/sources.list" ]; then # re-run after finalize: back to the build mirror
+		rm -f "$R/etc/apt/sources.list.d/devuan.sources"
+		for s in "" -updates -security -backports; do echo "deb $BUILD_MIRROR $DEVUAN_SUITE$s $DEVUAN_COMPONENTS"; done > "$R/etc/apt/sources.list"
+	fi
 	cat > "$R/etc/apt/sources.list.d/omaxian-build.list" <<EOS
 deb [signed-by=/usr/share/keyrings/omaxian-archive-keyring.pgp] http://127.0.0.1:$REPO_PORT $OMAXIAN_APT_SUITE main
 EOS
