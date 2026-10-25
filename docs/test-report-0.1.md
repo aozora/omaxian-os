@@ -37,3 +37,21 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
   but an installed user gets none. Proposed fix (not done yet): in omaxian-session, seed keyboard.json on first login from
   /etc/default/keyboard (XKBLAYOUT/XKBVARIANT/XKBOPTIONS), or fall back to the system layout instead of it,ru in
   omarchy-keyboard-apply.
+- firstboot optional apps (apt): chromium, gimp, inkscape, krita, podman, distrobox, buildah, docker-compose all `ii`
+  at 14:05 CET (shots/d3-fb10.png); the Flatpak ch.protonmail.protonmail-bridge is installed too (d3-fb9.png) — PASS (with the mirror override).
+- firstboot.done — **PENDING**: at 14:05 CET firstboot was still installing Flatpak runtimes (d3-fb8.png); there is no
+  /var/lib/omaxian/firstboot.done yet. d3 is left running.
+- Boot noise: "startpar: service(s) returned failure: smartmontools plymouth" on d3 boot (minor, not investigated).
+
+## d3 summary
+
+| Check | Result |
+|---|---|
+| Fallback UEFI boot without NVRAM entry | FAIL (grub>); fix in calamares-settings 0.2.3 is not verified (needs an ISO rebuild and re-install) |
+| lightdm greeter / first X login | PASS |
+| Super+Enter terminal | PASS |
+| Keyboard matches installer choice (us) | FAIL: omarchy-keyboard-apply default it,ru phonetic |
+| libvirt not enabled when Virtualization is off | PASS |
+| hwclock job | PASS (indirect: no installer error; log not kept on the target) |
+| firstboot apt optional apps | PASS (mirror override) |
+| firstboot.done | PENDING (Flatpak stage running) |
