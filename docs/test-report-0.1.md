@@ -17,3 +17,12 @@ Root cause of 7: shellprocess@omaxian-efi ran `/usr/libexec/omaxian/calamares-ef
 prefix swallowed the error. Fix: calamares-settings 0.2.3 runs the fixup from the live host on `${ROOT}`
 (dontChroot: true, no `-`). Needs an ISO rebuild + re-install to verify (not done in this run).
 d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cfg` to continue the tests.
+
+## d3 first-login checks (2026-10-25, ~13:40–14:00 CET)
+
+- Console login tester on tty2 works (shots/d3-calalog.png).
+- libvirt: no libvirt* links in /etc/rc2.d (Virtualization unselected) — PASS.
+- hwclock: the installer log is not persisted to the target (/var/log/installer missing, no Calamares.log), so it can't be grepped; the
+  hwclock job finished without an error dialog (i3-cala19.png) — PASS (indirect).
+- firstboot: on boot it ran and stalled in apt against https://packages.devuan.org through the sandbox proxy (sandbox artifact, shots/d3-fb1.png).
+  Restarted with the mirror override http://10.0.2.2:8099/merged.
