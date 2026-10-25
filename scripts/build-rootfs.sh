@@ -52,6 +52,11 @@ deb [signed-by=/usr/share/keyrings/omaxian-archive-keyring.pgp] http://127.0.0.1
 EOS
 	printf 'Package: *\nPin: release o=apt.omaxian.org\nPin-Priority: 700\n' > "$R/etc/apt/preferences.d/41-omaxian-build.pref"
 	echo 'Acquire::https::Pipeline-Depth "0";' > "$R/etc/apt/apt.conf.d/91omaxian-build"
+	# build only: never pull the big Noto extra packs (not even via Recommends)
+	printf 'Package: fonts-noto-extra fonts-noto-ui-extra fonts-noto-cjk-extra fonts-noto\nPin: release *\nPin-Priority: -1\n' \
+		> "$R/etc/apt/preferences.d/42-omaxian-build-nofonts.pref"
+	# live image: no docs/man pages, en+it translations only (see the file)
+	install -D -m644 "$TOPDIR/config/dpkg/90omaxian-live-excludes" "$R/etc/dpkg/dpkg.cfg.d/90omaxian-live-excludes"
 	cp "$TOPDIR/config/debconf/preseed.cfg" "$R/tmp/preseed.cfg"
 	CH debconf-set-selections /tmp/preseed.cfg
 	sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/; s/^# *\(it_IT.UTF-8 UTF-8\)/\1/' "$R/etc/locale.gen"
@@ -73,6 +78,10 @@ inst() { # install package list files (in batches to keep apt's RAM low)
 s_base()    { inst 00-base.list; }
 s_xlibre()  { inst 10-xlibre.list 20-audio.list; }
 s_desktop() { inst 30-desktop.list; }
+s_fonts()   { # fonts without Recommends (they drag in the Noto extra packs)
+	local pk; pk=$(cd "$TOPDIR/config/package-lists" && read_list 35-fonts.list | tr '\n' ' ')
+	CH $APT install --no-install-recommends $pk
+}
 s_user()    { inst 40-user.list; }
 s_omaxian() { CH apt-get update; inst 50-omaxian.list; }
 s_extrepo() {
@@ -135,9 +144,19 @@ EOC
 	printf 'Omaxian OS %s \\n \\l\n\n' "$OMAXIAN_VERSION" > "$R/etc/issue"
 }
 
+strip_excluded() { # files unpacked before the dpkg excludes were in place (bootstrap)
+	local d="$R/usr/share"
+	find "$d/doc" -mindepth 1 ! -name copyright ! -type d -delete 2>/dev/null || true
+	find "$d/doc" -mindepth 1 -type d -empty -delete 2>/dev/null || true
+	rm -rf "$d"/man/* "$d"/info/* "$d"/gtk-doc/* "$R"/var/cache/man/*
+	find "$d/help" -mindepth 1 -maxdepth 1 ! -name C ! -name it -exec rm -rf {} + 2>/dev/null || true
+	find "$d/locale" -mindepth 1 -maxdepth 1 ! -name locale.alias ! -name 'en' ! -name 'en_*' ! -name it -exec rm -rf {} + 2>/dev/null || true
+}
+
 s_finalize() {
 	# official sources for the shipped system
 	rm -f "$R/etc/apt/sources.list.d/omaxian-build.list" "$R/etc/apt/preferences.d/41-omaxian-build.pref" \
+		"$R/etc/apt/preferences.d/42-omaxian-build-nofonts.pref" \
 		"$R/etc/apt/apt.conf.d/91omaxian-build"
 	: > "$R/etc/apt/sources.list"
 	cat > "$R/etc/apt/sources.list.d/devuan.sources" <<EOS
@@ -150,6 +169,7 @@ EOS
 	[ -e "$R/usr/share/keyrings/devuan-archive-keyring.gpg" ] || sed -i '/^Signed-By/d' "$R/etc/apt/sources.list.d/devuan.sources"
 	rm -f "$R/usr/sbin/policy-rc.d" "$R/tmp/preseed.cfg"
 	CH apt-get clean
+	strip_excluded
 	rm -rf "$R"/var/lib/apt/lists/* "$R"/var/cache/apt/*.bin "$R"/tmp/* "$R"/root/.cache
 	: > "$R/etc/machine-id"; rm -f "$R/var/lib/dbus/machine-id"
 	find "$R/var/log" -type f -exec truncate -s0 {} +
@@ -170,8 +190,29 @@ s_full_from_base() {
 	for x in settings.yaml logs replays player.oraid; do rm -rf "$R/usr/share/omaxian/payload/openra/$x"; done
 	n=$(find "$R/usr/share/omaxian/payload/appimages" -maxdepth 1 -iname '*.AppImage' | wc -l)
 	[ "$n" -gt 0 ] || warn "payload/appimages is empty: the full ISO will have no offline AppImages"
+	s_optional_pool
 	rm -f "$R/usr/sbin/policy-rc.d"
 	CH dpkg-query -W -f '${Package}\t${Version}\n' > "$OUTDIR/omaxian-$FLAVOR.packages"
+}
+
+s_optional_pool() { # full ISO: the netinstall groups as an offline apt pool
+	local pool=/var/cache/omaxian/optional-pool pk
+	pk=$(grep -vE '^\s*(#|$)' "$TOPDIR/config/optional-groups.list" | cut -d'|' -f5 | tr '\n' ' ')
+	mkdir -p "$R$pool"
+	cat > "$R/etc/apt/sources.list.d/omaxian-build-pool.sources" <<EOS
+Types: deb
+URIs: $BUILD_MIRROR
+Suites: $DEVUAN_SUITE $DEVUAN_SUITE-updates $DEVUAN_SUITE-security $DEVUAN_SUITE-backports
+Components: $DEVUAN_COMPONENTS
+EOS
+	CH apt-get update
+	# everything the groups need on top of the base system (the base already
+	# has the rest): download only, into the pool
+	CH apt-get -y --download-only -o Dir::Cache::archives="$pool" install $pk
+	rm -rf "$R$pool/partial" "$R$pool/lock"
+	CH sh -c "cd $pool && apt-ftparchive packages . > Packages"
+	rm -f "$R/etc/apt/sources.list.d/omaxian-build-pool.sources"; rm -rf "$R"/var/lib/apt/lists/*
+	msg "optional pool: $(ls "$R$pool"/*.deb | wc -l) debs, $(du -sh "$R$pool" | cut -f1)"
 }
 
 exec > >(tee -a "$LOG") 2>&1
@@ -186,6 +227,7 @@ else
 	stage base s_base
 	stage xlibre s_xlibre
 	stage desktop s_desktop
+	stage fonts s_fonts
 	stage user s_user
 	stage omaxian s_omaxian
 	stage extrepo s_extrepo

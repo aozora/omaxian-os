@@ -1,0 +1,22 @@
+# Fonts, installed with --no-install-recommends (build-rootfs.sh s_fonts).
+# fonts-noto (metapackage) is replaced by the base packs: no fonts-noto-extra,
+# fonts-noto-ui-extra or fonts-noto-cjk-extra (pinned -1 during the build).
+fonts-firacode
+fonts-croscore
+fonts-crosextra-carlito
+fonts-crosextra-caladea
+fonts-noto-core
+fonts-noto-mono
+fonts-noto-ui-core
+fonts-noto-color-emoji
+fonts-noto-cjk
+fonts-jetbrains-mono
+fonts-jetbrains-mono-web
+fonts-liberation
+fonts-roboto
+fonts-dejavu
+fonts-hack
+fonts-adobe-sourcesans3
+fonts-ibm-plex
+fonts-font-awesome
+fonts-hack-ttf
