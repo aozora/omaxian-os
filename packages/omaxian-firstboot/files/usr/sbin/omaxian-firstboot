@@ -52,7 +52,14 @@ elif need_apt; then
 		# one unreachable third-party source must not block the rest:
 		# go on with whatever lists apt could fetch
 		apt-get update || echo "!! apt-get update reported errors (continuing with the lists it got)"
-		$APTI "${missing[@]}" || for p in "${missing[@]}"; do $APTI "$p" || echo "!! apt $p failed"; done
+		# one package (with its dependencies) per apt run: a single large
+		# transaction got apt-get OOM-killed on a 2.75 GiB machine, and each
+		# finished package is kept even if a later one fails
+		for p in "${missing[@]}"; do
+			installed "$p" && continue
+			echo "apt: $p"
+			nice -n 10 $APTI "$p" || echo "!! apt $p failed"
+		done
 	fi
 	still=(); for p in "${want[@]}"; do installed "$p" || still+=("$p"); done
 	printf '%s\n' "${still[@]}" | grep . > "$PENDING.new" || true
