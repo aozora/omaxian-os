@@ -116,3 +116,21 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
 - Disk space was freed by the user; the d4 disk is gone, so the planned d4 reboot check of the chmod was not done.
 - The only change since the 14:47 ISO is `215c7a9`, 7 lines in `s_configure`. No package or Calamares change, so the install path is unchanged since the d4 pass. **No reinstall.**
 - Rebuild: removed the `configure` and `finalize` stamps of `build/rootfs-base` (both stages are idempotent), re-ran `build-rootfs.sh base`, then `build-iso.sh base`.
+- 18:32 CET: rootfs `configure` + `finalize` re-run (exit 0); `build/rootfs-base/etc/init.d/x11-common` is now 0755. ISO rebuilt (exit 0); the squashfs inside the ISO also has `-rwxr-xr-x /etc/init.d/x11-common`.
+- ISO: `out/omaxian-base-0.1-trans-siberian-shaman-amd64.iso`, 2416007168 bytes (2.3 GiB),
+  sha256 `b8781ab493119989d2d41a02c56edd25d0024f7ab0da6ea07632ce06a97acbf2` (matches the `.sha256` file).
+
+### Live UEFI boot (OVMF, q35, TCG), 18:34–18:39 CET
+- Booted to the desktop (bar, wallpaper) on the first try; no plymouth hang. Super+Enter opened a terminal.
+- `ls -l /etc/init.d/x11-common`: `-rwxr-xr-x root root 2762`. **PASS**
+- `/var/log/boot.log`: 66 lines; `grep -a -c startpar` = 0; `grep -a -ci failed` = 0. **PASS**
+- boot.log contains "Setting up X socket directories... /tmp/.X11-unix /tmp/.ICE-unix."; `/tmp/.ICE-unix` exists (drwxrwxrwt, created 18:34). The x11-common init script now runs at boot.
+- Shots: `shots/r5-uefi-1.png`, `r5-uefi-term2.png`, `r5-uefi-term4.png`.
+
+### Live BIOS boot (SeaBIOS, q35, TCG), 18:40–18:43 CET
+- Booted to the desktop; Super+Enter terminal OK; x11-common is 0755; `grep -a -c startpar /var/log/boot.log` = 0. **PASS**
+- Shots: `shots/r5-bios-1.png`, `r5-bios-term.png`.
+
+### Notes
+- The first keystrokes typed into a new terminal before its prompt appears are echoed ahead of the prompt ("ls omaxian@..."). Cosmetic, caused by test typing.
+- Cleanup: the VMs were stopped and all OVMF vars copies deleted. No qcow2 disks were created in round 5.
