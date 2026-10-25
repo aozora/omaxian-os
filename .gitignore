@@ -2,6 +2,7 @@
 /out/
 /payload/appimages/*
 /payload/openra/*
+/payload/*.tar
 !/payload/**/.gitkeep
 /repo-local/
 /keys/

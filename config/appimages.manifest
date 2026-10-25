@@ -15,7 +15,7 @@ grok_bot	*grok*	payload	UNKNOWN (no public AppImage URL found)
 localsend	*localsend*	github	localsend/localsend|LocalSend-.*-linux-x86-64\.AppImage$
 marktext	*marktext*	github	marktext/marktext|marktext-linux-.*\.AppImage$
 obsidian	*obsidian*	github	obsidianmd/obsidian-releases|Obsidian-[0-9.]+\.AppImage$
-onlyoffice	*desktopeditors*	github	ONLYOFFICE/appimage-desktopeditors|DesktopEditors-x86_64\.AppImage$
+onlyoffice	*desktop*editors*	github	ONLYOFFICE/appimage-desktopeditors|DesktopEditors-x86_64\.AppImage$
 openra-d2k	*dune*	github	OpenRA/OpenRA|OpenRA-Dune-2000-x86_64\.AppImage$
 openra-ra	*red*alert*	github	OpenRA/OpenRA|OpenRA-Red-Alert-x86_64\.AppImage$
 openra-td	*tiberian*	github	OpenRA/OpenRA|OpenRA-Tiberian-Dawn-x86_64\.AppImage$
