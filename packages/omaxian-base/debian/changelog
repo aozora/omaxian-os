@@ -1,3 +1,11 @@
+omaxian-base (0.1.6) excalibur; urgency=medium
+
+  * Ship the real archive signing key (primary 1D8DE9AD3AFA60790333639EF45C7450C45D49A0,
+    signing subkey 5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75) in
+    /usr/share/keyrings/omaxian-archive-keyring.pgp instead of the throwaway test key.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 20:21:29 +0100
+
 omaxian-base (0.1.5) excalibur; urgency=medium
 
   * Release 0.1 "Trans-Siberian Shaman": os-release VERSION/VERSION_CODENAME/PRETTY_NAME, DEVUAN_CODENAME/DEBIAN_CODENAME; backports pin for mesa (XLibre drivers).

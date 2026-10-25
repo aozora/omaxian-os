@@ -9,6 +9,10 @@ need reprepro gpg
 [ -f "$TOPDIR/keys/public/fingerprint" ] || "$TOPDIR/scripts/gen-test-key.sh"
 export GNUPGHOME="${GNUPGHOME:-$TOPDIR/keys/private/gnupg}"
 KEY="${OMAXIAN_SIGN_KEY:-$(cat "$TOPDIR/keys/public/fingerprint")}"
+# keys/public/fingerprint names the signing SUBKEY; the trailing "!" makes gpg
+# use exactly that (sub)key instead of picking one by itself.
+case $KEY in *!) ;; *) KEY="$KEY!" ;; esac
+gpg --batch --list-secret-keys "${KEY%!}" >/dev/null 2>&1 || die "no secret key for ${KEY%!} in $GNUPGHOME"
 mkdir -p "$LOCALREPO/conf"
 cat > "$LOCALREPO/conf/distributions" <<EOD
 Origin: apt.omaxian.org
