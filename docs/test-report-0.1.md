@@ -145,3 +145,29 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
 - 20:07 `_staging/.../appimages.tar` appeared on R2 (2458900480 bytes) and was downloaded. It holds **17** AppImages (not 19; `cursor.appimage.zs-old` and `.icons` were excluded at the source). The 17 are exactly one per row of `config/appimages.manifest`, and the extracted sizes total 2458882708 bytes.
 - `onlyoffice_desktop_editors.appimage` did not match the manifest glob `*desktopeditors*`. The payload file was renamed to `onlyoffice_desktopeditors.appimage`, which matches the shipped manifest without a package rebuild. The manifest glob is widened to `*desktop*editors*` for the next omaxian-firstboot build.
 - `/payload/*.tar` added to .gitignore. The local appimages.tar was deleted after extraction.
+- Zoom (`us.zoom.Zoom`, an extra-data flatpak) can't be preinstalled here: apply_extra runs under bwrap and the build host forbids new namespaces. The full stage now installs flatpaks one at a time, warns about the missing ones, and omaxian-firstboot installs them when online. The other 7 flatpaks are preinstalled.
+- Optional pool: `apt-get --download-only` was OOM-killed (13 GB RSS) after an https "Ign" on packages.devuan.org. The pool now uses only the build-mirror source list (`Dir::Etc::sourcelist`/`sourceparts=-`) and is cached in build/dl/optional-pool: 328 debs, 550M.
+- ISO9660: the full squashfs is 8.9 GB. `-iso-level 3` is required and must come **before** `--` in grub-mkrescue (mkisofs mode). `-compliance iso_9660_level=3` after `--` is applied too late, and xorriso fails with "File exceeds size limit". build-iso.sh now deletes the old ISO first, so a failed run can't report a stale image.
+
+## Round 6 (C): signing-key switch (from 20:30 CET)
+- make-repo.sh/reprepro sign with the real subkey `5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75!`. The `!` pins it, and the script dies if the secret subkey is missing. The primary `1D8DE9AD…49A0` is only a stub (`sec#`) in keys/private/gnupg.
+- repo-local re-signed: `gpgv --keyring keys/public/omaxian-archive-keyring.pgp` reports "Good signature" for InRelease and Release.gpg. repo-local/omaxian-archive-keyring.pgp equals keys/public.
+- Test key `CD76E5317C33069E37DE570B62F519588AAF47F4` deleted (secret and public) from keys/private/gnupg after the switch worked. A test signature afterwards still verifies.
+- omaxian-base 0.1.6 ships the real keyring. **ISOs built with omaxian-base ≤ 0.1.5 trust only the test key and can't verify the re-signed repo, so a rebuild is needed** (done below together with the launcher change).
+- `DRY_RUN=1 publish-r2.sh apt`: offline plan (no aws CLI here). 6 debs in pool (220M), 6 dists files (44K, +delete remote extras), keyring 4K. No test-key warning. Nothing contacted or uploaded.
+- Base rebuild: rerunning apt-setup after finalize had no Devuan source left (finalize empties sources.list). apt-setup now restores the build-mirror sources in that case.
+
+## Round 6 (D): live installer discoverability (from 20:28 CET)
+- omaxian-calamares-settings 0.2.5 (live only; the package is purged and calamares-post removes the hooks on installed systems):
+  - "Install Omaxian OS" is the first hit for "install" in the launcher (Super+Space). The stock "Install System" entry is hidden for the live user.
+  - Super+Shift+I starts the installer.
+  - ~/Desktop shortcut.
+  - One-time welcome notification (from /etc/X11/Xsession.d/38omaxian-live-installer, gated on boot=live) with an "Install Omaxian OS" action.
+- Live UEFI test of the base ISO with 0.2.5: launcher search PASS (shots/r6-base-uefi-search.png), Super+Shift+I PASS, hint files and one-time flag present (r6-base-uefi-term.png). **But** pkexec asked for an admin password (r6-base-uefi-superI.png). live-config only writes a legacy .pkla grant, which polkitd 126 ignores.
+- 0.2.6: `/etc/polkit-1/rules.d/49-omaxian-live-installer.rules` returns YES only for `pkexec /usr/bin/env DISPLAY=.. XAUTHORITY=.. calamares`, for the sudo group, while /proc/cmdline has boot=live. calamares-post deletes the rule. tests/test-live-installer-hint.sh: 9/9 ok.
+
+### Build incident (20:38 CET): host /dev wiped on the build box
+- `s_full_from_base` ran `rm -rf build/rootfs-full`. The OOM-killed run had left /dev, /proc and /sys mounted inside it, because its cleanup trap never ran. rm went through the /dev bind mount and deleted the box's /dev nodes. It failed on /proc and /sys.
+- Recovery: 135 device nodes recreated with mknod from /sys/dev/{char,block}/*/uevent, plus the fd/stdin/stdout/stderr/ptmx symlinks. Nothing else on the host was affected.
+- Fix (713f9c5): `rm_rootfs` unmounts first, refuses if any mount is left, and uses `rm -rf --one-file-system`. It is used by bootstrap and full. Tested with a dummy bind mount: the mount was released, the rootfs removed, and the bind source kept.
+- Also fixed: helpers clobbered stage()'s `n` through bash dynamic scoping, so the full stamp was written as "17". The variable is renamed. The final du now runs after unmounting.
