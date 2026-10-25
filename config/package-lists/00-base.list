@@ -17,6 +17,8 @@ sudo
 cron
 logrotate
 less
+# hwclock (Calamares hwclock job, /etc/init.d/hwclock.sh)
+util-linux-extra
 bash-completion
 man-db
 ca-certificates

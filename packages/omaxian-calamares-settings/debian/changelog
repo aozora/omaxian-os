@@ -1,3 +1,10 @@
+omaxian-calamares-settings (0.2.2) excalibur; urgency=medium
+
+  * Enable libvirtd only when it is installed (Virtualization group not
+    selected, or still pending offline): no more update-rc.d error.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 12:05:00 +0100
+
 omaxian-calamares-settings (0.2.1) excalibur; urgency=medium
 
   * UEFI: after the bootloader job, mirror the stub grub.cfg from EFI/omaxian to EFI/debian and EFI/BOOT. The signed GRUB looks in /EFI/debian, so booting through the removable fallback stopped at a grub> prompt.
