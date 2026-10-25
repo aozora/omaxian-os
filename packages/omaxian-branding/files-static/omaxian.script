@@ -14,11 +14,12 @@ wm.sprite.SetPosition(sw / 2 - wm.scaled.GetWidth() / 2, sh / 2 + 90, 10);
 
 ver.image = Image.Text("@VERSION@ - @CODENAME@", 0.62, 0.70, 0.69);
 ver.sprite = Sprite(ver.image);
-ver.sprite.SetPosition(sw / 2 - ver.image.GetWidth() / 2, sh / 2 + 150, 10);
+// below the wordmark (its tagline ends at about sh/2 + 176)
+ver.sprite.SetPosition(sw / 2 - ver.image.GetWidth() / 2, sh / 2 + 186, 10);
 
 bar.bg = Image("progress-bg.png");
 bar.fg = Image("progress-fg.png");
-bar.x = sw / 2 - bar.bg.GetWidth() / 2; bar.y = sh / 2 + 190;
+bar.x = sw / 2 - bar.bg.GetWidth() / 2; bar.y = sh / 2 + 218;
 bar.bgs = Sprite(bar.bg); bar.bgs.SetPosition(bar.x, bar.y, 10);
 bar.fgs = Sprite(); bar.fgs.SetPosition(bar.x, bar.y, 11);
 

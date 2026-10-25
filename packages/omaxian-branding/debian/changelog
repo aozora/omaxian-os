@@ -1,3 +1,9 @@
+omaxian-branding (0.2.4) excalibur; urgency=medium
+
+  * Plymouth: move the version/codename line below the wordmark tagline (they overlapped) and the progress bar with it.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 11:22:57 +0100
+
 omaxian-branding (0.2.3) excalibur; urgency=medium
 
   * Release codename "Trans-Siberian Shaman" in Calamares, GRUB theme and Plymouth.
