@@ -1,3 +1,15 @@
+omaxian-calamares-settings (0.2.7) excalibur; urgency=medium
+
+  * Formats follow the installer language unless changed on the Locale page:
+    Calamares guessed LC_* from the time zone's country (English (US) +
+    Europe/Rome showed and installed "italiano" numbers/dates). The live
+    /usr/share/i18n/SUPPORTED (diverted) also lists bare language tags, which
+    Calamares prefers for its automatic formats; the new omaxianlocale job
+    (before localecfg) maps them to LANG. Explicit choices are kept.
+    calamares-locale-formats no longer guesses from the time zone.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 22:30:00 +0100
+
 omaxian-calamares-settings (0.2.6) excalibur; urgency=medium
 
   * Live session: polkit rule so the live user starts the installer without a

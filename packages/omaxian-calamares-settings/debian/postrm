@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+S=/usr/share/i18n/SUPPORTED
+if [ "$1" = remove ] || [ "$1" = purge ] || [ "$1" = abort-install ] || [ "$1" = disappear ]; then
+	rm -f $S
+	dpkg-divert --package omaxian-calamares-settings --rename --divert $S.omaxian-orig --remove $S >/dev/null
+fi
+#DEBHELPER#
+exit 0

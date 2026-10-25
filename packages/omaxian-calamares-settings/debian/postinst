@@ -1,0 +1,19 @@
+#!/bin/sh
+# Live media only (this package is purged on the installed system):
+# /usr/share/i18n/SUPPORTED, which Calamares reads for its locale list, also gets
+# one bare language tag per language ("en UTF-8"). Calamares then uses the
+# chosen language for the automatic formats instead of the time zone's
+# country; the omaxianlocale job maps the tag back to LANG.
+set -e
+S=/usr/share/i18n/SUPPORTED
+O=/usr/share/i18n/SUPPORTED.omaxian-orig
+if [ "$1" = configure ]; then
+	dpkg-divert --package omaxian-calamares-settings --rename --divert $O --add $S >/dev/null
+	if [ -f $O ]; then
+		{ cat $O
+		  sed -n 's/^\([a-z][a-z][a-z]\?\)_[A-Z].*UTF-8$/\1 UTF-8/p' $O | sort -u
+		} > $S.tmp && mv $S.tmp $S
+	fi
+fi
+#DEBHELPER#
+exit 0
