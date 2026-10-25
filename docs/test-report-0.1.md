@@ -103,3 +103,11 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
   - Firstboot then moved on to the Flatpak stage (Flathub runtimes plus `ch.protonmail.protonmail-bridge`).
 - **firstboot.done** = `2026-10-25T16:12:54+01:00` (16:12 CET). The log ends with "first boot provisioning complete". The AppImage stage downloaded BleachBit 6.0.6, Cursor 3.27.12 and teams-for-linux 2.27.0 inside the guest from upstream; nothing was copied from the host. **Caveat: the apt stage only completed after the host mirror override (see above).**
 - 16:15: rebooting d4 once to see whether the x11-common startpar failure reproduces.
+
+### x11-common startpar failure: root cause (16:15–16:35 CET)
+- It reproduces on every boot: `/var/log/boot.log` shows one `startpar ... x11-common ... failed!` line per boot (3 boots, 3 lines).
+- A boot-time trace (`exec 2>>/var/log/x11c.trace; set -x` added temporarily to the script, since reverted) **never produced a file**, so the script body never ran.
+- **Root cause:** `/etc/init.d/x11-common` on the installed system and in `build/rootfs-base` is mode **0644**, with mtime 7 Nov 2025, which is the Debian `x11-common 1:7.7+24+deb13u1` file. `xlibre-x11-common 1:7.8+5` ships it as 0755 (checked with `dpkg-deb -c`). The build installs XLibre by replacing x11-common, which is left in dpkg state `rc`; that conffile takeover kept the old non-executable file. startpar cannot exec it. `sudo sh -x /etc/init.d/x11-common start` by hand works, which is why it looked like a race.
+  - Consequence: `/tmp/.ICE-unix` is not created at boot. `.X11-unix` is created by the X server itself, so the desktop still works.
+- **Fix (committed, not yet in an ISO):** `scripts/build-rootfs.sh` `s_configure` now does `chmod 0755 /etc/init.d/x11-common` when it is not executable. On existing installs: `sudo chmod 0755 /etc/init.d/x11-common`.
+- d4: chmod applied in the guest, then rebooted (16:35) to verify.

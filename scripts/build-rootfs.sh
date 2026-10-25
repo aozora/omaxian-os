@@ -151,6 +151,13 @@ EOC
 			"$R/etc/init.d/plymouth"
 		grep -q 'plymouth --ping; then /usr/bin/plymouth quit' "$R/etc/init.d/plymouth" || warn "plymouth initscript not patched"
 	fi
+	# - xlibre-x11-common takes over the /etc/init.d/x11-common conffile from
+	#   Debian's x11-common (removed, left in state rc); the takeover keeps the
+	#   old file with mode 0644, so startpar cannot exec it at S19:
+	#   "startpar: service(s) returned failure: x11-common ... failed!"
+	if [ -f "$R/etc/init.d/x11-common" ] && [ ! -x "$R/etc/init.d/x11-common" ]; then
+		chmod 0755 "$R/etc/init.d/x11-common"
+	fi
 	# Plymouth theme + initramfs (live-boot hooks are in now)
 	CH plymouth-set-default-theme omaxian || warn "plymouth theme not set"
 	CH update-initramfs -u -k all
