@@ -234,11 +234,18 @@ URIs: $BUILD_MIRROR
 Suites: $DEVUAN_SUITE $DEVUAN_SUITE-updates $DEVUAN_SUITE-security $DEVUAN_SUITE-backports
 Components: $DEVUAN_COMPONENTS
 EOS
-	CH apt-get update
+	# only the build mirror: with the image's own https sources enabled too,
+	# apt-get's failover after an "Ign" ran out of memory (13 GB, OOM-killed)
+	local O=(-o Dir::Etc::sourcelist=sources.list.d/omaxian-build-pool.sources -o Dir::Etc::sourceparts=-)
+	CH apt-get "${O[@]}" update
+	# reuse debs from an earlier build (build/dl/optional-pool)
+	mkdir -p "$BUILDDIR/dl/optional-pool"
+	cp -n "$BUILDDIR"/dl/optional-pool/*.deb "$R$pool/" 2>/dev/null || true
 	# everything the groups need on top of the base system (the base already
 	# has the rest): download only, into the pool
-	CH apt-get -y --download-only -o Dir::Cache::archives="$pool" install $pk
+	CH apt-get "${O[@]}" -y --download-only -o Dir::Cache::archives="$pool" install $pk
 	rm -rf "$R$pool/partial" "$R$pool/lock"
+	cp -n "$R$pool"/*.deb "$BUILDDIR/dl/optional-pool/" 2>/dev/null || true
 	CH sh -c "cd $pool && apt-ftparchive packages . > Packages"
 	rm -f "$R/etc/apt/sources.list.d/omaxian-build-pool.sources"; rm -rf "$R"/var/lib/apt/lists/*
 	msg "optional pool: $(ls "$R$pool"/*.deb | wc -l) debs, $(du -sh "$R$pool" | cut -f1)"
