@@ -96,3 +96,8 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
   - Run by hand (`sudo sh -x /etc/init.d/x11-common start`) it exits 0, and both `/tmp/.X11-unix` and `/tmp/.ICE-unix` end up 1777 root:root. No "failed to set up" line was logged at boot, so the non-zero exit comes from the `set -e` path during boot, not from the explicit failure branch.
   - Likely cause: a race with `/tmp` cleaning or mounting under startpar. **Not fixed yet.** A reboot is needed to see whether it reproduces. The result is therefore FAIL (new service) for "no startpar failure", even though the round-4 target (smartmontools, plymouth) is fixed.
 - Firstboot after the override (16:02): thunderbird and telegram-desktop are done; virt-manager is installing.
+- **Optional apps (16:09 CET), all `ii`:** thunderbird 1:140.17.0esr-1~deb13u1, telegram-desktop 5.7.2+ds-2~bpo13+1, qemu-system-x86 1:10.0.13+ds-0+deb13u1, libvirt-daemon-system 11.3.0-3devuan1, virt-manager 1:5.0.0-5+deb13u1, gnome-boxes 48.0-3+b1, spice-client-gtk 0.42-3, bridge-utils 1.7.1-4+b1.
+  - `tester` is in `libvirt` and `kvm`.
+  - rc2.d has S03virtlogd, S04libvirtd, S05libvirt-guests; `libvirtd` is running.
+  - `optional-pending.list` is now empty.
+  - Firstboot then moved on to the Flatpak stage (Flathub runtimes plus `ch.protonmail.protonmail-bridge`).
