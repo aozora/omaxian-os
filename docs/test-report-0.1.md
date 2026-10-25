@@ -191,3 +191,15 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
 - Fix (9ce9555, scripts/build-rootfs.sh): the initscript patch now produces `if /usr/bin/plymouth --ping; then /usr/bin/plymouth quit || true; fi`, so there is no `--retain-splash`. Both orders end in KD_TEXT. The sed was checked against a reconstructed stock initscript: it produces the line and `sh -n` passes.
 - **The 21:08/21:13 ISOs still contain the bug.** A rootfs + ISO rebuild is needed to ship the fix. That is not done here because the brief said to rebuild only if stale.
 - Minor, seen in the dump: udevd reports `GOTO 'alsa_restore_std' has no matching label` in 90-alsa-restore.rules (alsa-utils packaging, harmless).
+
+## Round 7: rebuild with the plymouth fix + locale fix (from 22:09 CET)
+- Cleanup: every leftover qemu VM killed (dg, the unfinished install i6 on the old ISO, and the hook test VMs hf/hn, which had no result yet). Deleted build/disk-i6.qcow2 (20 GB), its OVMF vars, /tmp/dg3.str and /tmp/fs-full.sq (8.9 GB). Free space went from 36 GB to 64 GB.
+- **Locale bug, fixed properly (calamares-settings 0.2.7, 32c7ca0).** The 0.2.4 fix only corrected the target files afterwards, with a time-zone-country rule: the Locale page and the summary still said "numbers and dates: italiano", and an explicit English+Italian-formats choice was lost. Root cause in Calamares 3.3.14 (`LocaleConfiguration::fromLanguageAndLocation`): the automatic formats use an exact language-tag entry if the locale list has one, else the time zone's country (IT → it_IT). Our locale.conf defaults to Europe/Rome, so every English install got it_IT formats.
+  - Live only: postinst diverts /usr/share/i18n/SUPPORTED (Calamares' locale list) and adds one bare tag per language (`en UTF-8`, 206 languages). The automatic formats are now the chosen language ("en"). LANG still resolves to en_US.UTF-8 (similarity 100 vs 90 for the bare tag).
+  - New job `omaxianlocale`, placed in exec right before localecfg, maps bare tags in global storage `localeConf` to LANG. localecfg then writes /etc/default/locale and runs locale-gen with full names only.
+  - A "Change…" choice on the Locale page is always a full name (it_IT.UTF-8, en_GB.UTF-8) and is kept.
+  - calamares-locale-formats is now only a safety net (bare tag or empty → LANG). The postrm removes the diversion when calamares-post purges the package, so the installed system gets the stock SUPPORTED back.
+  - tests/test-locale-formats.sh: 20/20 ok. It includes a Python port of Calamares 3.3.14's loadLocales + fromLanguageAndLocation, which shows en_US+IT → it_IT with the stock list and → "en" (→ en_US) with ours.
+- Plymouth patch made idempotent (cd194b3), so the reused rootfs, already patched with `--retain-splash`, also gets the fix.
+- Packages: omaxian-calamares-settings_0.2.7 built, repo-local re-signed (gpgv: Good signature, real subkey).
+- Base rootfs rebuild started 22:11 (stamps apt-setup, upgrade, configure, finalize removed; the other stages reused). Full rootfs and both ISOs follow.
