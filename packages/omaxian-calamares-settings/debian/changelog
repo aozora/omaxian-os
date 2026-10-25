@@ -1,3 +1,11 @@
+omaxian-calamares-settings (0.2.3) excalibur; urgency=medium
+
+  * Run the EFI fallback fixup from the live host on ${ROOT}: the package is
+    purged from the target before the bootloader job, so the chrooted call
+    silently did nothing and fresh-NVRAM UEFI boots stopped at grub>.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 13:40:10 +0100
+
 omaxian-calamares-settings (0.2.2) excalibur; urgency=medium
 
   * Enable libvirtd only when it is installed (Virtualization group not

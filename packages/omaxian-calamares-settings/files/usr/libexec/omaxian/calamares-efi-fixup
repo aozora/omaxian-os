@@ -1,17 +1,20 @@
 #!/bin/sh
-# Runs in the target after the bootloader job (UEFI installs only).
+# Runs from the LIVE system after the bootloader job (UEFI installs only), with
+# the target root as $1: this package is purged from the target by the packages
+# job before the bootloader runs, so a chrooted call would find no script.
 # Debian's signed grubx64.efi has its prefix baked in as /EFI/debian, but with
 # efiBootloaderId=omaxian grub-install only writes the stub grub.cfg to
 # /EFI/omaxian. The removable fallback /EFI/BOOT/BOOTX64.EFI (used when the
 # firmware has no NVRAM entry, e.g. a disk moved to another machine or a VM with
 # fresh vars) then stops at a bare "grub>" prompt. Put the stub where GRUB looks.
 set -e
-esp=/boot/efi/EFI
+R=${1:-}
+esp=$R/boot/efi/EFI
 [ -d "$esp" ] || exit 0
 src="$esp/omaxian/grub.cfg"
 if [ ! -s "$src" ]; then
-	uuid=$(grub-probe --target=fs_uuid /boot/grub)
-	rel=$(grub-mkrelpath /boot/grub)
+	uuid=$(chroot "${R:-/}" grub-probe --target=fs_uuid /boot/grub)
+	rel=$(chroot "${R:-/}" grub-mkrelpath /boot/grub)
 	mkdir -p "$esp/omaxian"
 	printf 'search.fs_uuid %s root\nset prefix=($root)'"'"'%s'"'"'\nconfigfile $prefix/grub.cfg\n' "$uuid" "$rel" > "$src"
 fi
