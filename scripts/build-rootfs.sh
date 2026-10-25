@@ -153,14 +153,21 @@ EOC
 	# - lightdm (S04) already quits plymouthd when X starts, so the plymouth
 	#   initscript's "plymouth quit --retain-splash" (S18, under set -e) fails
 	#   when no daemon is left; only quit when plymouthd still answers.
+	# - and never with --retain-splash: S18 can win the race against the lightdm
+	#   daemon (its initscript returns before lightdm looks for plymouth). A
+	#   retained splash leaves tty1 in KD_GRAPHICS with no owner; the kernel then
+	#   ignores every VT switch (change_console), X waits forever in
+	#   VT_WAITACTIVE for vt7 and the boot "stops" on the splash (intermittent;
+	#   gnome-boxes BIOS report, round-6 BIOS repro). lightdm never reuses
+	#   plymouth's VT1 (minimum-vt 7) and quits it without retaining anyway.
 	if [ -f "$R/etc/default/smartmontools" ] && ! grep -q '^smartd_opts=' "$R/etc/default/smartmontools"; then
 		printf '\n# Omaxian OS: exit 0 (not 17) when no SMART-capable disk is found (VMs)\nsmartd_opts="-q nodev0"\n' \
 			>> "$R/etc/default/smartmontools"
 	fi
 	if [ -f "$R/etc/init.d/plymouth" ] && grep -q '^[[:space:]]*/usr/bin/plymouth quit --retain-splash$' "$R/etc/init.d/plymouth"; then
-		sed -i 's|^\([[:space:]]*\)/usr/bin/plymouth quit --retain-splash$|\1if /usr/bin/plymouth --ping; then /usr/bin/plymouth quit --retain-splash \|\| true; fi|' \
+		sed -i 's|^\([[:space:]]*\)/usr/bin/plymouth quit --retain-splash$|\1if /usr/bin/plymouth --ping; then /usr/bin/plymouth quit \|\| true; fi|' \
 			"$R/etc/init.d/plymouth"
-		grep -q 'plymouth --ping; then /usr/bin/plymouth quit' "$R/etc/init.d/plymouth" || warn "plymouth initscript not patched"
+		grep -q 'plymouth --ping; then /usr/bin/plymouth quit || true; fi' "$R/etc/init.d/plymouth" || warn "plymouth initscript not patched"
 	fi
 	# - xlibre-x11-common takes over the /etc/init.d/x11-common conffile from
 	#   Debian's x11-common (removed, left in state rc); the takeover keeps the
