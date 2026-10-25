@@ -1,0 +1,53 @@
+#!/bin/sh
+# calamares-locale-formats [ROOT]
+#
+# Make the installed system's formats (LC_TIME, LC_NUMERIC, ...) follow the
+# language chosen in Calamares.
+#
+# Calamares' locale page (3.3, LocaleConfiguration::fromLanguageAndLocation)
+# derives the formats locale from the *time zone's country* ("migrant"
+# heuristic): English (US) + Europe/Rome gives LANG=en_US.UTF-8 but
+# LC_TIME/LC_NUMERIC/...=it_IT.UTF-8, so the greeter and the session show
+# Italian dates and numbers. The flag telling whether the user picked the
+# formats with "Change..." is not exported to global storage.
+#
+# Rule: an LC_* value whose country is the time zone's country and which
+# differs from LANG is the automatic guess, so it is replaced with LANG. Any
+# other LC_* value (for example an explicit en_GB with Europe/Rome) is kept.
+# Limitation: an explicit choice equal to the time zone's own locale (English
+# language + Italian formats in Europe/Rome) is indistinguishable from the
+# guess and is reset to LANG; change it afterwards in /etc/default/locale.
+set -u
+ROOT=${1:-}
+DEF=$ROOT/etc/default/locale
+[ -f "$DEF" ] || exit 0
+
+LANGV=$(sed -n 's/^LANG=//p' "$DEF" | tail -n1 | tr -d '"')
+[ -n "$LANGV" ] || exit 0
+
+# time zone -> ISO country (zone.tab: CC <coords> TZ ...)
+TZ_NAME=
+[ -s "$ROOT/etc/timezone" ] && TZ_NAME=$(head -n1 "$ROOT/etc/timezone")
+if [ -z "$TZ_NAME" ] && [ -L "$ROOT/etc/localtime" ]; then
+	TZ_NAME=$(readlink "$ROOT/etc/localtime" | sed 's|.*/zoneinfo/||')
+fi
+CC=
+if [ -n "$TZ_NAME" ] && [ -r "$ROOT/usr/share/zoneinfo/zone.tab" ]; then
+	CC=$(awk -v z="$TZ_NAME" '!/^#/ && $3 == z { print $1; exit }' "$ROOT/usr/share/zoneinfo/zone.tab")
+fi
+[ -n "$CC" ] || exit 0
+
+for f in "$DEF" "$ROOT/etc/locale.conf"; do
+	[ -f "$f" ] || continue
+	tmp=$f.omaxian-tmp
+	awk -v lang="$LANGV" -v cc="$CC" '
+		/^LC_[A-Z_]+=/ {
+			k = $0; sub(/=.*/, "", k)
+			v = $0; sub(/^[^=]*=/, "", v); gsub(/"/, "", v)
+			c = v; sub(/^[a-z]+_/, "", c); sub(/[.@].*/, "", c)
+			if (c == cc && v != lang) { print k "=" lang; next }
+		}
+		{ print }' "$f" > "$tmp" && cat "$tmp" > "$f"
+	rm -f "$tmp"
+done
+exit 0

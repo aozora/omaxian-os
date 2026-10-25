@@ -1,3 +1,13 @@
+omaxian-calamares-settings (0.2.4) excalibur; urgency=medium
+
+  * calamares-locale-formats (run from calamares-post): formats (LC_*) follow
+    the language chosen in the installer. Calamares derived them from the
+    time zone's country, so English (US) + Europe/Rome installed it_IT
+    formats (Italian greeter date). Explicit formats from another country
+    are kept. Covered by tests/test-locale-formats.sh.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 20:00:56 +0100
+
 omaxian-calamares-settings (0.2.3) excalibur; urgency=medium
 
   * Run the EFI fallback fixup from the live host on ${ROOT}: the package is

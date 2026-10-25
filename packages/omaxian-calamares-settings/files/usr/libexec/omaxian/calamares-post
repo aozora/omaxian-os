@@ -8,6 +8,8 @@ rm -f /etc/sudoers.d/live /etc/lightdm/lightdm.conf.d/*live* /etc/live/config.co
 deluser --remove-home omaxian-live >/dev/null 2>&1 || true
 # default locale fallback (Calamares localecfg writes /etc/default/locale)
 grep -q '^LANG=' /etc/default/locale 2>/dev/null || echo 'LANG=en_US.UTF-8' >> /etc/default/locale
+# formats (LC_*) follow the chosen language, not the time zone's country
+/usr/libexec/omaxian/calamares-locale-formats
 # BIOS + UEFI GRUB packages: keep the non-bin package matching this firmware
 # so update-grub keeps working on kernel upgrades.
 if [ -d /sys/firmware/efi ]; then FW=efi; else FW=bios; fi
