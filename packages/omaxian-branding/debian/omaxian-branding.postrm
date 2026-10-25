@@ -2,6 +2,7 @@
 set -e
 if [ "$1" = purge ] || [ "$1" = remove ]; then
 	rm -rf /boot/grub/themes/omaxian
+	update-alternatives --remove lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf-omaxian 2>/dev/null || true
 fi
 #DEBHELPER#
 exit 0

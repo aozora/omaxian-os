@@ -1,3 +1,9 @@
+omaxian-branding (0.2.0) excalibur; urgency=medium
+
+  * LightDM GTK greeter: Omaxian config as the lightdm-gtk-greeter.conf alternative and a /usr/share conf.d snippet.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 10:00:29 +0100
+
 omaxian-branding (0.1.0) excalibur; urgency=medium
 
   * Initial release.

@@ -1,3 +1,9 @@
+omaxian-base (0.1.3) excalibur; urgency=medium
+
+  * GRUB: keep the kernel command line written by Calamares.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 25 Oct 2026 10:00:29 +0100
+
 omaxian-base (0.1.2) excalibur; urgency=medium
 
   * Brand /usr/lib/os-release as Omaxian OS (ID=omaxian, ID_LIKE="devuan

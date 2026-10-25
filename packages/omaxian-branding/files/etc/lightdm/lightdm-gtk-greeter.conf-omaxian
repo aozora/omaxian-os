@@ -1,3 +1,5 @@
+# Omaxian OS greeter. Registered as the lightdm-gtk-greeter.conf alternative
+# (priority 90, above desktop-base) by omaxian-branding.postinst.
 [greeter]
 background=/usr/share/omaxian/branding/greeter-background.png
 user-background=false

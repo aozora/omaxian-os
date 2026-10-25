@@ -1,6 +1,12 @@
 #!/bin/sh
 set -e
 if [ "$1" = configure ]; then
+	# LightDM GTK greeter: /etc/lightdm/lightdm-gtk-greeter.conf is an
+	# alternative (desktop-base points it at the Devuan theme) and is read
+	# after the conf.d snippets, so take it over.
+	update-alternatives --install /etc/lightdm/lightdm-gtk-greeter.conf lightdm-gtk-greeter.conf \
+		/etc/lightdm/lightdm-gtk-greeter.conf-omaxian 90
+	update-alternatives --set lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf-omaxian || true
 	# GRUB reads its theme from /boot (which may be a separate partition)
 	mkdir -p /boot/grub/themes
 	rm -rf /boot/grub/themes/omaxian
