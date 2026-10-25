@@ -1,0 +1,10 @@
+#!/bin/sh
+# Seed $HOME from the Omaxian home template once (first login). Never
+# overwrites existing files. Re-run by hand with --force to re-seed missing files.
+T=/usr/share/omaxian/home-template
+M="$HOME/.local/state/omaxian/home-seeded"
+[ -d "$T" ] && [ -n "$HOME" ] && [ -d "$HOME" ] || exit 0
+[ "$(id -u)" -ne 0 ] || exit 0
+[ -e "$M" ] && [ "${1:-}" != --force ] && exit 0
+cp -a -n "$T/." "$HOME/" 2>/dev/null || cp -R -n "$T/." "$HOME/"
+mkdir -p "${M%/*}" && date > "$M"

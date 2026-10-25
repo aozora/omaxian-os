@@ -12,11 +12,15 @@ if [ "$1" = configure ]; then
 		install -D -o root -g root -m 0755 "$SRC/omaxian/.local/share/omarchy/bin/omarchy-dns" \
 			/usr/local/libexec/omaxian/omarchy-dns
 	fi
-	# Seed /etc/skel (new users get the Omaxian defaults, owned by them).
-	# cp -n: never clobber what the admin put there.
-	if [ -d /usr/share/omaxian/home-template ]; then
-		cp -a -n /usr/share/omaxian/home-template/. /etc/skel/
-		chown -R root:root /etc/skel
+	# The home template is NOT copied to /etc/skel any more (it doubled the
+	# image size): /etc/X11/Xsession.d/25omaxian-home seeds each home at the
+	# first graphical login. Clean up the copy older versions put in /etc/skel.
+	if [ -n "$2" ] && dpkg --compare-versions "$2" lt 1.0.3-2 && [ -d /usr/share/omaxian/home-template ]; then
+		( cd /usr/share/omaxian/home-template && find . -type f -o -type l ) | while read -r f; do
+			[ -e "/etc/skel/$f" ] || [ -L "/etc/skel/$f" ] || continue
+			cmp -s "/usr/share/omaxian/home-template/$f" "/etc/skel/$f" 2>/dev/null || [ -L "/etc/skel/$f" ] && rm -f "/etc/skel/$f"
+		done
+		find /etc/skel -mindepth 1 -type d -empty -delete 2>/dev/null || true
 	fi
 fi
 #DEBHELPER#

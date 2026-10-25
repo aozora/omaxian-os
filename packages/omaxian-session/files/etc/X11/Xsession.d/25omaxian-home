@@ -1,0 +1,3 @@
+# Omaxian OS: seed the home directory from the Omaxian template at the first
+# graphical login (before ~/.Xresources etc. are read). Runs synchronously.
+[ -x /usr/bin/omaxian-seed-home ] && /usr/bin/omaxian-seed-home
