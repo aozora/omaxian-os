@@ -392,3 +392,11 @@ Open issues:
 - Online installs may pull in wtype/wl-clipboard.
 - An offline full install takes about 36 min under TCG.
 - Also removed a stale round-8 FUSE export, build/i8.raw (no daemon behind it).
+
+## Publish (2026-10-26, ~20:00 CET)
+
+- ISOs uploaded to R2 `omaxian-iso/releases/0.1/` (base overwritten):
+  - base: 2,461,612,032 B, sha256 f1f33022…e0f0 — verified by full HTTPS download from download.omaxian.org.
+  - full: 9,939,206,144 B, sha256 aa8b3f46…29ea — verified by full stream hash from R2 + HTTPS Content-Length.
+  - both `.sha256` files fetched over HTTPS and byte-identical to local.
+- apt repo NOT published: R2 token gets 403 AccessDenied on bucket `omaxian-apt` (list and put). Nothing written there.
