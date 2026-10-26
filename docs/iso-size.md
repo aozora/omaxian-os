@@ -20,7 +20,7 @@ Measured on build/rootfs-base (2026-10-24): 2256 packages, about 8.5 GiB install
 | 129 | mesa-vulkan-drivers | desktop |
 | 126 / 84 / 61 / 54 | buildah / podman / docker-compose / containernetworking-plugins | 40-user.list |
 | 124 | libllvm19 | mesa |
-| 113 | telegram-desktop | 40-user.list |
+| 113 | telegram-desktop | 40-user.list (0.1.7: replaced by the org.telegram.desktop Flatpak) |
 | 109 / 88+67 / 73 | inkscape / krita+krita-data / gimp-data | 40-user.list |
 | 98 + 97 | libwebkit2gtk-4.1 + libwebkitgtk-6.0 | two webkit ABIs |
 | 97 | firmware-amd-graphics | firmware |
@@ -56,3 +56,15 @@ Directory view: usr/share/fonts 881M, usr/share/locale 608M, usr/share/omaxian 4
 8. **Compression.** Use `mksquashfs -comp xz -Xbcj x86 -b 1M` (see build-iso.sh), or zstd
 
 Points 1, 3, 4 and 5 together should bring the base ISO to about **1.8 to 2.0 GiB**.
+
+## Full ISO: AppImage payload (0.1.7)
+AppImages are already squashfs-compressed, so they cost their full size on the ISO.
+
+| | AppImages | bytes |
+|---|---|---:|
+| bundled (10) | bleachbit, elecwhat, localsend, marktext, obsidian, onlyoffice_desktopeditors, 3 x openra, task_manager_tmog | 1 118 783 828 (~1.12 GB) |
+| optional, downloaded after install (6) | cursor, grok_bot, rebased, rustdesk, shotcut, teams_for_linux | 1 254 607 776 (~1.25 GB) |
+| removed | openspot | 85 228 024 |
+
+Dropping the 6 optional ones and OpenSpot takes about 1.34 GB off the full ISO
+(from about 10.2 GB). payload/openra (Content + maps, 2.2 GB) is unchanged.

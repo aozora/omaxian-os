@@ -12,5 +12,5 @@
 | `ttf-mscorefonts-installer` | contrib, downloads fonts from SourceForge at install | EULA preseeded; with no network during the build the fonts are fetched later (`update-ms-fonts`) |
 | Strata | not packaged upstream | `omaxian-strata` built from the signed GitHub release (Ed25519 manifest verified); portal + udiskie extras not packaged yet |
 | Gear Lever | Flatpak only | `it.mijorus.gearlever` from Flathub |
-| AppImages | not packages | payload/appimages + `omaxian-appimage-fetch` manifest (config/appimages.manifest) |
+| AppImages | not packages | config/appimages.manifest: 10 bundled (payload/appimages, full ISO) + 6 optional downloaded after install (installer group "Extra apps"), `omaxian-appimage-fetch` |
 | default games | `gnome-games` etc. | apt pin -1 (`30-omaxian-nogames.pref`) + purge at build |

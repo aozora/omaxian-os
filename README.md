@@ -15,7 +15,7 @@ Two images are made:
 | ISO | Contents |
 |---|---|
 | `omaxian-base-0.1-trans-siberian-shaman-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Telegram (Flatpak), Containers, Virtualization) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot |
-| `omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | same plus an offline pool for the optional groups and a 7th, unselected group **Voice dictation (VoxType)** (full ISO only, docs/voxtype.md), Flatpaks preinstalled (Telegram too; removed on first boot when its group was not picked) and `payload/` (AppImages, OpenRA content) bundled for offline install |
+| `omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | same plus an offline pool for the optional groups and a 7th, unselected group **Voice dictation (VoxType)** (full ISO only, docs/voxtype.md), Flatpaks preinstalled (Telegram too; removed on first boot when its group was not picked) and `payload/` (10 AppImages, OpenRA content) bundled for offline install |
 
 The live image has no man pages/docs and only en/it translations (dpkg
 path-excludes, live only); installed systems get the normal dpkg policy back,
@@ -99,5 +99,18 @@ puts it back.
   the full ISO preinstalls it and removes it offline when not picked), refreshes AppImages from
   `appimages.manifest` (methods github/json/url; `payload` rows have no known
   upstream URL and are reported as `?? id` in /var/log/omaxian-firstboot.log).
+- AppImages (`config/appimages.manifest`, column 5 = class): 10 **bundled** in the
+  full ISO payload (BleachBit, ElecWhat, LocalSend, MarkText, Obsidian, ONLYOFFICE,
+  OpenRA Dune 2000 / Red Alert / Tiberian Dawn, Task Manager) and 6 **optional**
+  ones never bundled in any ISO: Cursor, Grok Bot, Rebased, RustDesk, Shotcut,
+  Teams for Linux. Each optional one is its own checkbox (unselected) in the
+  installer's Applications-page group **Extra apps (downloaded after install)**;
+  the pick is recorded in /var/lib/omaxian/optional-appimages.list
+  (`omaxian-optional-appimage`) and firstboot downloads the picked ones once
+  online (GitHub ones pinned to a release asset + its sha256; Cursor and Grok Bot
+  follow their official release feed, no checksum published), then they land in
+  `~/AppImages`. On the full ISO a picked extra app counts as pending: firstboot.done
+  is not written offline, and firstboot retries at every boot until online.
+  Nothing picked: the full ISO finishes firstboot offline as before.
 - `omaxian-user-firstrun` (each user's first X session): seeds `~/.config/openra`
   (Content + maps only), copies AppImages to `~/AppImages`, integrates them with Gear Lever.

@@ -272,17 +272,30 @@ s_full_from_base() {
 	done
 	[ ${#missing[@]} = 0 ] || warn "flatpaks NOT preinstalled (firstboot installs them online): ${missing[*]}"
 	# offline payload (user supplies payload/appimages/*.AppImage, payload/openra/{Content,maps})
-	mkdir -p "$R/usr/share/omaxian/payload"
-	cp -a "$PAYLOADDIR/appimages" "$PAYLOADDIR/openra" "$R/usr/share/omaxian/payload/"
+	# Only the manifest's "bundled" rows are copied: "optional" ones (Extra apps,
+	# downloaded after install when picked) and files no row matches stay out.
+	mkdir -p "$R/usr/share/omaxian/payload/appimages"
+	cp -a "$PAYLOADDIR/openra" "$R/usr/share/omaxian/payload/"
 	find "$R/usr/share/omaxian/payload" -name .gitkeep -delete
 	for x in settings.yaml logs replays player.oraid; do rm -rf "$R/usr/share/omaxian/payload/openra/$x"; done
-	local n; n=$(find "$R/usr/share/omaxian/payload/appimages" -maxdepth 1 -iname '*.AppImage' | wc -l)
+	local id glob method source class rest f n=0 nomiss=()
+	shopt -s nullglob nocaseglob
+	while IFS=$'\t' read -r id glob method source class rest; do
+		[[ -z $id || $id == \#* || ${class:-bundled} == optional ]] && continue
+		f=( "$PAYLOADDIR"/appimages/$glob )
+		[ ${#f[@]} -gt 0 ] || { nomiss+=("$id"); continue; }
+		cp -a "${f[0]}" "$R/usr/share/omaxian/payload/appimages/"; n=$((n+1))
+	done < "$TOPDIR/config/appimages.manifest"
+	shopt -u nullglob nocaseglob
+	[ ${#nomiss[@]} = 0 ] || warn "bundled AppImages missing from payload/appimages (firstboot fetches them online): ${nomiss[*]}"
+	msg "payload: $n bundled AppImages ($(du -sh "$R/usr/share/omaxian/payload/appimages" | cut -f1))"
 	[ "$n" -gt 0 ] || warn "payload/appimages is empty: the full ISO will have no offline AppImages"
 	s_optional_pool
 	# 7th Calamares group, full ISO only (offline pool): VoxType. Not offered
 	# on the base ISO at all (it is not in any online archive).
 	bash "$TOPDIR/scripts/gen-netinstall.sh" "$TOPDIR/config/optional-groups.list" \
-		"$R/etc/calamares/modules/netinstall.conf" "$TOPDIR/config/optional-groups-full.list"
+		"$R/etc/calamares/modules/netinstall.conf" "$TOPDIR/config/optional-groups-full.list" \
+		--appimages "$TOPDIR/config/appimages.manifest"
 	full_only_pkgs | tr ' ' '\n' | sed '/^$/d' > "$R/etc/calamares/omaxian-offline-only.list"
 	# marker for omaxian-firstboot: this system ships everything offline, so
 	# first boot is complete without network once nothing is missing
