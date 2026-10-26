@@ -324,3 +324,31 @@ The .sha256 files next to them are written by the build and checked against an i
 - Same live tweak as rounds 7/8 (test only): partition.conf erase default. Location Europe/Rome, American English for both language and formats (shots/i10-04-location.png, i10-10-summary.png).
 - Users: Tester / tester / tester-standardpc, throwaway password. Applications: VoxType unchecked by default (shots/i10-09-apps.png), checked by keyboard, so all 7 groups are checked (i10-09b-apps.png).
 - 12:29:29 install started. 12:47 at 76% "Install packages" (offline pool).
+- ~13:07 "All done." (shots/i10-21.png), ~36 min. The offline package stage stayed at 78% for ~15 min because the voxtype deb (375 MB) unpacks slowly under TCG.
+
+### Round 10: installed system (i10), checks in the session (13:12–13:16 CET)
+- Disk boots UEFI offline to the LightDM greeter, and Tester logs in to i3: PASS.
+- `fc-match monospace` gives `JetBrainsMonoNerdFontMono-Regular.ttf: "JetBrainsMono Nerd Font Mono"`: PASS. `ls ~/AppImages | grep -ic appimage` gives 17: PASS. xfconf power-button-action is 4: PASS.
+- ACPI `system_powerdown` on the installed system powers the VM off in about 10 s: PASS.
+- `voxtype --version` under the default QEMU CPU (qemu64, x86-64-v1) **failed with SIGILL**. Upstream's "baseline" binary needs x86-64-v2.
+  Fix: the wrapper now refuses cleanly with exit 132 and a message on pre-v2 CPUs (omaxian-voxtype 1.1.1-2), and there is a new test in tests/test-voxtype.sh (25/25 pass). docs/voxtype.md lists it as a known limit.
+  The full ISO is being rebuilt with 1.1.1-2 (tools/diag/r10b-full.sh); the base ISO is not affected.
+  To re-verify, the installed disk was rebooted with `-cpu max` (new `CPU=` option in installvm.sh).
+- With `-cpu max` (TCG, avx2+fma+sse4_2), `voxtype --version` in the session prints `voxtype 1.1.1` (wrapper → avx2 variant): **PASS** (shots/i10-31-vx.png). ACPI powerdown works again: off in about 12 s.
+
+### Round 10: offline inspection of the installed disk (13:22 CET, tools/diag/inspect.sh, read-only)
+| Check | Result |
+|---|---|
+| Optional packages (7 groups, 25 packages incl. voxtype + omaxian-voxtype) | 25/25 installed, optional-pending.list empty: PASS |
+| firstboot.done without network | created 13:10:50: "full ISO: everything installed offline, first boot provisioning complete": PASS |
+| Locale / timezone | en_US.UTF-8 everywhere, Europe/Rome; SUPPORTED not diverted, matches original: PASS |
+| AppImages | 17: PASS |
+| OpenRA | ra/cnc/d2k content 151/115/590, maps for ra/cnc/d2k release-20250330: PASS |
+| Flatpaks | 8, including us.zoom.Zoom: PASS |
+| Live packages purged, optional pool removed | PASS |
+| VoxType | diversion /usr/bin/voxtype → voxtype.upstream by omaxian-voxtype; voxtype 1.1.1-1 + omaxian-voxtype 1.1.1-1 (built before the guard); `voxtype --version` in a chroot on the AVX2 host: 1.1.1: PASS |
+| No silent input group | `id tester`: not in `input`: PASS |
+| i3 keybinding | ~/.config/i3/config.d/60-voxtype.conf seeded: `bindsym Mod4+Ctrl+v exec --no-startup-id /usr/bin/omaxian-voxtype-toggle`: PASS |
+| Fonts / power | fc-match monospace → JetBrainsMono Nerd Font Mono; power-button-action is 3 (package default) in /etc/xdg and 4 per user (seeded only if unset, as in round 9): PASS |
+
+inspect.sh fix: a stale FUSE export (`Transport endpoint is not connected`) stopped `umount` from removing build/i10.raw. umount now checks /proc/mounts.

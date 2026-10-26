@@ -7,5 +7,12 @@ flags=$(grep -m1 '^flags' "${OMAXIAN_CPUINFO:-/proc/cpuinfo}" 2>/dev/null)
 has() { case " $flags " in *" $1 "*) return 0;; esac; return 1; }
 if has avx512f && [ -x "$L/voxtype-avx512" ]; then exec "$L/voxtype-avx512" "$@"; fi
 if has avx2 && has fma && [ -x "$L/voxtype-avx2" ]; then exec "$L/voxtype-avx2" "$@"; fi
+# Upstream "baseline" is built for x86-64-v2; on older CPUs (or the QEMU
+# qemu64 model) it dies with SIGILL, so refuse cleanly instead.
+if [ -n "$flags" ] && ! { has ssse3 && has sse4_1 && has sse4_2 && has popcnt && has cx16; }; then
+  echo "voxtype: this CPU lacks x86-64-v2 (SSSE3/SSE4.1/SSE4.2/POPCNT/CX16); VoxType cannot run here." >&2
+  echo "voxtype: (in a VM, use a host-passthrough or newer CPU model)" >&2
+  exit 132
+fi
 if [ -x "$L/voxtype-baseline" ]; then exec "$L/voxtype-baseline" "$@"; fi
 exec /usr/bin/voxtype.upstream "$@"

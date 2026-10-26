@@ -95,3 +95,7 @@ and `voxtype record stop`.
   processes only if they are killed; otherwise `pkill -f 'voxtype-.* daemon'`.
 - When VoxType is upgraded online, Omaxian's wrapper stays: the diversion keeps the new
   upstream wrapper as `voxtype.upstream`.
+- The CPU needs x86-64-v2 (SSSE3, SSE4.1, SSE4.2, POPCNT and CX16). Upstream doesn't
+  ship a build for older CPUs, and even its "baseline" binary dies with SIGILL on them,
+  including the default QEMU `qemu64` model. On such CPUs the wrapper exits with code
+  132 and a clear message instead. In a VM, use `-cpu host` or `-cpu max`.

@@ -1,3 +1,10 @@
+omaxian-voxtype (1.1.1-2) excalibur; urgency=medium
+
+  * Wrapper: refuse cleanly (exit 132, message) on CPUs without x86-64-v2
+    instead of letting the upstream baseline binary die with SIGILL.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 13:16:46 +0100
+
 omaxian-voxtype (1.1.1-1) excalibur; urgency=medium
 
   * Initial release: CPU-adaptive /usr/bin/voxtype (diverts the upstream

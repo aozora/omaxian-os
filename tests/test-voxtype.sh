@@ -69,8 +69,9 @@ for b in avx512 avx2 baseline vulkan; do printf '#!/bin/sh\necho %s "$@"\n' $b >
 cpu() { printf 'processor : 0\nflags\t\t: fpu sse2 %s\n' "$1" > "$T/cpu"; VOXTYPE_LIB=$L OMAXIAN_CPUINFO=$T/cpu sh "$W" --version; }
 [ "$(cpu 'avx2 fma avx512f')" = "avx512 --version" ] && ok "wrapper: avx512f -> avx512" || bad "avx512"
 [ "$(cpu 'avx2 fma')" = "avx2 --version" ] && ok "wrapper: avx2+fma -> avx2" || bad "avx2"
-[ "$(cpu 'avx ssse3')" = "baseline --version" ] && ok "wrapper: no AVX2 -> baseline (upstream would SIGILL)" || bad "baseline"
-[ "$(cpu 'avx2')" = "baseline --version" ] && ok "wrapper: avx2 without fma -> baseline" || bad "avx2 nofma"
+[ "$(cpu 'avx ssse3 sse4_1 sse4_2 popcnt cx16')" = "baseline --version" ] && ok "wrapper: no AVX2 -> baseline (upstream would SIGILL)" || bad "baseline"
+[ "$(cpu 'avx2 ssse3 sse4_1 sse4_2 popcnt cx16')" = "baseline --version" ] && ok "wrapper: avx2 without fma -> baseline" || bad "avx2 nofma"
+o=$(cpu 'sse3 cx16' 2>&1); rc=$?; [ $rc = 132 ] && case "$o" in *x86-64-v2*) true;; *) false;; esac && ok "wrapper: pre-v2 CPU (qemu64) -> clean error 132, no SIGILL" || bad "pre-v2: rc=$rc $o"
 [ "$(VOXTYPE_GPU=1 VOXTYPE_LIB=$L sh "$W" x)" = "vulkan x" ] && ok "wrapper: VOXTYPE_GPU=1 -> vulkan" || bad "vulkan"
 grep -q 'dpkg-divert --package omaxian-voxtype --add --rename' packages/omaxian-voxtype/debian/omaxian-voxtype.preinst &&
 	grep -q 'listpackage /usr/bin/voxtype' packages/omaxian-voxtype/debian/omaxian-voxtype.postrm && ok "diversion: added in preinst, removed only if ours" || bad "diversion"

@@ -14,7 +14,7 @@ for i in range(128):
     if i==1: print(struct.unpack('<Q',e[32:40])[0]); break")
   echo p2 start $start; sudo mkdir -p $MNT; sudo mount -t ext4 -o ro,noload,loop,offset=$((start*512)) $RAW $MNT && echo mounted;;
 umount)
-  sudo umount $MNT; sudo kill $(sudo cat build/qsd-$VM.pid) 2>/dev/null; sleep 2; mountpoint -q $RAW && sudo umount -l $RAW; rm -f $RAW; echo unmounted;;
+  sudo umount $MNT; sudo kill $(sudo cat build/qsd-$VM.pid) 2>/dev/null; sleep 2; grep -q " $PWD/$RAW " /proc/mounts && sudo umount -l $RAW; sudo rm -f $RAW; echo unmounted;;
 check)
   R=$MNT; S="sudo"
   OPT=$(grep -hvE '^\s*(#|$)' config/optional-groups.list config/optional-groups-full.list | cut -d'|' -f5 | tr ' ' '\n' | grep . | sort -u); T=$(echo "$OPT" | wc -l)
