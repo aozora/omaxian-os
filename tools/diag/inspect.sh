@@ -26,9 +26,9 @@ check)
   echo "== locale"; $S cat $R/etc/default/locale $R/etc/locale.conf 2>&1; $S cat $R/home/tester/r10-locale.txt 2>&1; $S cat $R/etc/timezone
   echo "== appimages"; $S ls $R/home/tester/AppImages 2>&1 | grep -ic appimage; $S grep -c integrated $R/home/tester/.local/state/omaxian/user-firstrun.log 2>/dev/null || $S find $R/home/tester -name "user-firstrun.log" -exec grep -c integrated {} \;
   echo "== openra"; for g in ra cnc d2k; do printf "%s content " $g; $S find $R/home/tester/.config/openra/Content/$g -type f 2>/dev/null | wc -l; done; $S find $R/home/tester/.config/openra/maps -maxdepth 2 2>/dev/null
-  echo "== flatpaks"; $S ls $R/var/lib/flatpak/app | tr '\n' ' '; echo; $S ls $R/var/lib/flatpak/app/us.zoom.Zoom/current 2>&1 | head -1
+  echo "== flatpaks"; $S ls $R/var/lib/flatpak/app | tr '\n' ' '; echo; echo "optional-flatpaks.list: [$($S cat $R/var/lib/omaxian/optional-flatpaks.list 2>&1 | tr '\n' ' ')]"; $S test -d $R/var/lib/flatpak/app/org.telegram.desktop && echo "telegram flatpak: present" || echo "telegram flatpak: absent"; $S ls $R/var/lib/flatpak/app/us.zoom.Zoom/current 2>&1 | head -1
   echo "== live pkgs"; for p in live-boot live-config live-tools calamares omaxian-calamares-settings; do $S chroot $R dpkg-query -W -f='${Package} ${Status}\n' $p 2>/dev/null | grep -q "ok installed" && echo "STILL $p"; done; echo live check done
   echo "== voxtype"; $S chroot $R voxtype --version 2>&1 | head -2; $S chroot $R dpkg-divert --list '*voxtype*'; $S chroot $R dpkg-query -W -f='${Package} ${Version}\n' voxtype omaxian-voxtype; $S chroot $R id tester; $S ls -l $R/home/tester/.config/i3/config.d/ 2>&1; $S cat $R/home/tester/.config/i3/config.d/60-voxtype.conf 2>&1
   echo "== fonts/power"; $S chroot $R fc-match monospace; $S grep -rh "power-button-action" $R/etc/xdg/xfce4/xfconf $R/home/tester/.config/xfce4/xfconf 2>/dev/null | head -3
-  $S ls $R/etc/apt/sources.list.d/ ; $S ls -d $R/var/cache/omaxian/optional-pool 2>&1;;
+  $S ls $R/etc/apt/sources.list.d/ ; $S grep -H "^Enabled" $R/etc/apt/sources.list.d/omaxian.sources; $S cat $R/home/tester/.config/omarchy/keyboard.json 2>&1; echo; $S ls -d $R/var/cache/omaxian/optional-pool 2>&1;;
 esac

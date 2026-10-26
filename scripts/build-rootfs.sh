@@ -33,6 +33,28 @@ trap cleanup EXIT
 APT="apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
 REPO_PORT=${REPO_PORT:-8098}
 
+# omaxian-base (>= 0.1.7) ships /etc/apt/sources.list.d/omaxian.sources with
+# "Enabled: yes" (https://apt.omaxian.org). The build must only use the local
+# repo + build mirror (offline-capable, and no published package shadowing a
+# freshly built one), so the file is dpkg-diverted out of sources.list.d for
+# the whole build: dpkg keeps doing proper conffile handling at the diverted
+# path, apt never reads it. s_finalize removes the diversion again.
+OMX_SRC=/etc/apt/sources.list.d/omaxian.sources
+OMX_PARK=/etc/apt/omaxian.sources.omaxian-build
+park_omaxian_sources() {
+	CH dpkg-divert --local --rename --divert "$OMX_PARK" --add "$OMX_SRC" >/dev/null
+}
+unpark_omaxian_sources() {
+	CH dpkg-divert --local --rename --divert "$OMX_PARK" --remove "$OMX_SRC" >/dev/null
+	[ ! -e "$R$OMX_PARK" ] || die "$OMX_PARK still there after removing the diversion"
+	if CH dpkg-query -W -f '${Status}' omaxian-base 2>/dev/null | grep -q ' installed'; then
+		[ -f "$R$OMX_SRC" ] || die "$OMX_SRC missing in the image"
+		cmp -s "$R$OMX_SRC" "$TOPDIR/packages/omaxian-base/files$OMX_SRC" \
+			|| warn "$OMX_SRC differs from packages/omaxian-base (old omaxian-base in the local repo?)"
+		msg "omaxian.sources: $(grep -m1 '^Enabled:' "$R$OMX_SRC")"
+	fi
+}
+
 serve_repo() { # local Omaxian repo over http, reachable from inside the chroot
 	[ -d "$LOCALREPO/dists" ] || die "no local repo: run scripts/make-repo.sh"
 	python3 -m http.server -b 127.0.0.1 -d "$LOCALREPO" "$REPO_PORT" >/dev/null 2>&1 & REPO_PID=$!
@@ -56,6 +78,7 @@ s_bootstrap() {
 s_apt_setup() {
 	# no daemons in the chroot
 	printf '#!/bin/sh\nexit 101\n' > "$R/usr/sbin/policy-rc.d"; chmod +x "$R/usr/sbin/policy-rc.d"
+	park_omaxian_sources
 	install -m644 "$TOPDIR"/config/apt/preferences.d/*.pref "$R/etc/apt/preferences.d/"
 	install -m644 "$TOPDIR"/config/apt/apt.conf.d/* "$R/etc/apt/apt.conf.d/"
 	install -m644 "$TOPDIR/config/apt/keys/NexusSfan.pgp" "$TOPDIR/keys/public/omaxian-archive-keyring.pgp" "$R/usr/share/keyrings/"
@@ -115,6 +138,10 @@ s_live()    { inst 90-live.list
 
 s_upgrade() { # apply pins (backports kernel/pipewire/quickshell) and drop older kernels
 	CH $APT dist-upgrade
+	# Our own packages may be rebuilt under an unchanged (unpublished) version; dist-upgrade
+	# skips those, so always reinstall them from repo-local to pick up the current build.
+	local own; own=$(CH dpkg-query -W -f '${Package} ${Status}\n' 'omaxian-*' | awk '/ installed$/{print $1}')
+	[ -z "$own" ] || CH $APT install --reinstall $own
 	local old; old=$(CH dpkg-query -W -f '${Package} ${Status}\n' 'linux-image-[0-9]*' | awk '/installed$/ && $1 !~ /^linux-image-7\./{print $1}')
 	[ -z "$old" ] || CH $APT purge $old
 	CH dpkg-query -W -f '${Package} ${Version}\n' linux-image-amd64 pipewire wireplumber quickshell
@@ -218,6 +245,7 @@ Components: $DEVUAN_COMPONENTS
 Signed-By: /usr/share/keyrings/devuan-archive-keyring.gpg
 EOS
 	[ -e "$R/usr/share/keyrings/devuan-archive-keyring.gpg" ] || sed -i '/^Signed-By/d' "$R/etc/apt/sources.list.d/devuan.sources"
+	unpark_omaxian_sources
 	rm -f "$R/usr/sbin/policy-rc.d" "$R/tmp/preseed.cfg"
 	CH apt-get clean
 	strip_excluded
@@ -236,7 +264,10 @@ s_full_from_base() {
 	# One app at a time, via BW: "extra-data" apps (Zoom) run apply_extra under
 	# bwrap. Anything that still fails is left to omaxian-firstboot (online).
 	local a missing=()
-	for a in $(read_list "$TOPDIR/config/flatpaks.list"); do
+	# + the optional groups' Flatpaks (Telegram; field 6 of optional-groups.list):
+	# preinstalled too, omaxian-firstboot removes the ones not picked in Calamares
+	for a in $(read_list "$TOPDIR/config/flatpaks.list") \
+		$(bash "$TOPDIR/scripts/gen-netinstall.sh" --optional-flatpaks "$TOPDIR/config/optional-groups.list" /dev/stdout | read_list /dev/stdin | cut -d'|' -f2); do
 		BW flatpak install --system -y --noninteractive flathub "$a" || missing+=("$a")
 	done
 	[ ${#missing[@]} = 0 ] || warn "flatpaks NOT preinstalled (firstboot installs them online): ${missing[*]}"
@@ -315,6 +346,22 @@ EOS
 	CH apt-get "${P[@]}" -s install $pk $(full_only_pkgs) > "$BUILDDIR/optional-pool-check.log" 2>&1 \
 		|| { cat "$BUILDDIR/optional-pool-check.log"; die "optional pool does not resolve offline"; }
 	msg "optional pool: offline resolve OK ($(grep -c '^Inst ' "$BUILDDIR/optional-pool-check.log") to install)"
+	# the reused cache (build/dl/optional-pool) also holds debs no group needs any
+	# more (a package dropped from a group, older versions): keep only what the
+	# offline install uses + the live-only dependencies + the local VoxType debs
+	local keep n=0; keep=$( { awk '$1=="Inst"{print $2}' "$BUILDDIR/optional-pool-check.log"; echo "$extra" | tr ' ' '\n'; } | sort -u)
+	for f in "$R$pool"/*.deb; do
+		case "${f##*/}" in voxtype_*|omaxian-voxtype_*) continue;; esac
+		grep -qxF "$(dpkg-deb -f "$f" Package)" <<<"$keep" || { rm -f "$f"; n=$((n+1)); }
+	done
+	if [ "$n" -gt 0 ]; then
+		msg "optional pool: dropped $n unused debs from the reused cache"
+		CH sh -c "cd $pool && apt-ftparchive packages . > Packages"
+		CH apt-get "${P[@]}" update >/dev/null
+		CH apt-get "${P[@]}" -s install $pk $(full_only_pkgs) > "$BUILDDIR/optional-pool-check.log" 2>&1 \
+			|| { cat "$BUILDDIR/optional-pool-check.log"; die "optional pool does not resolve offline after pruning"; }
+		msg "optional pool: offline resolve OK after pruning ($(grep -c '^Inst ' "$BUILDDIR/optional-pool-check.log") to install)"
+	fi
 	rm -f "$R/etc/apt/sources.list.d/omaxian-pool-check.list"
 	rm -f "$R/etc/apt/sources.list.d/omaxian-build-pool.sources"; rm -rf "$R"/var/lib/apt/lists/*
 	msg "optional pool: $(ls "$R$pool"/*.deb | wc -l) debs, $(du -sh "$R$pool" | cut -f1)"
