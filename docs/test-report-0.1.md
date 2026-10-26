@@ -249,3 +249,54 @@ d3 was booted by hand from grub> with `configfile (hd0,gpt1)/EFI/omaxian/grub.cf
 - **SUPPORTED**: apt purge runs postrm twice (`remove`, then `purge`). The second `rm -f` deleted the stock file that the first run had just restored. Reproduced with tests/test-supported-diversion.sh (real dpkg-divert --root). Fix: omaxian-calamares-settings 0.2.8 postrm only acts while the diversion still belongs to the package. The test now passes. Impact on round-7 installs: `dpkg-reconfigure locales` has no list. Workaround: `apt-get install --reinstall locales`.
 - **firstboot.done offline**: unchanged (design decision needed). firstboot also refreshes Flatpaks/AppImages online, so it never marks done without network. Proposal: on the full ISO, when nothing is pending and all Flatpaks are present, write firstboot.done offline and leave updates to the normal updater.
 - Both fixes need a rebuild (calamares-settings 0.2.8 + full rootfs pool) to reach the ISOs.
+
+## Round 8 (Mon 26 Oct 2026, CET): full-ISO offline firstboot, rebuild with all fixes
+
+Decision (owner, 05:49): on the FULL ISO, omaxian-firstboot writes firstboot.done offline when nothing is pending; the BASE ISO keeps retrying until online.
+
+- 06:00 omaxian-firstboot 0.2.3 (commit 7ad0b9e): `full_offline_complete()` (marker /var/lib/omaxian/full-offline, set by the full build; no pending apt; all wanted Flatpaks present; every AppImage manifest row is cached or in the payload). New tests/test-firstboot-offline.sh: 10/10 pass.
+- build-rootfs.sh: Flatpak install for the full rootfs runs under bwrap-as-root (`BW`), so Zoom's extra-data apply_extra works (the kernel refuses userns inside a chroot).
+- tests/test-locale-formats.sh fixture fix (bfba2ed): "stock" now means rootfs-base's SUPPORTED.omaxian-orig; the box has no SUPPORTED and the diverted file has bare tags. 20/20 pass.
+- Root-owned build/pkg/omaxian-branding and build/pkg/omaxian-firstboot fixed with chown; `build-packages.sh` (all) passes. omaxian-session isn't byte-reproducible at the same version, so the repo copy was kept and make-repo passes.
+- Builds (05:55 to 06:04, all EXIT 0; mirror via tools/devuan-redirect-proxy.py): base rootfs (stamps apt-setup/upgrade/configure/finalize removed, omaxian-calamares-settings 0.2.7→0.2.8 and omaxian-firstboot 0.2.2→0.2.3 upgraded), base ISO, full rootfs from base, full ISO. Full rootfs: **all 8 Flatpaks installed incl. us.zoom.Zoom** (bwrap-as-root fix), marker /var/lib/omaxian/full-offline present, optional pool 419 debs / 641M incl. krita, libqt6core5compat6, libxcb-res0 (the live-only dependency computation now adds 91 packages, a safe superset).
+- ISOs: base 2416023552 B sha256 9907ec4d735ee797ec8c8d3115d62e5e2ef345bb29e40e5521694d8b46d67937; full 9561276416 B sha256 ba99bff40a0e7676a7a06013d2f6ac77cfc2b98f805855cd5da4089708302389. `cd out && sha256sum -c` OK for both.
+
+### Round 8 live boots (untouched default GRUB entry, no serial, `-nic none`, TCG)
+| ISO | Firmware | Result | Shot |
+|---|---|---|---|
+| base | UEFI | PASS, desktop 06:02 (boot 05:59) | shots/l8bu-1.png |
+| base | BIOS | PASS, desktop 06:11 | shots/l8bb-1.png |
+| full | UEFI | PASS, desktop 06:11 | shots/l8fu-1.png |
+| full | BIOS | PASS, desktop 06:14 | shots/l8fb-1.png |
+| full | UEFI | PASS (install VM i8) | shots/i8-01-live.png |
+
+### ACPI shutdown (QEMU system_powerdown), base live UEFI
+- Default: ignored (VM still running after 30 s).
+- Diagnosis in the live session (shots/l8bu-3.png): the kernel "Power Button" input device exists and elogind handles it by default (HandlePowerKey=poweroff), but **xfce4-power-manager** (autostarted by i3_autostart) holds a *block* inhibitor on `handle-power-key` and its `power-button-action` is **3 = Ask**, from /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml. Ask needs an xfce4-session manager, which i3 doesn't run, so the press does nothing.
+- Confirmed: after `xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/power-button-action -s 4` (shutdown), system_powerdown shut the live system down (live-boot's "remove the live-medium … press ENTER" prompt, shots/l8bu-4.png), and the VM powered off 10 s after Enter.
+- Proposed fix (not in these ISOs): set power-button-action to 4 in i3_autostart's xfpm defaults block (or ship the xfconf default as 4).
+
+### Round 8 offline install (full ISO, UEFI, `-nic none`, 40 GB virtio, keyboard only), VM i8
+- Same live tweak as round 7 (erase default in partition.conf). Live SUPPORTED diversion active (bare `en UTF-8` present).
+- Location: Europe/Rome; "system language … American English (United States)", "numbers and dates locale … American English (United States)" (shots/i8-04-location.png, i8-10-summary.png).
+- Users: Tester / tester / tester-standardpc, throwaway password. Applications: all 6 groups checked (shots/i8-09-apps.png).
+- 06:21 install started.
+- 06:40 78% "Install packages" (offline pool).
+- 06:49 "All done." (shots/i8-18-progress.png), 28 min. VM stopped; installed disk booted UEFI (fresh vars, fallback loader), `-nic none`.
+- 06:51 LightDM greeter (Tester preselected); 06:54 i3 + Quickshell desktop (shots/i8-19-boot.png, i8-20-desktop.png).
+- 06:54 `locale` in terminal: all en_US.UTF-8 (shots/i8-21-locale.png); ~/AppImages = 17 (i8-22-state.png). Clean `sudo poweroff` 06:59.
+- Offline inspection of the installed disk (read-only qemu-storage-daemon export, tools/diag/inspect.sh check):
+
+| Check (installed disk, i8, full ISO, offline) | Result |
+|---|---|
+| Optional apps 23/23 incl. krita 1:5.2.9, chromium 156, thunderbird 153.5esr; optional-pending.list empty | PASS |
+| /usr/share/i18n/SUPPORTED present, md5 = stock (646522ed…), no diversion left | PASS |
+| firstboot.done written offline 06:50:19; log "full ISO: everything installed offline, first boot provisioning complete" | PASS |
+| Locale: /etc/default/locale, /etc/locale.conf and session `locale` all en_US.UTF-8; timezone Europe/Rome | PASS |
+| AppImages: 17 in ~/AppImages, integrated by user firstrun | PASS |
+| OpenRA Content ra/cnc/d2k = 151/115/590 files + release-20250330 maps | PASS |
+| Flatpaks 8 incl. us.zoom.Zoom (deployed) | PASS |
+| Live packages purged; optional pool removed; sources = devuan, omaxian, xlibre, extrepo brave/librewolf | PASS |
+| Boot to greeter/desktop UEFI with no network | PASS |
+
+Round 8 verdict: all checks PASS. Open issues: ACPI power button (xfpm action "Ask" under i3; proposed fix power-button-action=4, not in these ISOs); omaxian-session not byte-reproducible at the same version; stale out/omaxian-base-0.1.0-dev-amd64.iso.sha256; optional-pool extra-deps list (91) is a superset; out/*.sha256 and build stamps root-owned; cosmetic: bwrap trigger messages in flatpak install, udev alsa GOTO warning, changelog dates. Test scripts saved to tools/diag/.
