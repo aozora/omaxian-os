@@ -494,3 +494,18 @@ Folded in before the final ISO builds (the Round 11 ISOs were rebuilt).
   - omaxian-firstboot is unchanged (0.2.5). Its `omaxian-optional-*` helpers stay for manual use.
 - Tests: test-optional-appimages 17/17 and test-optional-flatpaks 11/11 now drive the real data path (plain marker names in `packageOperations` → omaxianpicks → omaxianoptional) and check the settings.conf sequence. firstboot-offline 22/22 and voxtype 25/25 pass, as do the others.
 - Package rebuilt, repo-local updated (0.2.12 only, signed by 5CD4C2DB…4E75). Old i12 disk deleted. Chain tools/diag/r12b-chain.sh started at 23:35:41.
+- r12b chain: base rootfs 23:35:41 → base ISO 23:37:31 → full rootfs 23:38:39 → full ISO 23:41:41 → ALLDONE 23:44:45. `sha256sum -c` OK for both. rootfs-full static check: netinstall.conf has the 7 `omaxian-pick:` markers (Telegram + 6 extras) and 0 `post-install`; calamares-settings 0.2.12; the omaxianpicks module is present; no telegram-desktop deb.
+- Round-12b live boots, all with the untouched default GRUB entry and no network:
+
+| boot | result |
+|---|---|
+| base UEFI (lbu) | PASS 23:43 (r12b-lbu-2/3) |
+| base BIOS (lbb) | PASS 23:47 (r12b-lbb-1/2) |
+| full UEFI (i13 live session) | PASS 23:54 (r12b-i13-c1/c2) |
+| full BIOS (lfb) | PASS 23:54 (r12b-r12b-lfb-c1/c2) |
+
+  Every boot showed base 0.1.7, calamares-settings 0.2.12, firstboot 0.2.5, session 1.0.4-1, strata 1.1.1-1 and `Enabled: yes`, with 7 pick markers and the omaxianpicks module present. Offline `apt-get update` gave rc=0 with 9 W: lines and 0 E: lines. The firmware matched the mode. Full ISO only: 9 Flatpaks including org.telegram.desktop, no telegram-desktop deb, a payload of 10 AppImages, and 0 removed or extra names.
+
+### Round 12b install i13 (full ISO, UEFI, `-nic none`, 40 GiB virtio)
+- Same test-only live tweak (partition.conf erase default). Europe/Rome, American English for language and formats, keyboard English (US), Erase disk (EFI 512 MiB plus ext4, swap to file). User Tester / tester / tester-standardpc, throwaway password (shots/r12b-i13-03…07).
+- Applications page (r12b-i13-08-apps): **Extra apps (downloaded after install)** shows 6 individual checkboxes (Cursor, Grok Bot, Rebased, RustDesk, Shotcut, Teams for Linux), all unselected by default, and Telegram (Flatpak) is checked by default. Ticked: VoxType, **Cursor** and **RustDesk**, so all 7 groups plus 2 extras are selected (r12b-i13-09-apps). Summary: r12b-i13-10. Install started 23:57 (r12b-i13-12).
