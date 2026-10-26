@@ -1,0 +1,6 @@
+# /etc/X11/Xsession.d/36omaxian-xfpm  (omaxian-session; sourced by Xsession)
+# xfce4-power-manager defaults the user has not set (power button = shut
+# down), written before xfconfd / xfce4-power-manager start.
+if [ -x /usr/bin/omaxian-xfpm-defaults ]; then
+	/usr/bin/omaxian-xfpm-defaults >/dev/null 2>&1 || true
+fi

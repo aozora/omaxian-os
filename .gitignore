@@ -3,6 +3,7 @@
 /payload/appimages/*
 /payload/openra/*
 /payload/*.tar
+/payload/fonts/*
 !/payload/**/.gitkeep
 /repo-local/
 /keys/

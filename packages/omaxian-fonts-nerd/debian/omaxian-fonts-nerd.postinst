@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+# refresh the system font cache for the new directory (dpkg triggers on
+# /usr/share/fonts are not relied on: fontconfig's trigger is not active in
+# every chroot/installer path)
+if [ "$1" = configure ] && command -v fc-cache >/dev/null 2>&1; then
+	fc-cache -s -f /usr/share/fonts/truetype/jetbrains-mono-nerd >/dev/null 2>&1 || true
+fi
+#DEBHELPER#
+exit 0

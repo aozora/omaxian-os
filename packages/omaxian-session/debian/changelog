@@ -1,3 +1,21 @@
+omaxian-session (1.0.3-4) excalibur; urgency=medium
+
+  * Depend on omaxian-fonts-nerd: JetBrains Mono Nerd Font is mandatory
+    for the Omaxian session (kitty/alacritty/ghostty, i3 bar, dunst,
+    Quickshell) and is now installed system-wide, not only per user.
+  * ACPI power button: new omaxian-xfpm-defaults, run at X login from
+    Xsession.d/36omaxian-xfpm (before xfconfd/xfce4-power-manager start),
+    sets power-button-action=4 (shut down) in the user's
+    xfce4-power-manager channel when the user has not chosen a value.
+    xfpm's default 3 ("ask") needs the xfce4-session logout dialog, which
+    the i3 session does not run, so the power button (incl. a hypervisor
+    ACPI power-off) did nothing. xfce4-power-manager's conffile is left
+    untouched (diverting another package's conffile is not supported by
+    dpkg: the diverted copy is skipped on install and purge deletes the
+    original).
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 09:30:00 +0100
+
 omaxian-session (1.0.3-3) excalibur; urgency=medium
 
   * omaxian-seed-keyboard (run from Xsession.d/25omaxian-home): create

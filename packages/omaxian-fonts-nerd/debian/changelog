@@ -1,0 +1,7 @@
+omaxian-fonts-nerd (3.5.1-1) excalibur; urgency=medium
+
+  * Initial package: JetBrains Mono Nerd Font from the official Nerd Fonts
+    v3.5.1 release (JetBrainsMono.tar.xz, sha256 04d5e8f9...10cf), variants
+    NerdFont + NerdFontMono, with fontconfig monospace preference.
+
+ -- Marcello Palmitessa <marcello@omaxian.org>  Mon, 26 Oct 2026 09:30:00 +0100

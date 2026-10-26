@@ -1,6 +1,7 @@
 # Omaxian OS own packages (local repo during build, apt.omaxian.org later)
 omaxian-base
 omaxian-branding
+omaxian-fonts-nerd
 omaxian-session
 omaxian-strata
 omaxian-firstboot

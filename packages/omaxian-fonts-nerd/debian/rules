@@ -1,0 +1,7 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+# upstream release fonts: ship them byte-identical
+override_dh_strip_nondeterminism:
+override_dh_compress:
+	dh_compress -X OFL.txt

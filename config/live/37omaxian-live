@@ -20,6 +20,7 @@ if grep -qw 'boot=live' /proc/cmdline 2>/dev/null; then
     <property name="lock-screen-suspend-hibernate" type="bool" value="false"/>
     <property name="inactivity-on-ac" type="uint" value="0"/>
     <property name="inactivity-on-battery" type="uint" value="0"/>
+    <property name="power-button-action" type="uint" value="4"/>
   </property>
 </channel>
 XML

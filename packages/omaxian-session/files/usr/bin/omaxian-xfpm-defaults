@@ -1,0 +1,62 @@
+#!/usr/bin/python3
+"""Omaxian defaults for xfce4-power-manager, written into the user's xfconf
+channel (~/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml)
+before xfconfd starts. Only properties the user has not set are added, so a
+choice made in xfce4-power-manager-settings is never overwritten.
+
+  power-button-action = 4 (shutdown). xfpm's default 3 ("ask") needs the
+  xfce4-session logout dialog, which the Omaxian i3 session does not run.
+
+Usage: omaxian-xfpm-defaults [channel-file]   (never fails the login)
+"""
+import os
+import sys
+import tempfile
+import xml.etree.ElementTree as ET
+
+DEFAULTS = [("power-button-action", "uint", "4")]
+
+
+def main():
+    if os.geteuid() == 0:
+        return 0
+    home = os.environ.get("HOME") or ""
+    cfg = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
+    path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+        cfg, "xfce4", "xfconf", "xfce-perchannel-xml", "xfce4-power-manager.xml")
+    if os.path.exists(path):
+        try:
+            tree = ET.parse(path)
+        except (ET.ParseError, OSError):
+            return 0  # leave a file we do not understand alone
+        root = tree.getroot()
+        if root.tag != "channel":
+            return 0
+    else:
+        root = ET.Element("channel", name="xfce4-power-manager", version="1.0")
+        tree = ET.ElementTree(root)
+    top = next((p for p in root.findall("property")
+                if p.get("name") == "xfce4-power-manager"), None)
+    if top is None:
+        top = ET.SubElement(root, "property", name="xfce4-power-manager", type="empty")
+    have = {p.get("name") for p in top.findall("property")}
+    missing = [d for d in DEFAULTS if d[0] not in have]
+    if not missing:
+        return 0
+    for name, typ, value in missing:
+        ET.SubElement(top, "property", name=name, type=typ, value=value)
+    ET.indent(tree, space="  ")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".xfpm.")
+    with os.fdopen(fd, "wb") as f:
+        tree.write(f, encoding="UTF-8", xml_declaration=True)
+        f.write(b"\n")
+    os.replace(tmp, path)
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception:  # never break the X login
+        sys.exit(0)

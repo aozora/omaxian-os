@@ -5,7 +5,7 @@
 # never lands in the git tree.
 . "$(dirname "$0")/lib.sh"
 need dpkg-buildpackage dh rsvg-convert grub-mkfont python3 curl jq
-ALL="omaxian-base omaxian-branding omaxian-session omaxian-strata omaxian-firstboot omaxian-calamares-settings"
+ALL="omaxian-base omaxian-branding omaxian-fonts-nerd omaxian-session omaxian-strata omaxian-firstboot omaxian-calamares-settings"
 PKGS=${*:-$ALL}
 STAGE="$BUILDDIR/pkg"; DEBS="$OUTDIR/debs"; mkdir -p "$STAGE" "$DEBS"
 OMX="$BUILDDIR/src/omaxian"
@@ -70,6 +70,11 @@ prep_omaxian-session() {
 	local up rev; up=$(cat "$OMX/version" 2>/dev/null | tr -d 'v\n'); up=${up:-1.0.3}
 	rev=$(sed -n '1s/.*(\([^)]*\)).*/\1/p' "$d/debian/changelog"); rev=${rev##*-}
 	sed -i "1s/([^)]*)/($up-${rev:-2})/" "$d/debian/changelog" || true
+}
+prep_omaxian-fonts-nerd() {
+	"$TOPDIR/scripts/fetch-nerd-fonts.sh" "$1/upstream"
+	local v; v=$(sed -n '1s/.*(\([^-)]*\).*/\1/p' "$1/debian/changelog")
+	[ "$v" = "$NERD_FONTS_VERSION" ] || die "omaxian-fonts-nerd changelog ($v) != NERD_FONTS_VERSION ($NERD_FONTS_VERSION)"
 }
 prep_omaxian-strata() {
 	"$TOPDIR/scripts/fetch-strata.sh" "$1/upstream"

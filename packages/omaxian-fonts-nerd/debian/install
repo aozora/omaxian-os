@@ -1,0 +1,4 @@
+upstream/ttf/*.ttf usr/share/fonts/truetype/jetbrains-mono-nerd/
+upstream/OFL.txt usr/share/doc/omaxian-fonts-nerd/
+upstream/README.md usr/share/doc/omaxian-fonts-nerd/
+files/56-omaxian-monospace.conf usr/share/fontconfig/conf.avail/

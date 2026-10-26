@@ -17,7 +17,7 @@ Depends: ${misc:Depends},
  inotify-tools, mate-polkit, psmisc, procps, xdg-user-dirs,
  qml6-module-qtquick-layouts, qml6-module-qtquick-controls,
  qml6-module-qtquick-shapes, qml6-module-qt-labs-folderlistmodel,
- qml6-module-qtquick-effects, fontconfig, fonts-jetbrains-mono,
+ qml6-module-qtquick-effects, fontconfig, omaxian-fonts-nerd, fonts-jetbrains-mono,
  fonts-noto-color-emoji, papirus-icon-theme, elogind, libpam-elogind,
  quickshell, pipewire, pipewire-pulse, wireplumber
 Recommends: playerctl, maim, flameshot, viewnior, imagemagick, tesseract-ocr,

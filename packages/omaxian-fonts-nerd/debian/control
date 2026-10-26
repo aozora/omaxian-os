@@ -1,0 +1,24 @@
+Source: omaxian-fonts-nerd
+Section: fonts
+Priority: optional
+Maintainer: Marcello Palmitessa <marcello@omaxian.org>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://www.nerdfonts.com/
+Rules-Requires-Root: no
+
+Package: omaxian-fonts-nerd
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}, fontconfig
+Provides: fonts-jetbrains-mono-nerd
+Description: JetBrains Mono Nerd Font (Omaxian default monospace)
+ JetBrains Mono patched with the Nerd Fonts glyph sets (Powerline, Font
+ Awesome, Material Design, Codicons, Devicons, Octicons, ...), as used by the
+ Omaxian session (kitty, alacritty, ghostty, i3 bar, dunst, Quickshell).
+ .
+ This package ships the official Nerd Fonts release archive JetBrainsMono.tar.xz
+ (version pinned and SHA-256-verified at build time): the "JetBrainsMono Nerd
+ Font" and "JetBrainsMono Nerd Font Mono" families, installed system-wide in
+ /usr/share/fonts/truetype/jetbrains-mono-nerd. It also makes JetBrains Mono
+ Nerd Font the preferred fontconfig "monospace" family.
