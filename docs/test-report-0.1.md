@@ -399,4 +399,51 @@ Open issues:
   - base: 2,461,612,032 B, sha256 f1f33022…e0f0 — verified by full HTTPS download from download.omaxian.org.
   - full: 9,939,206,144 B, sha256 aa8b3f46…29ea — verified by full stream hash from R2 + HTTPS Content-Length.
   - both `.sha256` files fetched over HTTPS and byte-identical to local.
-- apt repo NOT published: R2 token gets 403 AccessDenied on bucket `omaxian-apt` (list and put). Nothing written there.
+- apt repo NOT published: R2 token gets 403 AccessDenied on bucket `omaxian-apt` (list and put). Nothing written there. **Update (2026-10-26 20:26 CET):** published after the token was updated; see Round 11.
+
+## Round 11: omaxian-base 0.1.7, apt.omaxian.org enabled by default (2026-10-26, started 20:47 CET)
+
+- The apt repo was published at 20:26 CET and verified over HTTPS: InRelease GOODSIG/VALIDSIG 5CD4C2DB…, Packages sha256 OK, isolated apt-get update/download OK.
+- omaxian-base 0.1.7: `omaxian.sources` ships `Enabled: yes`. The preinst normalises a 0.1.6 file whose only change is `Enabled: yes` (dpkg's recorded md5 of the file with yes→no), so dpkg upgrades without a conffile prompt. Other local edits get standard dpkg conffile handling.
+- build-rootfs.sh: during the build `omaxian.sources` is dpkg-diverted (`--local`) to `/etc/apt/omaxian.sources.omaxian-build` (from s_apt_setup); s_finalize removes the diversion and checks the file. Build-time apt therefore only uses the local repo and the build mirror. The full-ISO pool steps already used `sourceparts=-`.
+- Tests: new tests/test-omaxian-sources-upgrade.sh (real dpkg, overlay on rootfs-base): 7/7 pass (pristine, sed-enabled, customised enabled/disabled, no-policy, build diversion, admin-disabled reinstall). test-firstboot-offline.sh case 12 (apt-get update fails → firstboot continues): 12/12 pass. Other tests pass.
+- repo-local regenerated (make-repo.sh) with omaxian-base 0.1.7, signed by 5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75 (gpg VALIDSIG). The other 6 debs are byte-identical to the published pool.
+- First 0.1.7 build (20:47–20:55 CET) all OK; base UEFI live boot: `Enabled: yes`, offline `apt-get update` only warns ("Some index files failed to download", no hang). Those ISOs were superseded by Round 11b before the BIOS boots finished.
+
+## Round 11b: Strata 1.1.1, Omaxian shell v1.0.4, Telegram as a Flatpak (2026-10-26, 20:58–… CET)
+
+Folded in before the final ISO builds (the Round 11 ISOs were rebuilt).
+
+- **Strata 1.1.1** (`STRATA_VERSION`, omaxian-strata 1.1.1-1): GitHub release v1.1.1 (not a prerelease). The manifest's Ed25519 signature verifies against the unchanged pinned key (install.sh / data/update-keys.json). Archive `strata-1.1.1-x86_64.tar.gz` sha256 e0552e0772fcded13a82884747b28f0b32220a32931cda6e55f83575bbe50734 matches the signed manifest. The manifest's `source_commit` is fb031552…; the tag v1.1.1 points to be3343a5… Same file list and .desktop file as 1.1.0. build-packages.sh now refuses a changelog/STRATA_VERSION mismatch.
+- **Omaxian shell v1.0.4** (`OMAXIAN_SHELL_REF`, omaxian-session 1.0.4-1, upstream version still from the shell's `version` file). The Omarchy ref follows setup.sh `UPSTREAM_REF` = v4.0.6 (unchanged). Upstream changes in our vendored parts:
+  - keyboard default `us` (was it,ru);
+  - deploy.sh seeds `~/.config/omarchy/keyboard.json` from /etc/default/keyboard;
+  - new theme transiberian;
+  - power button: i3_autostart / omarchy-idle-lock-apply map xfpm `power-button-action` unset/3 to 4 (Shutdown). Our Xsession.d/36omaxian-xfpm default agrees and stays as the early login-time default.
+- Build fix: gen-home-template.sh drops the `keyboard.json` that v1.0.4's deploy.sh renders from the *build host's* keyboard. In /etc/skel it would shadow the installer's layout, because omaxian-seed-keyboard never overwrites. The fix also drops render leftovers (`__pycache__`, `shell.json.bak`). The fastfetch patch applies as before. omaxian-base 0.1.7's /etc/omaxian-release records `OMAXIAN_SHELL="v1.0.4"`. 0.1.7 was never published, so its repo-local copy was replaced.
+- **Telegram:** a Flatpak (`org.telegram.desktop`) instead of the `telegram-desktop` apt package.
+  - `config/optional-groups.list` gets an optional 6th field (the group's Flatpaks); the Telegram group has no apt packages.
+  - The Calamares "Telegram" group stays (preselected). Its only netinstall entry is `flatpak`, which is always installed (an apt no-op that works offline), with the post-install step `omaxian-optional-flatpak select org.telegram.desktop`. That step records the pick in /var/lib/omaxian/optional-flatpaks.list. omaxianoptional (omaxian-calamares-settings 0.2.10) does not count it as a package and creates the file even when it is empty.
+  - omaxian-firstboot 0.2.4 installs picked optional Flatpaks from Flathub when online (base ISO).
+  - Full ISO: like the other Flatpaks, Telegram is preinstalled system-wide in the image. Firstboot removes it offline (plus unused runtimes) when the group was not picked, and the offline-done check requires it only when picked.
+  - Choice: preinstall plus offline removal rather than a local flatpak repo or bundle. It is simpler, needs no extra ISO payload and works fully offline. If the preinstall failed at build time, firstboot installs it online.
+  - Optional apt packages: 24 (was 25).
+- Tests: test-firstboot-offline.sh 18/18 (new 13–18 Telegram picked/unpicked/missing, base online install/skip, no-record default); new tests/test-optional-flatpaks.sh 11/11; test-omaxian-sources-upgrade.sh 7/7; voxtype 25/25; the others pass.
+- Packages: omaxian-base 0.1.7, omaxian-strata 1.1.1-1, omaxian-session 1.0.4-1, omaxian-firstboot 0.2.4, omaxian-calamares-settings 0.2.10 (branding 0.2.5, fonts-nerd 3.5.1-1 unchanged, byte-identical). repo-local regenerated and signed by subkey 5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75 (VALIDSIG). Nothing published.
+
+### Round 11b/11c/11d builds (21:12–21:28 CET)
+- r11b (21:12) was stopped during the full stage. The base rootfs still had the *first* omaxian-base 0.1.7 build (`OMAXIAN_SHELL="v1.0.3"`), because dist-upgrade skips a rebuilt package whose version did not change. **Build fix:** s_upgrade now always runs `apt-get install --reinstall` on the installed omaxian-* packages from repo-local ("7 reinstalled"). r11c base: /etc/omaxian-release and /etc/issue.omaxian say v1.0.4, `:: omaxian.sources: Enabled: yes`, netinstall.conf has the Telegram `flatpak` + post-install entry, and the home template has no keyboard.json.
+- r11c full: the optional pool still held telegram-desktop and its dependencies (421 debs, 1000M). The reused download cache (build/dl/optional-pool) is copied in wholesale. **Build fix:** after the offline resolve check, s_optional_pool now deletes pool debs that are not in the resolver's Inst set, the live-only dependencies or the local VoxType debs. It then re-indexes and re-runs the offline resolve check. r11d (full only, 21:22–21:28): "dropped 8 unused debs", offline resolve OK after pruning (322 to install, was 330 with telegram-desktop), **413 debs, 963M**, no telegram deb. org.telegram.desktop (7.3.3) preinstalled with the other 8 Flatpaks (9 apps).
+- ISOs: base 2,467,051,520 B (21:18), full 10,207,485,952 B (21:28). The full ISO is ~268 MB bigger than r11 because of the Telegram Flatpak plus runtime, partly offset by the smaller pool. `sha256sum -c` OK for both .sha256 files.
+
+### Round 11c/11d live boots (TCG, `-nic none`, default GRUB entry)
+| ISO / firmware | desktop | omaxian.sources | /etc/omaxian-release | other |
+|---|---|---|---|---|
+| base UEFI (lbu) | PASS 21:25 (shots/r11c-lbu-1.png) | Enabled: yes | v1.0.4 | offline `apt-get update` rc=0, only "W: … failed to download" (r11c-lbu-3.png); ~/.config/omarchy/keyboard.json seeded at login |
+| base BIOS (lbb) | PASS 21:25 (r11c-lbb-1.png) | Enabled: yes, apt.omaxian.org queried and fails resolving, rc=0 (r11c-lbb-2.png) | v1.0.4 | live layout us,it (LIVE_KEYBOARD_LAYOUTS, intended) (r11c-lbb-3.png) |
+| full UEFI (lfu) | PASS 21:32 (r11c-lfu-2.png) | Enabled: yes | v1.0.4 | 9 Flatpak apps incl. org.telegram.desktop, pool 413 debs, 0 telegram debs, strata 1.1.1 (r11c-lfu-3.png) |
+| full BIOS (lfb) | PASS 21:38 (r11c-lfb-1.png) | Enabled: yes | v1.0.4 | 9 apps, Telegram 7.3.3, pool 413, strata 1.1.1, offline `apt-get update` rc=0 (r11c-lfb-2.png) |
+
+### Round 11 offline install i11 (full ISO, UEFI, `-nic none`, 40 GB virtio, keyboard only)
+- Same test-only live tweak (partition.conf erase default). Europe/Rome, American English for language and formats, keyboard English (US) (shots/i11-05…i11-10). User Tester / tester, throwaway password.
+- Applications: default selection, 6 groups checked including Telegram (Flatpak), VoxType unchecked (i11-09-apps.png). Install started 21:39:35.
