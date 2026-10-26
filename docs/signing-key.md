@@ -59,6 +59,6 @@ Then:
    build-packages copies the public keyring into omaxian-base. Bump omaxian-base.
 2. Store `omaxian-signing-subkey-SECRET.asc` as the GitHub secret `OMAXIAN_SIGNING_KEY`.
 3. Publish the fingerprint on omaxian.org (HTTPS) so users can check it.
-4. Set `Enabled: yes` in `omaxian.sources` once the real repo is live.
+4. Set `Enabled: yes` in `omaxian.sources` once the real repo is live (done in omaxian-base 0.1.7).
 
 Never commit anything under `keys/` (it's in .gitignore).

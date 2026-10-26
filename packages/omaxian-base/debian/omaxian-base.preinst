@@ -6,5 +6,25 @@ if [ "$1" = install ] || [ "$1" = upgrade ]; then
 	dpkg-divert --package omaxian-base --add --rename \
 		--divert /usr/lib/os-release.devuan /usr/lib/os-release
 fi
+# 0.1.7 enables apt.omaxian.org by default (omaxian.sources conffile).
+# Systems that enabled it by hand in <= 0.1.6, with the documented
+#   sed -i 's/^Enabled: no/Enabled: yes/'
+# and no other change, get the pristine old text back here, so dpkg sees an
+# unmodified conffile and installs the new (enabled) one without a prompt.
+# Any other local change is left alone: normal dpkg conffile handling.
+SRC=/etc/apt/sources.list.d/omaxian.sources
+if [ "$1" = upgrade ] && [ -n "${2:-}" ] && dpkg --compare-versions "$2" lt 0.1.7~; then
+	f=$(dpkg-divert --truename "$SRC")
+	old=$(dpkg-query -W -f '${Conffiles}\n' omaxian-base 2>/dev/null | awk -v c="$SRC" '$1==c{print $2; exit}')
+	if [ -f "$f" ] && [ -n "$old" ] && grep -q '^Enabled: yes$' "$f"; then
+		t=$(mktemp)
+		sed 's/^Enabled: yes$/Enabled: no/' "$f" > "$t"
+		if [ "$(md5sum < "$t" | cut -d' ' -f1)" = "$old" ]; then
+			cat "$t" > "$f"
+			echo "omaxian-base: $SRC was only switched to Enabled: yes; the new default keeps it enabled"
+		fi
+		rm -f "$t"
+	fi
+fi
 #DEBHELPER#
 exit 0

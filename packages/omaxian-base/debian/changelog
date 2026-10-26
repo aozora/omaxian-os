@@ -1,3 +1,15 @@
+omaxian-base (0.1.7) excalibur; urgency=medium
+
+  * Enable the Omaxian OS repository (https://apt.omaxian.org) by default:
+    /etc/apt/sources.list.d/omaxian.sources now ships "Enabled: yes".
+  * preinst: an omaxian.sources that was only switched to "Enabled: yes" by
+    hand (the documented sed) is treated as unmodified, so the upgrade from
+    <= 0.1.6 installs the new file without a conffile prompt. Other local
+    changes keep the normal dpkg conffile handling.
+  * /etc/omaxian-release: OMAXIAN_SHELL="v1.0.4" (Omaxian shell v1.0.4).
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 20:45:03 +0100
+
 omaxian-base (0.1.6) excalibur; urgency=medium
 
   * Ship the real archive signing key (primary 1D8DE9AD3AFA60790333639EF45C7450C45D49A0,

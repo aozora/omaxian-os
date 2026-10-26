@@ -1,7 +1,8 @@
-# Omaxian OS package repository (Cloudflare R2: bucket omaxian-apt).
-# Disabled until the repository is published and signed with the release key
-# (docs/signing-key.md). Enable with: sed -i 's/^Enabled: no/Enabled: yes/' this file
-Enabled: no
+# Omaxian OS package repository (https://apt.omaxian.org, signed with the
+# Omaxian OS archive key in /usr/share/keyrings/omaxian-archive-keyring.pgp).
+# Enabled by default since omaxian-base 0.1.7. To turn it off set "Enabled: no"
+# (dpkg then keeps your choice on upgrades).
+Enabled: yes
 Types: deb
 URIs: https://apt.omaxian.org
 Suites: excalibur
