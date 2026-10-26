@@ -7,6 +7,8 @@
 #  - drops the offline optional pool of the full ISO from the target.
 #  - makes sure optional-flatpaks.list (Flatpak groups picked, Telegram)
 #    exists, so omaxian-firstboot can tell "none picked" from "no record";
+#  - same for optional-appimages.list (Extra apps picked; downloaded by
+#    omaxian-firstboot once online);
 # Packages listed in /etc/calamares/omaxian-offline-only.list (live system;
 # full ISO only: VoxType, not in the Devuan/Omaxian archives) are never left
 # pending: omaxian-firstboot could not install them and would retry forever.
@@ -21,13 +23,16 @@ def pretty_name():
 # group entries that only record an optional Flatpak (scripts/gen-netinstall.sh):
 # "flatpak" + post-install omaxian-optional-flatpak; not an optional package
 FLATPAK_MARK = "omaxian-optional-flatpak"
+# same for the optional AppImages ("Extra apps"): "curl" + omaxian-optional-appimage
+APPIMAGE_MARK = "omaxian-optional-appimage"
+MARKS = (FLATPAK_MARK, APPIMAGE_MARK)
 
 def _names(ops):
     out = []
     for op in ops or []:
         for key in ("install", "try_install"):
             for p in op.get(key, []) or []:
-                if not isinstance(p, str) and FLATPAK_MARK in (p.get("post-script") or ""):
+                if not isinstance(p, str) and any(m in (p.get("post-script") or "") for m in MARKS):
                     continue
                 name = p if isinstance(p, str) else (p.get("package") or p.get("name"))
                 if name and name not in out:
@@ -67,6 +72,8 @@ def run():
     # during the packages module; make sure the record exists (even if empty)
     # so omaxian-firstboot knows the pick was made (full ISO: removes the others)
     open(os.path.join(state, "optional-flatpaks.list"), "a").close()
+    # optional AppImages: same, recorded by omaxian-optional-appimage
+    open(os.path.join(state, "optional-appimages.list"), "a").close()
     with open(os.path.join(state, "optional-packages.list"), "w") as f:
         f.write("".join(p + "\n" for p in wanted))
     with open(os.path.join(state, "optional-pending.list"), "w") as f:

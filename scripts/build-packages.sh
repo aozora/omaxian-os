@@ -88,7 +88,8 @@ prep_omaxian-firstboot() {
 		"$1/files/usr/share/omaxian/optional-flatpaks.list"
 }
 prep_omaxian-calamares-settings() {
-	bash "$TOPDIR/scripts/gen-netinstall.sh" "$TOPDIR/config/optional-groups.list" "$1/files/etc/calamares/modules/netinstall.conf"
+	bash "$TOPDIR/scripts/gen-netinstall.sh" "$TOPDIR/config/optional-groups.list" "$1/files/etc/calamares/modules/netinstall.conf" \
+		--appimages "$TOPDIR/config/appimages.manifest"
 }
 prep_omaxian-voxtype() { # integration only; the upstream .deb is fetched by build-rootfs (full)
 	local v; v=$(sed -n '1s/.*(\([^-)]*\).*/\1/p' "$1/debian/changelog")
