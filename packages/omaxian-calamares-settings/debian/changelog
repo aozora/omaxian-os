@@ -1,3 +1,11 @@
+omaxian-calamares-settings (0.2.9) excalibur; urgency=medium
+
+  * omaxianoptional: packages in /etc/calamares/omaxian-offline-only.list
+    (full ISO: VoxType, not in any archive) are never left pending for
+    omaxian-firstboot, which could not install them.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 12:30:00 +0100
+
 omaxian-calamares-settings (0.2.8) excalibur; urgency=medium
 
   * postrm: apt purge runs postrm remove then purge; the second run deleted

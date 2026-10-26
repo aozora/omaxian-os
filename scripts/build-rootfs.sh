@@ -248,6 +248,11 @@ s_full_from_base() {
 	local n; n=$(find "$R/usr/share/omaxian/payload/appimages" -maxdepth 1 -iname '*.AppImage' | wc -l)
 	[ "$n" -gt 0 ] || warn "payload/appimages is empty: the full ISO will have no offline AppImages"
 	s_optional_pool
+	# 7th Calamares group, full ISO only (offline pool): VoxType. Not offered
+	# on the base ISO at all (it is not in any online archive).
+	bash "$TOPDIR/scripts/gen-netinstall.sh" "$TOPDIR/config/optional-groups.list" \
+		"$R/etc/calamares/modules/netinstall.conf" "$TOPDIR/config/optional-groups-full.list"
+	full_only_pkgs | tr ' ' '\n' | sed '/^$/d' > "$R/etc/calamares/omaxian-offline-only.list"
 	# marker for omaxian-firstboot: this system ships everything offline, so
 	# first boot is complete without network once nothing is missing
 	mkdir -p "$R/var/lib/omaxian"; date -Is > "$R/var/lib/omaxian/full-offline"
@@ -255,10 +260,17 @@ s_full_from_base() {
 	CH dpkg-query -W -f '${Package}\t${Version}\n' > "$OUTDIR/omaxian-$FLAVOR.packages"
 }
 
+full_only_pkgs() { grep -vE '^\s*(#|$)' "$TOPDIR/config/optional-groups-full.list" | cut -d'|' -f5 | tr '\n' ' '; }
 s_optional_pool() { # full ISO: the netinstall groups as an offline apt pool
-	local pool=/var/cache/omaxian/optional-pool pk
+	local pool=/var/cache/omaxian/optional-pool pk vx
 	pk=$(grep -vE '^\s*(#|$)' "$TOPDIR/config/optional-groups.list" | cut -d'|' -f5 | tr '\n' ' ')
 	mkdir -p "$R$pool"
+	# full-only group: the pinned, signature-verified upstream VoxType .deb +
+	# our integration package (neither is in an archive)
+	"$TOPDIR/scripts/fetch-voxtype.sh" "$R$pool"
+	vx=$(ls "$OUTDIR"/debs/omaxian-voxtype_*_all.deb 2>/dev/null | tail -1)
+	[ -n "$vx" ] || die "out/debs/omaxian-voxtype_*.deb missing: run scripts/build-packages.sh"
+	cp "$vx" "$R$pool/"
 	cat > "$R/etc/apt/sources.list.d/omaxian-build-pool.sources" <<EOS
 Types: deb
 URIs: $BUILD_MIRROR
@@ -275,6 +287,10 @@ EOS
 	# everything the groups need on top of the base system (the base already
 	# has the rest): download only, into the pool
 	CH apt-get "${O[@]}" -y --download-only -o Dir::Cache::archives="$pool" install $pk
+	# archive dependencies of the two local debs (xclip, libnotify-bin, ...);
+	# no Recommends: wtype / wl-clipboard are Wayland-only
+	CH apt-get "${O[@]}" -y --download-only --no-install-recommends -o Dir::Cache::archives="$pool" install \
+		$(cd "$R" && ls ."$pool"/voxtype_*.deb ."$pool"/omaxian-voxtype_*.deb | sed 's|^\.||')
 	# Calamares' packages module purges the live packages and autoremoves their
 	# dependencies BEFORE it installs the picked groups; group dependencies that
 	# only the live packages pulled in (krita: libxcb-res0, libqt6core5compat6)
@@ -287,8 +303,19 @@ EOS
 	msg "optional pool: live-only dependencies added: ${extra:-none}"
 	[ -z "$extra" ] || CH sh -c "cd $pool && apt-get ${O[*]} download $extra"
 	rm -rf "$R$pool/partial" "$R$pool/lock"
-	cp -n "$R$pool"/*.deb "$BUILDDIR/dl/optional-pool/" 2>/dev/null || true
+	local f; for f in "$R$pool"/*.deb; do # not the local debs (own cache / out/debs)
+		case "${f##*/}" in voxtype_*|omaxian-voxtype_*) ;; *) cp -n "$f" "$BUILDDIR/dl/optional-pool/";; esac
+	done
 	CH sh -c "cd $pool && apt-ftparchive packages . > Packages"
+	# offline sanity: every group (incl. the full-only one) resolves from the
+	# pool + what is already installed, with no other source
+	echo "deb [trusted=yes] file:$pool ./" > "$R/etc/apt/sources.list.d/omaxian-pool-check.list"
+	local P=(-o Dir::Etc::sourcelist=sources.list.d/omaxian-pool-check.list -o Dir::Etc::sourceparts=-)
+	CH apt-get "${P[@]}" update >/dev/null
+	CH apt-get "${P[@]}" -s install $pk $(full_only_pkgs) > "$BUILDDIR/optional-pool-check.log" 2>&1 \
+		|| { cat "$BUILDDIR/optional-pool-check.log"; die "optional pool does not resolve offline"; }
+	msg "optional pool: offline resolve OK ($(grep -c '^Inst ' "$BUILDDIR/optional-pool-check.log") to install)"
+	rm -f "$R/etc/apt/sources.list.d/omaxian-pool-check.list"
 	rm -f "$R/etc/apt/sources.list.d/omaxian-build-pool.sources"; rm -rf "$R"/var/lib/apt/lists/*
 	msg "optional pool: $(ls "$R$pool"/*.deb | wc -l) debs, $(du -sh "$R$pool" | cut -f1)"
 }

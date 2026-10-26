@@ -300,3 +300,27 @@ Decision (owner, 05:49): on the FULL ISO, omaxian-firstboot writes firstboot.don
 | Boot to greeter/desktop UEFI with no network | PASS |
 
 Round 8 verdict: all checks PASS. Open issues: ACPI power button (xfpm action "Ask" under i3; proposed fix power-button-action=4, not in these ISOs); omaxian-session not byte-reproducible at the same version; stale out/omaxian-base-0.1.0-dev-amd64.iso.sha256; optional-pool extra-deps list (91) is a superset; out/*.sha256 and build stamps root-owned; cosmetic: bwrap trigger messages in flatpak install, udev alsa GOTO warning, changelog dates. Test scripts saved to tools/diag/.
+
+## Round 10 (Mon 26 Oct 2026, CET): VoxType option B (7th optional group, full ISO only), rebuild both ISOs
+- Build chain tools/diag/r10-chain.sh: base rootfs 12:12, base ISO 12:13, full rootfs 12:16, full ISO 12:19 (ALLDONE 12:19:35).
+- Full build log: `voxtype_1.1.1-1_amd64.deb sha256 OK (1d4767ca…57ed3c), signature OK (9CCF7915B750CAE8B095ED1AA3FC9F33FD209279), binaries match signed SHA256SUMS.txt`; `optional pool: offline resolve OK (330 to install)`; `optional pool: 421 debs, 1000M`.
+
+| ISO | Size (bytes) | sha256 |
+|---|---|---|
+| out/omaxian-base-0.1-trans-siberian-shaman-amd64.iso | 2,461,612,032 | f1f330229736db43e58a6117590ac2c054331acd86e15923bd35c365f3ede0f0 |
+| out/omaxian-full-0.1-trans-siberian-shaman-amd64.iso | 9,939,206,144 | 7236036c36527c7ef986820cc64832627c6315f0e1e963ce8540c9faa9d25fc4 |
+
+The .sha256 files next to them are written by the build and checked against an independent sha256sum (match). The stale out/omaxian-base-0.1.0-dev-amd64.iso.sha256 has been removed.
+
+### Round 10 live boots (untouched default GRUB entry, `-nic none`, TCG)
+| Boot | Desktop | fc-match monospace | power-button-action / xfpm | netinstall groups | ACPI system_powerdown |
+|---|---|---|---|---|---|
+| base UEFI (lbu) | PASS 12:20 | JetBrainsMono Nerd Font Mono | 4 / running | 6, no offline-only list | PASS (shutdown → live-boot eject prompt → Enter → VM off) |
+| base BIOS (lbb) | PASS 12:25 | JetBrainsMono Nerd Font Mono | 4 / running | 6, no offline-only list, no voxtype pkg | PASS (same) |
+| full UEFI (i10 live) | PASS 12:25 | JetBrainsMono Nerd Font Mono | 4 / running | 7, VoxType `selected: false`, offline-only = voxtype omaxian-voxtype, both debs in pool | (the installed system was tested instead) |
+| full BIOS (lfb) | PASS 12:31 | JetBrainsMono Nerd Font Mono | 4 / running | 7, VoxType `selected: false` | PASS (same) |
+
+### Round 10 offline install (full ISO, UEFI, `-nic none`, 40 GB virtio, keyboard only), VM i10
+- Same live tweak as rounds 7/8 (test only): partition.conf erase default. Location Europe/Rome, American English for both language and formats (shots/i10-04-location.png, i10-10-summary.png).
+- Users: Tester / tester / tester-standardpc, throwaway password. Applications: VoxType unchecked by default (shots/i10-09-apps.png), checked by keyboard, so all 7 groups are checked (i10-09b-apps.png).
+- 12:29:29 install started. 12:47 at 76% "Install packages" (offline pool).

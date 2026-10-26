@@ -1,0 +1,2 @@
+# Omaxian OS (omaxian-voxtype): seed the VoxType i3 keybinding once per user
+[ -x /usr/libexec/omaxian/voxtype-seed-i3 ] && /usr/libexec/omaxian/voxtype-seed-i3 >/dev/null 2>&1 || true

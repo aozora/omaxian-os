@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+# the upstream wrapper runs the AVX2 build on CPUs without AVX2 (SIGILL):
+# divert it, ours picks avx512 / avx2 / baseline
+if [ "$1" = install ] || [ "$1" = upgrade ]; then
+	dpkg-divert --package omaxian-voxtype --add --rename \
+		--divert /usr/bin/voxtype.upstream /usr/bin/voxtype >/dev/null
+fi
+#DEBHELPER#
+exit 0

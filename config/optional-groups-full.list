@@ -1,0 +1,8 @@
+# Optional groups offered by Calamares on the FULL ISO only (offline pool).
+# Same format as optional-groups.list; appended to netinstall.conf by the full
+# rootfs build. Packages listed here are not in the Devuan archive: when one
+# could not be installed it is NOT left pending for omaxian-firstboot (see
+# /etc/calamares/omaxian-offline-only.list in the full live image).
+#  voxtype + omaxian-voxtype: upstream .deb (pinned, signature-verified by
+#  scripts/fetch-voxtype.sh) + Omaxian's X11/sysvinit integration.
+voice-voxtype|Voice dictation (VoxType)|Offline speech-to-text (Whisper); Super+Ctrl+V dictates to the clipboard. Speech model downloaded on first use (needs internet). Large: ~690 MB installed|false|voxtype omaxian-voxtype

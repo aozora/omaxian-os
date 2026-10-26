@@ -30,6 +30,8 @@ ask-passphrase
 EOD
 sed -i '/ask-passphrase/d' "$LOCALREPO/conf/options"
 for deb in "$OUTDIR"/debs/*.deb; do
+	# full-ISO-only (needs the upstream voxtype .deb from the offline pool)
+	case "${deb##*/}" in omaxian-voxtype_*) continue;; esac
 	reprepro -b "$LOCALREPO" includedeb "$OMAXIAN_APT_SUITE" "$deb"
 done
 reprepro -b "$LOCALREPO" export "$OMAXIAN_APT_SUITE"

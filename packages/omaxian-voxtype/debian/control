@@ -1,0 +1,22 @@
+Source: omaxian-voxtype
+Section: sound
+Priority: optional
+Maintainer: Omaxian OS <dev@omaxian.org>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://voxtype.io/
+Rules-Requires-Root: no
+
+Package: omaxian-voxtype
+Architecture: all
+Depends: voxtype (>= 1.1.1), xclip, libnotify-bin, procps, ${misc:Depends}
+Description: Omaxian integration for VoxType voice dictation (X11/i3, sysvinit)
+ Makes the unmodified upstream VoxType package usable on Omaxian OS (Devuan,
+ sysvinit, X11/i3):
+  * /usr/bin/voxtype picks the AVX-512, AVX2 or baseline CPU build (the
+    upstream wrapper runs the AVX2 build on CPUs without AVX2); the upstream
+    wrapper is diverted to /usr/bin/voxtype.upstream;
+  * omaxian-voxtype-toggle starts the per-user daemon without systemd and
+    toggles recording; text goes to the X11 clipboard via xclip;
+  * an i3 keybinding (Super+Ctrl+V), seeded once per user.
+ The user is NOT added to the "input" group (the evdev hotkey stays off).

@@ -18,8 +18,9 @@ keys:
 	@test -e keys/public/omaxian-archive-keyring.pgp || bash scripts/gen-test-key.sh
 fetch:
 	bash scripts/fetch-omaxian.sh
-	bash scripts/fetch-strata.sh
+	bash scripts/fetch-strata.sh build/pkg/.fetch-strata
 	bash scripts/fetch-nerd-fonts.sh build/pkg/.fetch-nerd-fonts
+	bash scripts/fetch-voxtype.sh
 packages: fetch
 	bash scripts/build-packages.sh
 repo: keys packages

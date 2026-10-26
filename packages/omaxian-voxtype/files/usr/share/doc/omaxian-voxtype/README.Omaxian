@@ -1,0 +1,14 @@
+VoxType on Omaxian OS
+=====================
+1. Press Super+Ctrl+V. The first time, a terminal opens and asks you to pick
+   a speech model (`voxtype setup model`, needs internet; base.en ~142 MB,
+   tiny.en ~75 MB). No model is shipped on the ISO.
+2. Press Super+Ctrl+V to start recording, again to stop: the text is put on
+   the X11 clipboard (xclip). Paste it with Ctrl+V (Shift+Insert / middle
+   click in terminals).
+The daemon runs per user, started on demand (no systemd, so the upstream
+systemd user unit is unused). Its evdev hotkey is off, so you do NOT need the
+"input" group (that group can read every keystroke). If you want typing at
+the cursor instead of the clipboard, install ydotool (trixie-backports; needs
+a root uinput daemon) and set [output] mode in ~/.config/voxtype/config.toml.
+Disable the keybinding: delete ~/.config/i3/config.d/60-voxtype.conf.

@@ -64,4 +64,7 @@ setup 0; rm $T/var/lib/omaxian/full-offline; run >/dev/null
 # 10 full ISO but online: normal online path (updates), no offline shortcut
 setup 1; run >/dev/null
 ! log | grep -q "everything installed offline" && ok "full online: normal online path" || { bad "online"; log; }; rm -rf $T
+# 11 all 7 groups incl. VoxType (full-only, installed from the pool): done offline
+setup 0; printf 'krita\npodman\nvoxtype\nomaxian-voxtype\n' > $T/var/lib/omaxian/optional-packages.list; run --boot >/dev/null
+done_ && log | grep -q "everything installed offline" && ok "VoxType group installed offline: done" || { bad "voxtype done"; log; }; rm -rf $T
 echo "$pass passed, $fail failed"; [ $fail = 0 ]

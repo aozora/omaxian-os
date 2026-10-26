@@ -1,0 +1,7 @@
+omaxian-voxtype (1.1.1-1) excalibur; urgency=medium
+
+  * Initial release: CPU-adaptive /usr/bin/voxtype (diverts the upstream
+    wrapper), sysvinit-friendly daemon start + record toggle, X11 clipboard
+    output via xclip, i3 keybinding Super+Ctrl+V seeded once per user.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 12:10:00 +0100

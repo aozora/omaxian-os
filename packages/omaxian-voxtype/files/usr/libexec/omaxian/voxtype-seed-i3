@@ -1,0 +1,14 @@
+#!/bin/sh
+# Omaxian OS: once per user, add the VoxType i3 keybinding (delete the file
+# to drop it; it is not re-created).
+[ "$(id -u)" = 0 ] && exit 0
+S="${XDG_STATE_HOME:-$HOME/.local/state}/omaxian"; D="$HOME/.config/i3/config.d"
+[ -e "$S/voxtype-i3-seeded" ] && exit 0
+[ -d "$D" ] || exit 0
+mkdir -p "$S"
+[ -e "$D/60-voxtype.conf" ] || cat > "$D/60-voxtype.conf" <<'C'
+# VoxType voice dictation (package omaxian-voxtype): Super+Ctrl+V starts /
+# stops recording; the text lands in the clipboard (paste with Ctrl+V).
+bindsym Mod4+Ctrl+v exec --no-startup-id /usr/bin/omaxian-voxtype-toggle
+C
+date -Is > "$S/voxtype-i3-seeded"

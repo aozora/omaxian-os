@@ -4,8 +4,10 @@
 /payload/openra/*
 /payload/*.tar
 /payload/fonts/*
+/payload/voxtype/*
 !/payload/**/.gitkeep
 /repo-local/
 /keys/
 *.iso
 *.squashfs
+__pycache__/

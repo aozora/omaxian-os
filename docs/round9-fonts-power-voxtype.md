@@ -36,6 +36,8 @@ ISOs were **not** rebuilt in this round. Only the packages were rebuilt (`omaxia
 
 ## VoxType (optional): not added; options for a decision
 
+> **Decided 26 Oct 2026: option B**, implemented in round 10 (see docs/voxtype.md). Current upstream is 1.1.1; Devuan excalibur's glibc 2.41 satisfies its glibc >= 2.39 requirement.
+
 Findings (v0.6.x, voxtype.io / GitHub releases):
 
 - **Upstream .deb:** 376 MB download, 687 MB installed (it bundles every backend, CUDA included). It needs glibc ≥ 2.39,

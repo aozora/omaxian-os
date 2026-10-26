@@ -5,7 +5,7 @@
 # never lands in the git tree.
 . "$(dirname "$0")/lib.sh"
 need dpkg-buildpackage dh rsvg-convert grub-mkfont python3 curl jq
-ALL="omaxian-base omaxian-branding omaxian-fonts-nerd omaxian-session omaxian-strata omaxian-firstboot omaxian-calamares-settings"
+ALL="omaxian-base omaxian-branding omaxian-fonts-nerd omaxian-session omaxian-strata omaxian-firstboot omaxian-calamares-settings omaxian-voxtype"
 PKGS=${*:-$ALL}
 STAGE="$BUILDDIR/pkg"; DEBS="$OUTDIR/debs"; mkdir -p "$STAGE" "$DEBS"
 OMX="$BUILDDIR/src/omaxian"
@@ -85,6 +85,10 @@ prep_omaxian-firstboot() {
 }
 prep_omaxian-calamares-settings() {
 	bash "$TOPDIR/scripts/gen-netinstall.sh" "$TOPDIR/config/optional-groups.list" "$1/files/etc/calamares/modules/netinstall.conf"
+}
+prep_omaxian-voxtype() { # integration only; the upstream .deb is fetched by build-rootfs (full)
+	local v; v=$(sed -n '1s/.*(\([^-)]*\).*/\1/p' "$1/debian/changelog")
+	[ "$v" = "$VOXTYPE_VERSION" ] || die "omaxian-voxtype changelog ($v) != VOXTYPE_VERSION ($VOXTYPE_VERSION)"
 }
 
 for p in $PKGS; do

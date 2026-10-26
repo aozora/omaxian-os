@@ -1,0 +1,11 @@
+#!/bin/sh
+# Omaxian OS: CPU-adaptive VoxType launcher (replaces the diverted upstream
+# wrapper, /usr/bin/voxtype.upstream, which assumes AVX2 on every x86_64 CPU).
+L="${VOXTYPE_LIB:-/usr/lib/voxtype}"
+if [ "${VOXTYPE_GPU:-}" = 1 ] && [ -x "$L/voxtype-vulkan" ]; then exec "$L/voxtype-vulkan" "$@"; fi
+flags=$(grep -m1 '^flags' "${OMAXIAN_CPUINFO:-/proc/cpuinfo}" 2>/dev/null)
+has() { case " $flags " in *" $1 "*) return 0;; esac; return 1; }
+if has avx512f && [ -x "$L/voxtype-avx512" ]; then exec "$L/voxtype-avx512" "$@"; fi
+if has avx2 && has fma && [ -x "$L/voxtype-avx2" ]; then exec "$L/voxtype-avx2" "$@"; fi
+if [ -x "$L/voxtype-baseline" ]; then exec "$L/voxtype-baseline" "$@"; fi
+exec /usr/bin/voxtype.upstream "$@"

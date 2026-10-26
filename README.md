@@ -15,7 +15,7 @@ Two images are made:
 | ISO | Contents |
 |---|---|
 | `omaxian-base-0.1-trans-siberian-shaman-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Telegram, Containers, Virtualization) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot |
-| `omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | same plus an offline pool for the optional groups, Flatpaks preinstalled and `payload/` (AppImages, OpenRA content) bundled for offline install |
+| `omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | same plus an offline pool for the optional groups and a 7th, unselected group **Voice dictation (VoxType)** (full ISO only, docs/voxtype.md), Flatpaks preinstalled and `payload/` (AppImages, OpenRA content) bundled for offline install |
 
 The live image has no man pages/docs and only en/it translations (dpkg
 path-excludes, live only); installed systems get the normal dpkg policy back,
@@ -44,7 +44,7 @@ scripts/           fetch-*, build-packages, make-repo (reprepro), build-rootfs,
 tools/             qmon.py (QEMU monitor: screenshots/keys), prefetch-debs.sh, devuan-redirect-proxy.py
 payload/           (git-ignored) appimages/*.AppImage, openra/{Content,maps}
 ci/github/         GitHub Actions sketch
-docs/              signing-key.md, missing-packages.md, netinstall-TODO.md
+docs/              signing-key.md, missing-packages.md, netinstall-TODO.md, voxtype.md
 ```
 
 ## Build

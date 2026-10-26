@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+case "$1" in
+remove|abort-install|disappear)
+	if [ "$(dpkg-divert --listpackage /usr/bin/voxtype 2>/dev/null)" = omaxian-voxtype ]; then
+		dpkg-divert --package omaxian-voxtype --remove --rename \
+			--divert /usr/bin/voxtype.upstream /usr/bin/voxtype >/dev/null
+	fi ;;
+esac
+#DEBHELPER#
+exit 0
