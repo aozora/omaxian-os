@@ -352,3 +352,43 @@ The .sha256 files next to them are written by the build and checked against an i
 | Fonts / power | fc-match monospace → JetBrainsMono Nerd Font Mono; power-button-action is 3 (package default) in /etc/xdg and 4 per user (seeded only if unset, as in round 9): PASS |
 
 inspect.sh fix: a stale FUSE export (`Transport endpoint is not connected`) stopped `umount` from removing build/i10.raw. umount now checks /proc/mounts.
+
+### Round 10b: final full ISO (13:25 CET, omaxian-voxtype 1.1.1-2)
+- Rebuild: tools/diag/r10b-full.sh. Only the `full` stage and the full ISO were rebuilt (rootfs 13:19–13:22, ISO 13:22–13:25). The base rootfs (stamps 12:12) and the base ISO (12:13) are untouched.
+- The base ISO doesn't need a rebuild: omaxian-base.packages has no voxtype at all. omaxian-voxtype exists only in the full ISO's optional pool, and the base ISO has no pool.
+- Changes beyond voxtype 1.1.1-2: none found.
+  - The full dpkg set and versions are identical to base (the full rootfs is a copy of base).
+  - Flatpaks: the same 8 apps; Zoom has the same commit, 1323ee65…319c, as the installed i10 system. The other 7 Flatpak commits weren't compared because the i10 disk was already deleted.
+  - 17 AppImages.
+  - The pool is again 421 debs / 1000M with 330 resolving offline, and voxtype_1.1.1-1 has the same sha256 and signature (OK).
+  - So the full install was not redone.
+- Guard check: omaxian-voxtype_1.1.1-2 taken from the rebuilt pool, run with x86-64-v1 cpuinfo, gives the message and exit 132: PASS.
+
+| Live boot of final full ISO (`-nic none`, TCG) | Desktop | fc-match monospace | power-button-action | netinstall groups | pool voxtype | ACPI system_powerdown |
+|---|---|---|---|---|---|---|
+| UEFI (lfu) | PASS | JetBrainsMono Nerd Font Mono | 4 | 7 | omaxian-voxtype_1.1.1-2 + voxtype_1.1.1-1 | live-boot prompt, Enter → off: PASS |
+| BIOS (lfb) | PASS | JetBrainsMono Nerd Font Mono | 4 | 7 | omaxian-voxtype_1.1.1-2 + voxtype_1.1.1-1 | live-boot prompt, Enter → off: PASS |
+
+Final ISOs (`sha256sum -c` on both .sha256 files: OK):
+
+| ISO | Size (bytes) | sha256 |
+|---|---|---|
+| out/omaxian-base-0.1-trans-siberian-shaman-amd64.iso (12:13) | 2,461,612,032 | f1f330229736db43e58a6117590ac2c054331acd86e15923bd35c365f3ede0f0 |
+| out/omaxian-full-0.1-trans-siberian-shaman-amd64.iso (13:25) | 9,939,206,144 | aa8b3f46c1b95d667bdf17ffefecc57b949430c03c00ca70b564baafd8cf29ea |
+
+The 12:19 full ISO (7236036c…) has been replaced. The round 10 install results above were taken from it; the only difference is the voxtype wrapper.
+
+Round 10 verdict: all checks PASS. `voxtype --version` passes on an x86-64-v2+ CPU, and pre-v2 CPUs now get a clean refusal instead of SIGILL.
+Test disks and VM files deleted. Nothing uploaded, R2 not touched.
+
+Open issues:
+- The VoxType signing key is trust-on-first-use.
+- A speech model needs internet on first use.
+- The VoxType daemon isn't stopped at logout.
+- VoxType needs x86-64-v2.
+- Per-user fonts are duplicated.
+- Greeter font.
+- omaxian-branding/omaxian-session are not byte-reproducible.
+- Online installs may pull in wtype/wl-clipboard.
+- An offline full install takes about 36 min under TCG.
+- Also removed a stale round-8 FUSE export, build/i8.raw (no daemon behind it).
