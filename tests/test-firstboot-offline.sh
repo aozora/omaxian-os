@@ -12,7 +12,7 @@ setup() { # setup <online 0|1>
 	mkdir -p $T/var/log $T/var/lib/omaxian $T/usr/share/omaxian/payload/appimages $T/bin $T/etc/apt
 	printf 'deb http://deb.example/merged excalibur main\n' > $T/etc/apt/sources.list
 	printf '# comment\napp.One\nio.podman_desktop.PodmanDesktop\nus.zoom.Zoom\n' > $T/usr/share/omaxian/flatpaks.list
-	printf 'alpha\t*alpha*\tgithub\tx/alpha|re\nbeta\t*beta*\tpayload\t-\n' > $T/usr/share/omaxian/appimages.manifest
+	printf 'alpha\t*alpha*\tgithub\tx/alpha|re\nbeta\t*beta*\tpayload\t-\nextra\t-\turl\thttps://x.example/Extra.AppImage\toptional\t-\tExtra: an extra app\n' > $T/usr/share/omaxian/appimages.manifest
 	touch $T/usr/share/omaxian/payload/appimages/Alpha-1.AppImage $T/usr/share/omaxian/payload/appimages/beta.appimage
 	printf 'app.One\nio.podman_desktop.PodmanDesktop\nus.zoom.Zoom\norg.telegram.desktop\n' > $T/flatpaks-installed
 	printf '# generated\nchat-telegram|org.telegram.desktop\n' > $T/usr/share/omaxian/optional-flatpaks.list
@@ -108,4 +108,18 @@ setup 1; rm $T/var/lib/omaxian/full-offline; : > $T/$FPS; sed -i '/telegram/d' $
 # 18 no record (not installed by Calamares): group default (picked) -> kept
 setup 0; run >/dev/null
 done_ && grep -qx org.telegram.desktop $T/flatpaks-installed && ok "no pick record: Telegram kept (group default)" || { bad "no record"; log; }; rm -rf $T
+# Extra apps = optional AppImages (manifest class "optional"): never bundled
+AIS=var/lib/omaxian/optional-appimages.list
+# 19 full ISO, extra AppImage not picked (empty record): done offline
+setup 0; : > $T/$AIS; run --boot >/dev/null
+done_ && ok "full ISO, extra AppImage not picked: done offline" || { bad "extra not picked"; log; }; rm -rf $T
+# 20 full ISO, extra AppImage picked, not downloaded yet: pending, not done, retried
+setup 0; echo extra > $T/$AIS; run --now >/dev/null
+! done_ && log | grep -q "extra AppImage extra picked, download pending" && log | grep -q "offline: will retry" && ok "full ISO, extra AppImage picked: pending offline, not done" || { bad "extra picked offline"; log; }; rm -rf $T
+# 21 full ISO, extra AppImage picked and already in the cache: done
+setup 0; echo extra > $T/$AIS; mkdir -p $T/var/lib/omaxian/appimages/extra; touch $T/var/lib/omaxian/appimages/extra/Extra.AppImage; run >/dev/null
+done_ && ok "full ISO, extra AppImage picked and downloaded: done" || { bad "extra cached"; log; }; rm -rf $T
+# 22 a bundled-glob file in the payload does not satisfy a picked extra app
+setup 0; echo extra > $T/$AIS; touch $T/usr/share/omaxian/payload/appimages/extra.AppImage; run >/dev/null
+! done_ && ok "payload copy is ignored for extra apps (cache only)" || { bad "extra payload"; log; }; rm -rf $T
 echo "$pass passed, $fail failed"; [ $fail = 0 ]

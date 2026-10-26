@@ -1,9 +1,13 @@
 #!/bin/bash
-# Download the latest upstream AppImages listed in the Omaxian manifest.
-#   omaxian-appimage-fetch <destdir> [--list]
+# Download the upstream AppImages listed in the Omaxian manifest.
+#   omaxian-appimage-fetch <destdir>
 # Rows with method "payload" have no known upstream URL and are only reported.
+# Rows of class "optional" are fetched only when picked in the installer
+# (one id per line in OMAXIAN_OPTIONAL_APPIMAGES, written by
+# omaxian-optional-appimage). A sha256 column other than "-" must match.
 set -uo pipefail
 MANIFEST=${OMAXIAN_APPIMAGE_MANIFEST:-/usr/share/omaxian/appimages.manifest}
+PICKED=${OMAXIAN_OPTIONAL_APPIMAGES:-/var/lib/omaxian/optional-appimages.list}
 DEST=${1:?destdir}; mkdir -p "$DEST"
 UA="Omaxian-OS-firstboot"
 fail=0
@@ -19,8 +23,10 @@ resolve() { # method source -> URL on stdout
 	*)     return 1 ;;
 	esac
 }
-while IFS=$'\t' read -r id glob method source; do
+picked() { [ -f "$PICKED" ] && grep -qx "$1" "$PICKED"; }
+while IFS=$'\t' read -r id glob method source class sha label; do
 	[[ -z $id || $id == \#* ]] && continue
+	if [ "${class:-bundled}" = optional ] && ! picked "$id"; then continue; fi
 	if [ "$method" = payload ]; then echo "?? $id: no upstream URL known (bundled copy only)"; continue; fi
 	url=$(resolve "$method" "$source") || url=""
 	if [ -z "$url" ] || [ "$url" = null ]; then echo "!! $id: could not resolve download URL"; fail=1; continue; fi
@@ -29,6 +35,9 @@ while IFS=$'\t' read -r id glob method source; do
 	if [ -s "$DEST/$id/$name" ]; then echo "== $id: $name already cached"; continue; fi
 	mkdir -p "$DEST/$id"
 	if curl -fL --retry 3 -A "$UA" -o "$DEST/$id/$name.part" "$url"; then
+		if [ -n "${sha:-}" ] && [ "$sha" != - ] && ! echo "$sha  $DEST/$id/$name.part" | sha256sum -c --status; then
+			rm -f "$DEST/$id/$name.part"; echo "!! $id: sha256 mismatch ($url)"; fail=1; continue
+		fi
 		mv "$DEST/$id/$name.part" "$DEST/$id/$name"; chmod 0755 "$DEST/$id/$name"
 		find "$DEST/$id" -maxdepth 1 -type f ! -name "$name" -delete
 		echo "ok $id: $name"

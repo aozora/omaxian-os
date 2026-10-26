@@ -1,3 +1,19 @@
+omaxian-firstboot (0.2.5) excalibur; urgency=medium
+
+  * Extra apps: optional AppImages (appimages.manifest class "optional",
+    never bundled in an ISO): Cursor, Grok Bot, Rebased, RustDesk,
+    Shotcut, Teams for Linux. New omaxian-optional-appimage records each
+    Calamares pick in /var/lib/omaxian/optional-appimages.list;
+    omaxian-appimage-fetch downloads only the picked ones (into the cache,
+    sha256-verified where the manifest pins one) and
+    omaxian-user-firstrun copies them to ~/AppImages.
+  * Full ISO: a picked extra app that is not downloaded yet is pending,
+    so firstboot.done is not written offline and firstboot retries until
+    the machine is online. Nothing picked: done offline as before.
+  * OpenSpot dropped from the AppImage set.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 22:10:00 +0100
+
 omaxian-firstboot (0.2.4) excalibur; urgency=medium
 
   * Optional groups shipped as Flatpaks (Telegram: org.telegram.desktop,

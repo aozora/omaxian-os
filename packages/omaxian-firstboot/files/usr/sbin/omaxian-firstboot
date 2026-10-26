@@ -39,11 +39,18 @@ PENDING=$STATE/optional-pending.list
 OPT_FLATPAKS=$FB/usr/share/omaxian/optional-flatpaks.list
 FP_SELECTED=$STATE/optional-flatpaks.list
 need_apt() { [ -s "$PENDING" ]; }
+# Optional AppImages ("Extra apps", class "optional" in the manifest): the
+# installer records the picked ids (omaxian-optional-appimage); never bundled,
+# downloaded by omaxian-appimage-fetch once online.
+AI_SELECTED=$STATE/optional-appimages.list
+export OMAXIAN_OPTIONAL_APPIMAGES=$AI_SELECTED OMAXIAN_APPIMAGE_MANIFEST=$MANIFEST
+appimage_picked() { [ -f "$AI_SELECTED" ] && grep -qx "$1" "$AI_SELECTED"; }
 
 installed() { [ "$(dpkg-query -W -f '${db:Status-Status}' "$1" 2>/dev/null)" = installed ]; }
 # Full ISO: done offline once nothing is missing (no pending optional packages,
-# every Flatpak of the list present, every AppImage of the manifest available
-# from the cache or the payload). Updates are left to the normal updater.
+# every Flatpak of the list present, every bundled AppImage of the manifest
+# available from the cache or the payload, every picked extra AppImage already
+# downloaded). A picked extra AppImage keeps it pending: retried until online. Updates are left to the normal updater.
 opt_flatpaks() { grep -vE '^\s*(#|$)' "$OPT_FLATPAKS" 2>/dev/null | cut -d'|' -f2 | grep .; }
 # picked in the installer; no record at all (not installed by Calamares):
 # the groups' default (selected)
@@ -75,8 +82,15 @@ full_offline_complete() {
 	command -v flatpak >/dev/null || { echo "full ISO: flatpak missing"; return 1; }
 	while read -r a; do flatpak info --system "$a" >/dev/null 2>&1 || { echo "full ISO: flatpak $a missing"; ok=1; }; done < <(flatpak_wanted)
 	shopt -s nullglob nocaseglob
-	while IFS=$'\t' read -r id glob rest; do
+	while IFS=$'\t' read -r id glob method source class rest; do
 		[[ -z $id || $id == \#* ]] && continue
+		if [ "${class:-bundled}" = optional ]; then
+			# extra apps: never in the image; a picked one is pending until downloaded
+			appimage_picked "$id" || continue
+			f=( "$CACHE/$id"/*.AppImage )
+			[ ${#f[@]} -gt 0 ] || { echo "full ISO: extra AppImage $id picked, download pending (needs network)"; ok=1; }
+			continue
+		fi
 		f=( "$CACHE/$id"/*.AppImage $PAYLOAD/appimages/$glob )
 		[ ${#f[@]} -gt 0 ] || { echo "full ISO: AppImage $id missing"; ok=1; }
 	done < "$MANIFEST"

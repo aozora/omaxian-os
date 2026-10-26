@@ -1,6 +1,7 @@
 #!/bin/bash
 # Per-user first run (from /etc/X11/Xsession.d/36omaxian-user-firstrun, in background):
-#  - AppImages: copy into ~/AppImages and integrate with Gear Lever.
+#  - AppImages: copy into ~/AppImages and integrate with Gear Lever (the
+#    optional "Extra apps" only when picked in the installer).
 #    Source preference: fresh system cache (/var/lib/omaxian/appimages, filled
 #    by omaxian-firstboot when online), else the offline payload of the full
 #    ISO (/usr/share/omaxian/payload/appimages).
@@ -28,8 +29,15 @@ fi
 gearlever() { flatpak run it.mijorus.gearlever "$@"; }
 have_gl=0; flatpak info it.mijorus.gearlever >/dev/null 2>&1 && have_gl=1
 shopt -s nullglob nocaseglob
-while IFS=$'\t' read -r id glob method source; do
+PICKED=/var/lib/omaxian/optional-appimages.list
+while IFS=$'\t' read -r id glob method source class rest; do
 	[[ -z $id || $id == \#* ]] && continue
+	# extra apps (class optional): only the ones picked in the installer,
+	# from the download cache only (never bundled)
+	if [ "${class:-bundled}" = optional ]; then
+		{ [ -f "$PICKED" ] && grep -qx "$id" "$PICKED"; } || continue
+		glob=/nonexistent
+	fi
 	src=""
 	for f in "$CACHE/$id"/*.AppImage; do src=$f; done
 	if [ -z "$src" ]; then for f in "$PAYLOAD"/appimages/$glob; do src=$f; break; done; fi

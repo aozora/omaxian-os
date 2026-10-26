@@ -1,17 +1,26 @@
 # Omaxian OS AppImage manifest (managed by Gear Lever after integration).
-# Columns (TAB separated):
-#   id  payload-glob  method  source
+# Columns (TAB separated; 5-7 optional):
+#   id  payload-glob  method  source  [class  [sha256  [label]]]
 # method:
 #   github   source = owner/repo|asset-regex      (latest release asset)
 #   json     source = url|jq-filter               (URL returning JSON with download URL)
 #   url      source = direct stable download URL
 #   payload  no known upstream URL: only the bundled copy (full ISO) is used
+# class:
+#   bundled  (default) copied from payload/appimages/ into the full ISO and
+#            refreshed by omaxian-firstboot when online
+#   optional NOT in any ISO. Offered unselected on the installer's
+#            Applications page ("Extra apps (downloaded after install)", one
+#            checkbox each, scripts/gen-netinstall.sh); omaxian-firstboot
+#            downloads the picked ones once online (pending until then).
+# sha256: "-" = not published upstream (no check); else the download must match.
+#   github rows pinned to one release asset use method url + the sha256 that
+#   GitHub publishes for the asset (release API "digest").
+# label: "Name: description" shown in the installer (optional rows).
 # payload-glob matches the file name in payload/appimages/ (case-insensitive).
-# Researched 2026-10-24; "payload" rows need an upstream URL from Marcello.
+# Researched 2026-10-24, optional pins 2026-10-26.
 bleachbit	*bleachbit*	github	bleachbit/bleachbit|BleachBit-.*-x86_64\.AppImage$
-cursor	*cursor*	json	https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable|.downloadUrl
 elecwhat	*elecwhat*	github	piec/elecwhat|elecwhat-.*\.AppImage$
-grok_bot	*grok*	payload	UNKNOWN (no public AppImage URL found)
 localsend	*localsend*	github	localsend/localsend|LocalSend-.*-linux-x86-64\.AppImage$
 marktext	*marktext*	github	marktext/marktext|marktext-linux-.*\.AppImage$
 obsidian	*obsidian*	github	obsidianmd/obsidian-releases|Obsidian-[0-9.]+\.AppImage$
@@ -19,9 +28,11 @@ onlyoffice	*desktop*editors*	github	ONLYOFFICE/appimage-desktopeditors|DesktopEd
 openra-d2k	*dune*	github	OpenRA/OpenRA|OpenRA-Dune-2000-x86_64\.AppImage$
 openra-ra	*red*alert*	github	OpenRA/OpenRA|OpenRA-Red-Alert-x86_64\.AppImage$
 openra-td	*tiberian*	github	OpenRA/OpenRA|OpenRA-Tiberian-Dawn-x86_64\.AppImage$
-openspot	*openspot*	github	BlackHatDevX/openspot-music-app|OpenSpot-.*\.AppImage$
-rebased	*rebased*	github	DetachHead/rebased|Rebased-x86_64\.AppImage$
-rustdesk	*rustdesk*	github	rustdesk/rustdesk|rustdesk-.*-x86_64\.AppImage$
-shotcut	*shotcut*	github	mltframework/shotcut|shotcut-linux-x86_64-.*\.AppImage$
 task_manager_tmog	*task*manager*	url	https://www.tmog.org/downloads/TaskManagerOG-1.0.0-x86_64.AppImage
-teams_for_linux	*teams*	github	IsmaelMartinez/teams-for-linux|teams-for-linux-.*\.AppImage$
+# optional (downloaded after install when picked; ~1.2 GB together)
+cursor	-	json	https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable|.downloadUrl	optional	-	Cursor: AI code editor (~320 MB)
+grok_bot	-	json	https://api2.cursor.sh/updates/api/download/stable/linux-x64/sand|.downloadUrl	optional	-	Grok Bot: Grok Bot desktop app (~140 MB)
+rebased	-	url	https://github.com/DetachHead/rebased/releases/download/1.1.22/Rebased-x86_64.AppImage	optional	ec14edb28e1d7697a2048d5c2a5d9aa456c9feda8668de30839afec78c590350	Rebased: Git client on the IntelliJ platform (~345 MB)
+rustdesk	-	url	https://github.com/rustdesk/rustdesk/releases/download/1.5.0/rustdesk-1.5.0-x86_64.AppImage	optional	422ebb915b4c709f3511cfa2941abcefdcb1d3d60f673f5a20cf88a4ab2c9aa5	RustDesk: remote desktop (~88 MB)
+shotcut	-	url	https://github.com/mltframework/shotcut/releases/download/v26.9.27/shotcut-linux-x86_64-26.10.3.AppImage	optional	a876d10ea083d2d61e62045c410d8951936264978bdd39f46b0a5ae380e0bc47	Shotcut: video editor (~216 MB)
+teams_for_linux	-	url	https://github.com/IsmaelMartinez/teams-for-linux/releases/download/v2.27.0/teams-for-linux-2.27.0.AppImage	optional	9d7ec0a4c6bb3173fec8119fd7e7a2404fb5d160d343121150caa32b77d1d1f2	Teams for Linux: unofficial Microsoft Teams client (~130 MB)

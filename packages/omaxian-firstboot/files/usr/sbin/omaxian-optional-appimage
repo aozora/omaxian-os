@@ -1,0 +1,14 @@
+#!/bin/sh
+# Records an optional AppImage picked on the installer's "Applications" page
+# ("Extra apps (downloaded after install)", class "optional" rows of
+# /usr/share/omaxian/appimages.manifest).
+#   omaxian-optional-appimage select <id>
+# Run by Calamares' packages module (target chroot) as the post-install step
+# of the entry (netinstall.conf, scripts/gen-netinstall.sh). omaxian-firstboot
+# downloads the picked ones once online (omaxian-appimage-fetch); each user
+# gets them in ~/AppImages at login (omaxian-user-firstrun).
+set -eu
+L=${OMAXIAN_FB_ROOT:-}/var/lib/omaxian/optional-appimages.list
+[ "${1:-}" = select ] && [ -n "${2:-}" ] || { echo "usage: $0 select <id>" >&2; exit 2; }
+mkdir -p "${L%/*}"; touch "$L"
+grep -qx "$2" "$L" || echo "$2" >> "$L"

@@ -12,5 +12,6 @@ Depends: ${misc:Depends}, curl, jq, flatpak, ca-certificates
 Description: Omaxian OS first-boot provisioning
  sysvinit service that, on an installed system with network access, adds
  Flathub, installs the Omaxian Flatpak set and downloads fresh AppImages
- (manifest of upstream URLs). A per-user first-login step integrates the
+ (manifest of upstream URLs), including the optional "extra apps"
+ picked in the installer. A per-user first-login step integrates the
  AppImages with Gear Lever and seeds ~/.config/openra from the offline payload.
