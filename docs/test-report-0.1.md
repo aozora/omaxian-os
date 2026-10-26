@@ -447,3 +447,29 @@ Folded in before the final ISO builds (the Round 11 ISOs were rebuilt).
 ### Round 11 offline install i11 (full ISO, UEFI, `-nic none`, 40 GB virtio, keyboard only)
 - Same test-only live tweak (partition.conf erase default). Europe/Rome, American English for language and formats, keyboard English (US) (shots/i11-05…i11-10). User Tester / tester, throwaway password.
 - Applications: default selection, 6 groups checked including Telegram (Flatpak), VoxType unchecked (i11-09-apps.png). Install started 21:39:35.
+
+## Round 12 (0.1.7 + OpenSpot removed, 6 optional "extra apps" AppImages)
+- i11 was stopped at about 23% (superseded by the new AppImage requirement). Its disk was deleted.
+- Code: config/appimages.manifest now has 10 bundled + 6 optional rows (column 5 `optional`, column 6 sha256, column 7 label), and OpenSpot is gone. The payload file was moved to build/payload-removed/, not deleted. New omaxian-optional-appimage records picks in /var/lib/omaxian/optional-appimages.list. omaxian-appimage-fetch downloads only the picked optional rows and verifies the sha256. firstboot treats a picked, not-yet-downloaded extra app as pending on the full ISO, so firstboot.done is not written offline. gen-netinstall `--appimages` adds the "Extra apps (downloaded after install)" group with one unselected subgroup (checkbox) per optional app. omaxianoptional ignores these entries.
+- Packages: omaxian-firstboot 0.2.5 and omaxian-calamares-settings 0.2.11. repo-local was re-exported; the InRelease signature from subkey 5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75 checks out with gpgv. Nothing was published.
+- Tests: test-firstboot-offline.sh 22/22 (new cases 19–22: extra app not picked → done; picked and offline → pending, not done; picked and cached → done; a payload copy is ignored). New tests/test-optional-appimages.sh 16/16. test-optional-flatpaks 11/11, voxtype 25/25, and the others pass.
+- r12 build (tools/diag/r12-chain.sh, 22:06–22:21 CET): the full rootfs log says "payload: 10 bundled AppImages (1.1G)".
+  - base ISO 2,467,051,520 B (22:08).
+  - full ISO 8,874,823,680 B (22:20), 1.33 GB smaller than r11d.
+  - `sha256sum -c` OK for both.
+- Static check (unsquashfs, both ISOs):
+  - Both: omaxian-base 0.1.7, firstboot 0.2.5, calamares-settings 0.2.11, session 1.0.4-1, strata 1.1.1-1, no telegram-desktop deb, omaxian.sources `Enabled: yes`, 6 `omaxian-optional-appimage select` entries, no OpenSpot in the manifest.
+  - Base netinstall: 7 groups; payload absent.
+  - Full netinstall: 8 groups; payload has exactly the 10 bundled AppImages; org.telegram.desktop preinstalled.
+
+### Round 12 live boots (TCG, `-nic none`, default GRUB entry)
+| ISO / firmware | result |
+|---|---|
+| base UEFI (lbu) | PASS 22:33 (shots/r12-lbu-2.png). In the session: base 0.1.7, calamares-settings 0.2.11, firstboot 0.2.5, session 1.0.4-1, strata 1.1.1-1, Enabled: yes, 6 extra-app entries. Offline `apt-get update` only prints W: lines, rc=0 (r12-lbu-3.png) |
+| base BIOS (lbb) | PASS 22:43 (r12-lbb-2.png). Same versions, Enabled: yes, 6 entries, `/sys/firmware/efi` absent = BIOS (r12-lbb-3.png). A first attempt at 22:30 was OOM-killed on the host (3 VMs × 4 GB); rerun alone |
+| full UEFI | the i12 live session (r12-i12-2.png, Calamares started from it) |
+
+### Round 12 offline install i12 (full ISO, UEFI, `-nic none`, 40 GB virtio, keyboard only)
+- Same test-only live tweak (partition.conf erase default). Europe/Rome, American English for language and formats, keyboard English (US), user Tester / tester, throwaway password (shots/i12-03…i12-07).
+- Applications page (i12-08-apps.png): the new group **Extra apps (downloaded after install)** is unselected, with 6 individual unselected checkboxes: Cursor, Grok Bot, Rebased, RustDesk, Shotcut, Teams for Linux.
+- Selection (i12-09-apps.png): all 7 package groups (VoxType ticked by hand) plus the extra apps **Cursor** and **RustDesk**, so the group shows as partially checked. Install started at 22:42:46 (i12-12.png).
