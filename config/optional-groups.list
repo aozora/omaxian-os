@@ -2,10 +2,14 @@
 # preselected), preinstalled nowhere on the base ISO, shipped as an offline
 # apt pool on the full ISO. Base ISO offline installs: the selection is
 # recorded and omaxian-firstboot installs it once the machine is online.
-# Format:  id|Name|Description|selected(true/false)|package package ...
+# Format:  id|Name|Description|selected(true/false)|package package ...[|flatpak-app-id ...]
+# Field 6 (optional): Flatpaks of the group. Calamares records the pick
+# (omaxian-optional-flatpak, post-install step of the group); omaxian-firstboot
+# installs them from Flathub (base ISO, once online) or removes the unpicked
+# ones (full ISO: preinstalled offline in the image). Field 5 may be empty.
 browser-chromium|Chromium|Chromium web browser (Brave and LibreWolf are always installed)|true|chromium
 mail-thunderbird|Thunderbird|Thunderbird mail and calendar|true|thunderbird
 graphics|Graphics|GIMP, Inkscape and Krita|true|gimp inkscape krita
-chat-telegram|Telegram|Telegram Desktop|true|telegram-desktop
+chat-telegram|Telegram|Telegram Desktop (Flatpak)|true||org.telegram.desktop
 containers|Containers|Podman, Buildah, podman-docker, podman-compose, docker-compose, Distrobox (Podman Desktop comes from Flathub)|true|podman podman-docker podman-compose buildah docker-compose distrobox
 virtualization|Virtualization|QEMU/KVM, libvirt, virt-manager and GNOME Boxes|true|qemu-system-x86 qemu-system-gui qemu-utils libvirt-daemon-system libvirt-clients libvirt-daemon libvirt-daemon-driver-qemu bridge-utils virt-manager gnome-boxes spice-client-gtk

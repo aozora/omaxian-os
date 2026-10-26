@@ -1,3 +1,15 @@
+omaxian-calamares-settings (0.2.10) excalibur; urgency=medium
+
+  * Telegram is a Flatpak now (org.telegram.desktop), no longer the
+    telegram-desktop apt package. The "Telegram" group stays on the
+    Applications page: its only entry is "flatpak" (always installed, apt
+    no-op, offline-safe) with a post-install step that records the pick
+    (omaxian-optional-flatpak, omaxian-firstboot >= 0.2.4).
+  * omaxianoptional: such recording entries are not optional packages;
+    creates optional-flatpaks.list (empty when nothing was picked).
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 21:08:00 +0100
+
 omaxian-calamares-settings (0.2.9) excalibur; urgency=medium
 
   * omaxianoptional: packages in /etc/calamares/omaxian-offline-only.list

@@ -5,6 +5,8 @@
 #    installed now (offline base ISO) in optional-pending.list, which
 #    omaxian-firstboot installs once the machine is online;
 #  - drops the offline optional pool of the full ISO from the target.
+#  - makes sure optional-flatpaks.list (Flatpak groups picked, Telegram)
+#    exists, so omaxian-firstboot can tell "none picked" from "no record";
 # Packages listed in /etc/calamares/omaxian-offline-only.list (live system;
 # full ISO only: VoxType, not in the Devuan/Omaxian archives) are never left
 # pending: omaxian-firstboot could not install them and would retry forever.
@@ -16,11 +18,17 @@ import libcalamares
 def pretty_name():
     return "Recording optional applications"
 
+# group entries that only record an optional Flatpak (scripts/gen-netinstall.sh):
+# "flatpak" + post-install omaxian-optional-flatpak; not an optional package
+FLATPAK_MARK = "omaxian-optional-flatpak"
+
 def _names(ops):
     out = []
     for op in ops or []:
         for key in ("install", "try_install"):
             for p in op.get(key, []) or []:
+                if not isinstance(p, str) and FLATPAK_MARK in (p.get("post-script") or ""):
+                    continue
                 name = p if isinstance(p, str) else (p.get("package") or p.get("name"))
                 if name and name not in out:
                     out.append(name)
@@ -55,6 +63,10 @@ def run():
     if dropped:
         libcalamares.utils.warning("omaxian optional: not installed and only available "
                                    "offline on the full ISO (not retried): %s" % dropped)
+    # optional Flatpaks: the picked ones were appended by omaxian-optional-flatpak
+    # during the packages module; make sure the record exists (even if empty)
+    # so omaxian-firstboot knows the pick was made (full ISO: removes the others)
+    open(os.path.join(state, "optional-flatpaks.list"), "a").close()
     with open(os.path.join(state, "optional-packages.list"), "w") as f:
         f.write("".join(p + "\n" for p in wanted))
     with open(os.path.join(state, "optional-pending.list"), "w") as f:

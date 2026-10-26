@@ -1,7 +1,7 @@
 # Marcello's standard Devuan package list (de-duplicated).
 # Renamed: fontmanager -> font-manager. Virtual: qemu-kvm (provided by qemu-system-x86).
 # Not in Devuan/Debian: witr (see docs/missing-packages.md).
-# Optional groups (Chromium, Thunderbird, GIMP/Inkscape/Krita, Telegram,
+# Optional groups (Chromium, Thunderbird, GIMP/Inkscape/Krita, Telegram (Flatpak),
 # containers, virtualization): config/optional-groups.list (Calamares netinstall).
 # Fonts: 35-fonts.list (installed without Recommends).
 firmware-amd-graphics

@@ -2,7 +2,16 @@
 # config/optional-groups.list -> Calamares netinstall.conf (local groups)
 #   gen-netinstall.sh <optional-groups.list> <netinstall.conf> [more.list ...]
 # (the full ISO adds config/optional-groups-full.list)
+#   gen-netinstall.sh --optional-flatpaks <list> [more.list ...] <out>
+# writes "group-id|app-id" lines (field 6) for omaxian-firstboot / the full build
 set -eu
+if [ "${1:-}" = --optional-flatpaks ]; then
+	shift; out=${*: -1}; set -- "${@:1:$#-1}"
+	{ echo "# GENERATED from config/optional-groups.list (field 6) by scripts/gen-netinstall.sh"
+	  grep -hvE '^\s*(#|$)' "$@" | while IFS='|' read -r id name desc sel pkgs fps; do
+		for f in $fps; do echo "$id|$f"; done; done; } > "$out"
+	exit 0
+fi
 in=$1 out=$2; shift 2
 {
 cat <<'H'
@@ -17,8 +26,12 @@ label:
     title[it]: "Applicazioni opzionali (installate dalla rete o dal pacchetto offline)"
 groups:
 H
-grep -hvE '^\s*(#|$)' "$in" "$@" | while IFS='|' read -r id name desc sel pkgs; do
+grep -hvE '^\s*(#|$)' "$in" "$@" | while IFS='|' read -r id name desc sel pkgs fps; do
 	printf '    - name: "%s"\n      description: "%s"\n      selected: %s\n      critical: false\n      hidden: false\n      packages:\n' "$name" "$desc" "$sel"
 	for p in $pkgs; do printf '        - %s\n' "$p"; done
+	# Flatpaks: netinstall only knows packages. "flatpak" (always installed:
+	# apt no-op, works offline) carries a post-install step that records the
+	# pick for omaxian-firstboot (omaxian-firstboot package).
+	for f in $fps; do printf '        - name: flatpak\n          post-install: "/usr/sbin/omaxian-optional-flatpak select %s"\n' "$f"; done
 done
 } > "$out"

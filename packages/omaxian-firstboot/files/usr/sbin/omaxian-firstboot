@@ -31,17 +31,43 @@ apt_uri() {
 apt_online() { local u; u=$(apt_uri); [ -n "$u" ] && [ "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 8 "${u%/}/dists/" 2>/dev/null)" != 000 ]; }
 SELECTED=$STATE/optional-packages.list
 PENDING=$STATE/optional-pending.list
+# Optional groups shipped as Flatpaks (Telegram): "group-id|app-id" lines,
+# generated from config/optional-groups.list (field 6). The installer records
+# the picked ones in FP_SELECTED (omaxian-optional-flatpak, run by Calamares'
+# packages module as the group's post-install step; omaxianoptional creates
+# the file, so it exists, possibly empty, after every Calamares install).
+OPT_FLATPAKS=$FB/usr/share/omaxian/optional-flatpaks.list
+FP_SELECTED=$STATE/optional-flatpaks.list
 need_apt() { [ -s "$PENDING" ]; }
 
 installed() { [ "$(dpkg-query -W -f '${db:Status-Status}' "$1" 2>/dev/null)" = installed ]; }
 # Full ISO: done offline once nothing is missing (no pending optional packages,
 # every Flatpak of the list present, every AppImage of the manifest available
 # from the cache or the payload). Updates are left to the normal updater.
-flatpak_wanted() { # the Flatpak list, minus Podman Desktop when Containers was not picked
+opt_flatpaks() { grep -vE '^\s*(#|$)' "$OPT_FLATPAKS" 2>/dev/null | cut -d'|' -f2 | grep .; }
+# picked in the installer; no record at all (not installed by Calamares):
+# the groups' default (selected)
+opt_flatpak_picked() { [ ! -f "$FP_SELECTED" ] || grep -qx "$1" "$FP_SELECTED"; }
+flatpak_wanted() { # the Flatpak list, minus Podman Desktop when Containers was not picked, plus the picked optional ones
 	local a; grep -vE '^\s*(#|$)' "$FLATPAKS" 2>/dev/null | while read -r a; do
 		if [ "$a" = io.podman_desktop.PodmanDesktop ] && [ -f "$SELECTED" ] && ! grep -qx podman "$SELECTED"; then continue; fi
 		echo "$a"; done
+	opt_flatpaks | while read -r a; do opt_flatpak_picked "$a" && echo "$a"; done
 }
+# Full ISO: every optional Flatpak is preinstalled in the image (offline);
+# drop the ones the user did not pick. Offline-safe (local uninstall only).
+prune_optional_flatpaks() {
+	[ -f "$FP_SELECTED" ] && command -v flatpak >/dev/null || return 0
+	local a n=0
+	while read -r a; do
+		opt_flatpak_picked "$a" && continue
+		flatpak info --system "$a" >/dev/null 2>&1 || continue
+		if flatpak uninstall --system -y --noninteractive "$a"; then echo "flatpak $a: removed (group not selected)"; n=1
+		else echo "!! flatpak $a: removal failed"; fi
+	done < <(opt_flatpaks)
+	[ $n = 0 ] || flatpak uninstall --system -y --noninteractive --unused || true
+}
+prune_optional_flatpaks
 full_offline_complete() {
 	[ -f "$FULL_MARKER" ] || return 1
 	need_apt && { echo "full ISO: optional packages pending: $(tr '\n' ' ' < "$PENDING")"; return 1; }
@@ -110,11 +136,10 @@ fi
 # 1. Flatpaks (system-wide). Already present on the full ISO -> no-op.
 if [ $NET = 1 ] && command -v flatpak >/dev/null; then
 	flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || rc=1
-	mapfile -t apps < <(grep -vE '^\s*(#|$)' "$FLATPAKS")
+	# Podman Desktop only when the Containers group was selected, optional
+	# Flatpaks (Telegram) only when their group was selected
+	mapfile -t apps < <(flatpak_wanted)
 	for a in "${apps[@]}"; do
-		# Podman Desktop only when the Containers group was selected
-		if [ "$a" = io.podman_desktop.PodmanDesktop ] && [ -f "$SELECTED" ] && ! grep -qx podman "$SELECTED"; then
-			echo "flatpak $a: skipped (containers group not selected)"; continue; fi
 		if flatpak info --system "$a" >/dev/null 2>&1; then echo "flatpak $a: present"; continue; fi
 		flatpak install --system -y --noninteractive flathub "$a" || { echo "!! flatpak $a failed"; rc=1; }
 	done

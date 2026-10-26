@@ -6,7 +6,7 @@
 sources).
 
 A Devuan 6 "Excalibur" based live/installable distribution with the
-[Omaxian](https://github.com/aozora/omaxian) desktop (v1.0.3, Omarchy vendored)
+[Omaxian](https://github.com/aozora/omaxian) desktop (v1.0.4, Omarchy vendored)
 as the default session and XFCE as the alternative. No systemd: sysvinit + eudev
 + elogind, XLibre X server, PipeWire per user, kernel 7.2 from excalibur-backports.
 
@@ -14,8 +14,8 @@ Two images are made:
 
 | ISO | Contents |
 |---|---|
-| `omaxian-base-0.1-trans-siberian-shaman-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Telegram, Containers, Virtualization) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot |
-| `omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | same plus an offline pool for the optional groups and a 7th, unselected group **Voice dictation (VoxType)** (full ISO only, docs/voxtype.md), Flatpaks preinstalled and `payload/` (AppImages, OpenRA content) bundled for offline install |
+| `omaxian-base-0.1-trans-siberian-shaman-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Telegram (Flatpak), Containers, Virtualization) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot |
+| `omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | same plus an offline pool for the optional groups and a 7th, unselected group **Voice dictation (VoxType)** (full ISO only, docs/voxtype.md), Flatpaks preinstalled (Telegram too; removed on first boot when its group was not picked) and `payload/` (AppImages, OpenRA content) bundled for offline install |
 
 The live image has no man pages/docs and only en/it translations (dpkg
 path-excludes, live only); installed systems get the normal dpkg policy back,
@@ -34,7 +34,7 @@ config/            build.conf, apt sources/prefs/keys, package-lists/*.list,
 packages/          debian packaging of the Omaxian OS packages
   omaxian-base               apt sources/pins/keyrings, os defaults, groups
   omaxian-branding           Plymouth "omaxian", GRUB theme, LightDM gtk-greeter theme, wallpapers
-  omaxian-session            Omaxian v1.0.3 + Omarchy (vendored), session + home template
+  omaxian-session            Omaxian v1.0.4 + Omarchy (vendored), session + home template
   omaxian-strata             Strata file manager (signed release), default for inode/directory
   omaxian-firstboot          firstboot init script: flathub + flatpaks, AppImage refresh;
                              per-user first run: OpenRA content, Gear Lever integration
@@ -82,13 +82,21 @@ DRY_RUN=1 scripts/publish-r2.sh apt    # default is dry-run
 DRY_RUN=0 scripts/publish-r2.sh iso
 ```
 
-It refuses to publish a repo signed with the test key. Images ship
-`/etc/apt/sources.list.d/omaxian.sources` with `Enabled: no` until the repo is live.
+It refuses to publish a repo signed with the test key. The repo is live at
+https://apt.omaxian.org: since omaxian-base 0.1.7 images ship
+`/etc/apt/sources.list.d/omaxian.sources` with `Enabled: yes` (upgrades from
+0.1.6 enable it too unless the file was customised; see the 0.1.7 changelog).
+During the rootfs build that file is dpkg-diverted out of `sources.list.d`, so
+build-time apt only uses the local repo and the build mirror; `s_finalize`
+puts it back.
 
 ## First boot
 
 - `omaxian-firstboot` (sysvinit, runs once, not in the live session): waits for
-  network, adds Flathub, installs `flatpaks.list`, refreshes AppImages from
+  network, adds Flathub, installs `flatpaks.list` plus the optional groups'
+  Flatpaks picked in the installer (Telegram, `org.telegram.desktop`: field 6 of
+  `config/optional-groups.list`, pick recorded in /var/lib/omaxian/optional-flatpaks.list;
+  the full ISO preinstalls it and removes it offline when not picked), refreshes AppImages from
   `appimages.manifest` (methods github/json/url; `payload` rows have no known
   upstream URL and are reported as `?? id` in /var/log/omaxian-firstboot.log).
 - `omaxian-user-firstrun` (each user's first X session): seeds `~/.config/openra`

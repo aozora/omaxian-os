@@ -1,3 +1,18 @@
+omaxian-firstboot (0.2.4) excalibur; urgency=medium
+
+  * Optional groups shipped as Flatpaks (Telegram: org.telegram.desktop,
+    field 6 of config/optional-groups.list, listed in
+    /usr/share/omaxian/optional-flatpaks.list). New omaxian-optional-flatpak
+    records the pick (run by Calamares as the group's post-install step) in
+    /var/lib/omaxian/optional-flatpaks.list. omaxian-firstboot installs the
+    picked ones from Flathub (base ISO, once online) and, on the full ISO
+    where every optional Flatpak is preinstalled, removes the unpicked ones
+    offline (plus unused runtimes). No record: the group default (installed).
+  * Podman Desktop / optional Flatpaks: one wanted-list for the offline
+    check and the online loop.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 21:08:00 +0100
+
 omaxian-firstboot (0.2.3) excalibur; urgency=medium
 
   * Full ISO (marker /var/lib/omaxian/full-offline, installed by the full

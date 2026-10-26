@@ -67,7 +67,7 @@ prep_omaxian-session() {
 	bash "$TOPDIR/scripts/gen-home-template.sh" "$OMX" "$d/vendor/home-template"
 	cp "$OMX/packaging/sysvinit/power-profiles-daemon" "$d/debian/omaxian-session.power-profiles-daemon.init"
 	# upstream version from the Omaxian checkout, Debian revision from our changelog
-	local up rev; up=$(cat "$OMX/version" 2>/dev/null | tr -d 'v\n'); up=${up:-1.0.3}
+	local up rev; up=$(cat "$OMX/version" 2>/dev/null | tr -d 'v\n'); up=${up:-1.0.4}
 	rev=$(sed -n '1s/.*(\([^)]*\)).*/\1/p' "$d/debian/changelog"); rev=${rev##*-}
 	sed -i "1s/([^)]*)/($up-${rev:-2})/" "$d/debian/changelog" || true
 }
@@ -77,11 +77,15 @@ prep_omaxian-fonts-nerd() {
 	[ "$v" = "$NERD_FONTS_VERSION" ] || die "omaxian-fonts-nerd changelog ($v) != NERD_FONTS_VERSION ($NERD_FONTS_VERSION)"
 }
 prep_omaxian-strata() {
+	local v; v=$(sed -n '1s/.*(\([^-)]*\).*/\1/p' "$1/debian/changelog")
+	[ "$v" = "$STRATA_VERSION" ] || die "omaxian-strata changelog ($v) != STRATA_VERSION ($STRATA_VERSION)"
 	"$TOPDIR/scripts/fetch-strata.sh" "$1/upstream"
 }
 prep_omaxian-firstboot() {
 	mkdir -p "$1/files/usr/share/omaxian"
 	cp "$TOPDIR/config/flatpaks.list" "$TOPDIR/config/appimages.manifest" "$1/files/usr/share/omaxian/"
+	bash "$TOPDIR/scripts/gen-netinstall.sh" --optional-flatpaks "$TOPDIR/config/optional-groups.list" \
+		"$1/files/usr/share/omaxian/optional-flatpaks.list"
 }
 prep_omaxian-calamares-settings() {
 	bash "$TOPDIR/scripts/gen-netinstall.sh" "$TOPDIR/config/optional-groups.list" "$1/files/etc/calamares/modules/netinstall.conf"
