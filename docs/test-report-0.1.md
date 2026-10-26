@@ -473,3 +473,8 @@ Folded in before the final ISO builds (the Round 11 ISOs were rebuilt).
 - Same test-only live tweak (partition.conf erase default). Europe/Rome, American English for language and formats, keyboard English (US), user Tester / tester, throwaway password (shots/i12-03…i12-07).
 - Applications page (i12-08-apps.png): the new group **Extra apps (downloaded after install)** is unselected, with 6 individual unselected checkboxes: Cursor, Grok Bot, Rebased, RustDesk, Shotcut, Teams for Linux.
 - Selection (i12-09-apps.png): all 7 package groups (VoxType ticked by hand) plus the extra apps **Cursor** and **RustDesk**, so the group shows as partially checked. Install started at 22:42:46 (i12-12.png).
+
+### Round 12 progress 22:51
+- Full ISO BIOS live (lfb): PASS 22:51. Desktop reached (r12-lfb-2). Terminal checks (r12-lfb-3/4): base 0.1.7, calamares-settings 0.2.11, firstboot 0.2.5, session 1.0.4-1, strata 1.1.1-1, no telegram-desktop deb, Telegram Flatpak present, Enabled: yes, 6 extra-app netinstall entries, payload 10 AppImages, 0 removed/optional names, BIOS firmware, offline `apt-get update` rc=0.
+- i12 install at 22% at 22:49 (i12-14).
+- Full ISO UEFI live (lfu): PASS 22:56. Desktop reached (r12-lfu-1), with the same terminal results as lfb (r12-lfu-2) and firmware=UEFI. **All 4 round-12 live boots pass.**
