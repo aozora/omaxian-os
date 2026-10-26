@@ -1,3 +1,14 @@
+omaxian-firstboot (0.2.3) excalibur; urgency=medium
+
+  * Full ISO (marker /var/lib/omaxian/full-offline, installed by the full
+    build): write firstboot.done offline once nothing is missing (no pending
+    optional packages, every Flatpak of the list present, every AppImage of
+    the manifest in the cache or the payload). Updates are left to the normal
+    updater. The base ISO keeps retrying until online.
+  * OMAXIAN_FB_ROOT path prefix for tests/test-firstboot-offline.sh.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 06:00:00 +0100
+
 omaxian-firstboot (0.2.2) excalibur; urgency=medium
 
   * Install pending optional packages one per apt run: the single large

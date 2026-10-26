@@ -3,11 +3,16 @@
 #   --boot        called from /etc/init.d/omaxian-firstboot (waits for network)
 #   --now         run immediately (e.g. after connecting Wi-Fi)
 set -u
-LOG=/var/log/omaxian-firstboot.log
-STATE=/var/lib/omaxian
+# OMAXIAN_FB_ROOT: path prefix for tests only (empty on a real system)
+FB=${OMAXIAN_FB_ROOT:-}
+LOG=$FB/var/log/omaxian-firstboot.log
+STATE=$FB/var/lib/omaxian
 CACHE=$STATE/appimages
-FLATPAKS=/usr/share/omaxian/flatpaks.list
-MANIFEST=/usr/share/omaxian/appimages.manifest
+FLATPAKS=$FB/usr/share/omaxian/flatpaks.list
+MANIFEST=$FB/usr/share/omaxian/appimages.manifest
+PAYLOAD=$FB/usr/share/omaxian/payload
+# installed by the full ISO build: everything ships offline on that ISO
+FULL_MARKER=$STATE/full-offline
 mkdir -p "$STATE" "$CACHE"
 exec >>"$LOG" 2>&1
 echo "== $(date -Is) omaxian-firstboot $*"
@@ -18,8 +23,8 @@ echo "== $(date -Is) omaxian-firstboot $*"
 online() { curl -fsS --max-time 8 -o /dev/null https://dl.flathub.org/repo/summary.idx 2>/dev/null || curl -fsS --max-time 8 -o /dev/null https://github.com 2>/dev/null; }
 apt_uri() {
 	local u
-	u=$(awk 'tolower($1)=="uris:"{print $2; exit}' /etc/apt/sources.list.d/devuan.sources 2>/dev/null)
-	[ -n "$u" ] || u=$(awk '$1=="deb"{for(i=2;i<=NF;i++) if($i ~ /^(https?|ftp):/){print $i; exit}}' /etc/apt/sources.list 2>/dev/null)
+	u=$(awk 'tolower($1)=="uris:"{print $2; exit}' $FB/etc/apt/sources.list.d/devuan.sources 2>/dev/null)
+	[ -n "$u" ] || u=$(awk '$1=="deb"{for(i=2;i<=NF;i++) if($i ~ /^(https?|ftp):/){print $i; exit}}' $FB/etc/apt/sources.list 2>/dev/null)
 	printf '%s' "$u"
 }
 # any HTTP answer from the main apt mirror counts as reachable
@@ -27,6 +32,36 @@ apt_online() { local u; u=$(apt_uri); [ -n "$u" ] && [ "$(curl -sS -o /dev/null 
 SELECTED=$STATE/optional-packages.list
 PENDING=$STATE/optional-pending.list
 need_apt() { [ -s "$PENDING" ]; }
+
+installed() { [ "$(dpkg-query -W -f '${db:Status-Status}' "$1" 2>/dev/null)" = installed ]; }
+# Full ISO: done offline once nothing is missing (no pending optional packages,
+# every Flatpak of the list present, every AppImage of the manifest available
+# from the cache or the payload). Updates are left to the normal updater.
+flatpak_wanted() { # the Flatpak list, minus Podman Desktop when Containers was not picked
+	local a; grep -vE '^\s*(#|$)' "$FLATPAKS" 2>/dev/null | while read -r a; do
+		if [ "$a" = io.podman_desktop.PodmanDesktop ] && [ -f "$SELECTED" ] && ! grep -qx podman "$SELECTED"; then continue; fi
+		echo "$a"; done
+}
+full_offline_complete() {
+	[ -f "$FULL_MARKER" ] || return 1
+	need_apt && { echo "full ISO: optional packages pending: $(tr '\n' ' ' < "$PENDING")"; return 1; }
+	local a id glob rest f ok=0
+	command -v flatpak >/dev/null || { echo "full ISO: flatpak missing"; return 1; }
+	while read -r a; do flatpak info --system "$a" >/dev/null 2>&1 || { echo "full ISO: flatpak $a missing"; ok=1; }; done < <(flatpak_wanted)
+	shopt -s nullglob nocaseglob
+	while IFS=$'\t' read -r id glob rest; do
+		[[ -z $id || $id == \#* ]] && continue
+		f=( "$CACHE/$id"/*.AppImage $PAYLOAD/appimages/$glob )
+		[ ${#f[@]} -gt 0 ] || { echo "full ISO: AppImage $id missing"; ok=1; }
+	done < "$MANIFEST"
+	shopt -u nullglob nocaseglob
+	return $ok
+}
+if full_offline_complete && ! online; then
+	date -Is > "$STATE/firstboot.done"
+	echo "full ISO: everything installed offline, first boot provisioning complete (updates: normal updater)"
+	exit 0
+fi
 
 if [ "${1:-}" = --boot ]; then
 	for _ in $(seq 1 60); do online && break; need_apt && apt_online && break; sleep 10; done
@@ -39,7 +74,6 @@ rc=0
 # 0. Optional apt groups picked in the installer (Calamares netinstall page)
 #    that could not be installed then (base ISO, offline). Idempotent: only
 #    packages that are still missing are installed; the pending list shrinks.
-installed() { [ "$(dpkg-query -W -f '${db:Status-Status}' "$1" 2>/dev/null)" = installed ]; }
 if need_apt && [ $APT = 0 ]; then
 	echo "!! apt mirror $(apt_uri) unreachable: optional packages stay pending"; rc=1
 elif need_apt; then

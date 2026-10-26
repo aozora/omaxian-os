@@ -12,6 +12,12 @@ FLAVOR=${1:-base}
 R="$BUILDDIR/rootfs-$FLAVOR"; ST="$R.stamps"; mkdir -p "$ST"
 LOG="$BUILDDIR/rootfs-$FLAVOR.log"
 CH() { "$TOPDIR/scripts/chroot-run.sh" "$R" "$@"; }
+# Like CH, but the root is set up with pivot_root (bwrap) instead of chroot: the
+# kernel refuses new user namespaces inside a chroot, so Flatpak's apply_extra
+# sandbox ("extra-data" apps such as Zoom) only works this way.
+BW() { bwrap --bind "$R" / --dev-bind /dev /dev --proc /proc --ro-bind /sys /sys --tmpfs /run --tmpfs /tmp \
+	--clearenv --setenv HOME /root --setenv TERM dumb --setenv LANG C.UTF-8 \
+	--setenv PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "$@"; }
 # Remove a rootfs safely: a killed earlier run can leave /dev /proc /sys bind
 # mounts inside it, and a plain rm -rf would then delete the HOST's /dev nodes.
 rm_rootfs() { local d=$1; [ -e "$d" ] || return 0
@@ -227,12 +233,11 @@ s_full_from_base() {
 	printf '#!/bin/sh\nexit 101\n' > "$R/usr/sbin/policy-rc.d"; chmod +x "$R/usr/sbin/policy-rc.d"
 	# Flatpaks preinstalled system-wide (firstboot only updates them)
 	CH flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-	# One app at a time: "extra-data" apps (e.g. Zoom) run apply_extra under
-	# bwrap, which fails where the build host forbids new namespaces; those are
-	# left to omaxian-firstboot (it installs every missing app when online).
+	# One app at a time, via BW: "extra-data" apps (Zoom) run apply_extra under
+	# bwrap. Anything that still fails is left to omaxian-firstboot (online).
 	local a missing=()
 	for a in $(read_list "$TOPDIR/config/flatpaks.list"); do
-		CH flatpak install --system -y --noninteractive flathub "$a" || missing+=("$a")
+		BW flatpak install --system -y --noninteractive flathub "$a" || missing+=("$a")
 	done
 	[ ${#missing[@]} = 0 ] || warn "flatpaks NOT preinstalled (firstboot installs them online): ${missing[*]}"
 	# offline payload (user supplies payload/appimages/*.AppImage, payload/openra/{Content,maps})
@@ -243,6 +248,9 @@ s_full_from_base() {
 	local n; n=$(find "$R/usr/share/omaxian/payload/appimages" -maxdepth 1 -iname '*.AppImage' | wc -l)
 	[ "$n" -gt 0 ] || warn "payload/appimages is empty: the full ISO will have no offline AppImages"
 	s_optional_pool
+	# marker for omaxian-firstboot: this system ships everything offline, so
+	# first boot is complete without network once nothing is missing
+	mkdir -p "$R/var/lib/omaxian"; date -Is > "$R/var/lib/omaxian/full-offline"
 	rm -f "$R/usr/sbin/policy-rc.d"
 	CH dpkg-query -W -f '${Package}\t${Version}\n' > "$OUTDIR/omaxian-$FLAVOR.packages"
 }
