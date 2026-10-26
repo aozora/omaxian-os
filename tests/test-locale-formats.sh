@@ -6,7 +6,7 @@ set -u
 cd "$(dirname "$0")/.."
 P=packages/omaxian-calamares-settings; C=$P/files
 S=$C/usr/libexec/omaxian/calamares-locale-formats
-SUP=/usr/share/i18n/SUPPORTED; [ -r $SUP ] || SUP=build/rootfs-base/usr/share/i18n/SUPPORTED
+SUP=/usr/share/i18n/SUPPORTED; [ -r $SUP ] || SUP=build/rootfs-base/usr/share/i18n/SUPPORTED.omaxian-orig; [ -r $SUP ] || SUP=build/rootfs-base/usr/share/i18n/SUPPORTED
 fail=0; ok() { echo "ok   $1"; }; bad() { echo "FAIL $1"; fail=1; }
 LCS="LC_NUMERIC LC_TIME LC_MONETARY LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION"
 
