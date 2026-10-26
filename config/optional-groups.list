@@ -4,7 +4,8 @@
 # recorded and omaxian-firstboot installs it once the machine is online.
 # Format:  id|Name|Description|selected(true/false)|package package ...[|flatpak-app-id ...]
 # Field 6 (optional): Flatpaks of the group. Calamares records the pick
-# (omaxian-optional-flatpak, post-install step of the group); omaxian-firstboot
+# (netinstall marker omaxian-pick:flatpak:<id>, recorded by the omaxianpicks
+# Calamares job into /var/lib/omaxian/optional-flatpaks.list); omaxian-firstboot
 # installs them from Flathub (base ISO, once online) or removes the unpicked
 # ones (full ISO: preinstalled offline in the image). Field 5 may be empty.
 browser-chromium|Chromium|Chromium web browser (Brave and LibreWolf are always installed)|true|chromium

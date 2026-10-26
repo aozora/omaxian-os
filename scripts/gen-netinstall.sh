@@ -36,15 +36,15 @@ H
 grep -hvE '^\s*(#|$)' "$in" "$@" | while IFS='|' read -r id name desc sel pkgs fps; do
 	printf '    - name: "%s"\n      description: "%s"\n      selected: %s\n      critical: false\n      hidden: false\n      packages:\n' "$name" "$desc" "$sel"
 	for p in $pkgs; do printf '        - %s\n' "$p"; done
-	# Flatpaks: netinstall only knows packages. "flatpak" (always installed:
-	# apt no-op, works offline) carries a post-install step that records the
-	# pick for omaxian-firstboot (omaxian-firstboot package).
-	for f in $fps; do printf '        - name: flatpak\n          post-install: "/usr/sbin/omaxian-optional-flatpak select %s"\n' "$f"; done
+	# Flatpaks: netinstall only knows packages (and Calamares 3.3 ignores
+	# post-install on package entries), so the pick is a marker name that the
+	# omaxianpicks job records and strips before the packages module.
+	for f in $fps; do printf '        - "omaxian-pick:flatpak:%s"\n' "$f"; done
 done
 # Optional AppImages: netinstall only knows packages. Each entry is a subgroup
-# whose only package is "curl" (a dependency of omaxian-firstboot: apt no-op,
-# works offline) carrying a post-install step that records the pick
-# (omaxian-optional-appimage); omaxian-firstboot downloads it once online.
+# whose only "package" is the marker omaxian-pick:appimage:<id>, recorded and
+# stripped by the omaxianpicks job (before packages); omaxian-firstboot
+# downloads the picked ones once online.
 if [ -n "$manifest" ]; then
 	printf '    - name: "Extra apps (downloaded after install)"\n      description: "AppImages not on the ISO: downloaded into ~/AppImages after installation, once the machine is online"\n      selected: false\n      critical: false\n      hidden: false\n      expanded: true\n      subgroups:\n'
 	n=0
@@ -52,7 +52,7 @@ if [ -n "$manifest" ]; then
 		[[ -z $id || $id == \#* || ${class:-} != optional ]] && continue
 		[[ $id =~ ^[A-Za-z0-9._-]+$ ]] || { echo "gen-netinstall: bad AppImage id '$id'" >&2; exit 1; }
 		lname=${label%%: *}; ldesc=${label#*: }; [ -n "$label" ] || { lname=$id; ldesc="$id (AppImage)"; }
-		printf '        - name: "%s"\n          description: "%s (AppImage, downloaded after install)"\n          selected: false\n          critical: false\n          hidden: false\n          packages:\n            - name: curl\n              post-install: "/usr/sbin/omaxian-optional-appimage select %s"\n' \
+		printf '        - name: "%s"\n          description: "%s (AppImage, downloaded after install)"\n          selected: false\n          critical: false\n          hidden: false\n          packages:\n            - "omaxian-pick:appimage:%s"\n' \
 			"${lname//\"/}" "${ldesc^}" "$id"
 		n=$((n+1))
 	done < "$manifest"

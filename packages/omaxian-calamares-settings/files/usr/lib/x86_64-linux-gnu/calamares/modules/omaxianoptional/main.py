@@ -25,6 +25,8 @@ def pretty_name():
 FLATPAK_MARK = "omaxian-optional-flatpak"
 # same for the optional AppImages ("Extra apps"): "curl" + omaxian-optional-appimage
 APPIMAGE_MARK = "omaxian-optional-appimage"
+# marker names recorded (and stripped) by omaxianpicks, which runs before packages
+PICK_PREFIX = "omaxian-pick:"
 MARKS = (FLATPAK_MARK, APPIMAGE_MARK)
 
 def _names(ops):
@@ -35,6 +37,8 @@ def _names(ops):
                 if not isinstance(p, str) and any(m in (p.get("post-script") or "") for m in MARKS):
                     continue
                 name = p if isinstance(p, str) else (p.get("package") or p.get("name"))
+                if name and name.startswith(PICK_PREFIX):
+                    continue
                 if name and name not in out:
                     out.append(name)
     return out
@@ -68,11 +72,11 @@ def run():
     if dropped:
         libcalamares.utils.warning("omaxian optional: not installed and only available "
                                    "offline on the full ISO (not retried): %s" % dropped)
-    # optional Flatpaks: the picked ones were appended by omaxian-optional-flatpak
-    # during the packages module; make sure the record exists (even if empty)
+    # optional Flatpaks: the picked ones were recorded by omaxianpicks (before
+    # the packages module); make sure the record exists (even if empty)
     # so omaxian-firstboot knows the pick was made (full ISO: removes the others)
     open(os.path.join(state, "optional-flatpaks.list"), "a").close()
-    # optional AppImages: same, recorded by omaxian-optional-appimage
+    # optional AppImages: same, recorded by omaxianpicks
     open(os.path.join(state, "optional-appimages.list"), "a").close()
     with open(os.path.join(state, "optional-packages.list"), "w") as f:
         f.write("".join(p + "\n" for p in wanted))

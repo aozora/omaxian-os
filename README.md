@@ -106,7 +106,8 @@ puts it back.
   Teams for Linux. Each optional one is its own checkbox (unselected) in the
   installer's Applications-page group **Extra apps (downloaded after install)**;
   the pick is recorded in /var/lib/omaxian/optional-appimages.list
-  (`omaxian-optional-appimage`) and firstboot downloads the picked ones once
+  (netinstall marker `omaxian-pick:appimage:<id>`, recorded by the Calamares job
+  `omaxianpicks` before the packages module) and firstboot downloads the picked ones once
   online (GitHub ones pinned to a release asset + its sha256; Cursor and Grok Bot
   follow their official release feed, no checksum published), then they land in
   `~/AppImages`. On the full ISO a picked extra app counts as pending: firstboot.done

@@ -1,3 +1,20 @@
+omaxian-calamares-settings (0.2.12) excalibur; urgency=medium
+
+  * Fix: the Telegram Flatpak pick and the "Extra apps" AppImage picks
+    were never recorded. Calamares 3.3 netinstall ignores post-install
+    steps on package entries, so omaxian-optional-flatpak/-appimage never
+    ran (round 12 install test: both records empty, firstboot then removed
+    Telegram and wrote firstboot.done offline).
+  * netinstall.conf: such picks are now marker names
+    omaxian-pick:flatpak:<app-id> / omaxian-pick:appimage:<id>.
+  * New job omaxianpicks (before packages): records the selected markers
+    in /var/lib/omaxian/optional-{flatpaks,appimages}.list (always
+    created) and strips them from packageOperations, so apt never sees
+    them.
+  * omaxianoptional: never counts markers as optional packages.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 26 Oct 2026 23:50:00 +0100
+
 omaxian-calamares-settings (0.2.11) excalibur; urgency=medium
 
   * New Applications-page group "Extra apps (downloaded after install)",
