@@ -27,7 +27,7 @@ XML
 	unset _x
 	# keyboard: US first for the live session, Italian kept as 2nd group.
 	# i3_autostart re-applies ~/.config/omarchy/keyboard.json via
-	# omarchy-keyboard-apply (whose built-in default is it,ru), so seed it.
+	# omarchy-keyboard-apply (falls back to /etc/default/keyboard or "us"), so seed it.
 	_k="$HOME/.config/omarchy/keyboard.json"
 	if [ ! -e "$_k" ]; then
 		mkdir -p "${_k%/*}"

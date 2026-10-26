@@ -1,3 +1,17 @@
+omaxian-session (1.0.4-1) excalibur; urgency=medium
+
+  * New upstream Omaxian shell v1.0.4 (Omarchy v4.0.6, taken from the pin in
+    its scripts/setup.sh). Upstream now also rewrites xfpm power-button-action
+    unset/3 (Ask) to 4 (Shutdown) in i3_autostart and omarchy-idle-lock-apply;
+    our omaxian-xfpm-defaults (Xsession.d/36omaxian-xfpm) stays as the early,
+    login-time default and agrees with it.
+  * Home template: drop the keyboard.json that v1.0.4's deploy.sh seeds from
+    the build host (it would shadow the installer's layout in /etc/skel and
+    the live session's us,it seed), plus python __pycache__ and
+    shell.json.bak render leftovers.
+
+ -- Marcello Palmitessa <marcello@omaxian.org>  Mon, 26 Oct 2026 21:00:00 +0100
+
 omaxian-session (1.0.3-4) excalibur; urgency=medium
 
   * Depend on omaxian-fonts-nerd: JetBrains Mono Nerd Font is mandatory

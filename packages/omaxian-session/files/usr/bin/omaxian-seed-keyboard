@@ -1,9 +1,10 @@
 #!/bin/sh
 # Omaxian OS: create ~/.config/omarchy/keyboard.json from the system keyboard
 # (/etc/default/keyboard: XKBLAYOUT / XKBVARIANT / XKBOPTIONS, written by the
-# installer) when the user has none. Without it, omarchy-keyboard-apply (run by
-# i3_autostart) falls back to its hard-coded it,ru phonetic default and the
-# installer's keyboard choice is lost. Never overwrites an existing file.
+# installer) when the user has none. Omaxian <= v1.0.3's omarchy-keyboard-apply
+# (run by i3_autostart) otherwise fell back to a hard-coded it,ru default; v1.0.4
+# reads /etc/default/keyboard itself, so this is now belt and braces (it runs
+# earlier, from Xsession.d). Never overwrites an existing file.
 #   omaxian-seed-keyboard [--force]
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/keyboard.json"
 SRC="${OMAXIAN_KEYBOARD_DEFAULTS:-/etc/default/keyboard}"

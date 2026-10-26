@@ -1,3 +1,12 @@
+omaxian-strata (1.1.1-1) excalibur; urgency=medium
+
+  * Package signed upstream release v1.1.1 (source commit fb031552,
+    archive sha256 e0552e07...0734, Ed25519 manifest signature verified
+    with the unchanged release key 15899032...cebf3c).
+  * build-packages.sh now checks this version against STRATA_VERSION.
+
+ -- Marcello Palmitessa <marcello@omaxian.org>  Mon, 26 Oct 2026 21:05:00 +0100
+
 omaxian-strata (1.1.0-1) excalibur; urgency=medium
 
   * Package signed upstream release v1.1.0.

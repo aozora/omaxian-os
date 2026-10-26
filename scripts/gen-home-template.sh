@@ -19,6 +19,14 @@ if grep -rIl --exclude-dir=themes "$T/home" "$T/home" 2>/dev/null | head -5 | gr
 	grep -rIl --exclude-dir=themes "$T/home" "$T/home" | head; die "home template contains build paths"
 fi
 rm -rf "$OUT"; mkdir -p "$(dirname "$OUT")"; mv "$T/home" "$OUT"
+# Omaxian >= v1.0.4 deploy.sh seeds ~/.config/omarchy/keyboard.json from the
+# *build host's* /etc/default/keyboard (or "us"). In /etc/skel that would
+# shadow the installer's layout: omaxian-seed-keyboard (Xsession.d/25omaxian-home)
+# never overwrites an existing file. Drop it; it is seeded per user at login.
+rm -f "$OUT/.config/omarchy/keyboard.json"
+# render-time leftovers (python bytecode of the build host, deploy backup)
+find "$OUT" -name __pycache__ -type d -prune -exec rm -rf {} +
+rm -f "$OUT/.local/state/omarchy/shell.json.bak"
 # fastfetch 2.40 (Devuan excalibur) has no "#rrggbb" colours: the themed
 # config failed with "invalid color code found: b5" (e.g. accent #8773b5).
 # Emit an ANSI truecolor token ({{ key_ansi }} -> 38;2;r;g;b) and use it.
