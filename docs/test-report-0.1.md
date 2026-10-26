@@ -509,3 +509,30 @@ Folded in before the final ISO builds (the Round 11 ISOs were rebuilt).
 ### Round 12b install i13 (full ISO, UEFI, `-nic none`, 40 GiB virtio)
 - Same test-only live tweak (partition.conf erase default). Europe/Rome, American English for language and formats, keyboard English (US), Erase disk (EFI 512 MiB plus ext4, swap to file). User Tester / tester / tester-standardpc, throwaway password (shots/r12b-i13-03…07).
 - Applications page (r12b-i13-08-apps): **Extra apps (downloaded after install)** shows 6 individual checkboxes (Cursor, Grok Bot, Rebased, RustDesk, Shotcut, Teams for Linux), all unselected by default, and Telegram (Flatpak) is checked by default. Ticked: VoxType, **Cursor** and **RustDesk**, so all 7 groups plus 2 extras are selected (r12b-i13-09-apps). Summary: r12b-i13-10. Install started 23:57 (r12b-i13-12).
+- Install finished "All done" at 00:43 (r12b-i13-18). It went through `omaxianpicks` and `packages` without errors and spent its usual long time at 78% "Install packages".
+- Pre-boot read-only look at the disk: optional-appimages.list = `cursor`, `rustdesk`; optional-flatpaks.list = `org.telegram.desktop`; optional-packages.list = the 24 ticked packages, with **no `curl`** (the r12 leak is gone).
+- The installed disk booted UEFI offline, then greeter (r12b-i13-20), then Tester desktop (r12b-i13-21). In-session checks (r12b-i13-22/23) and offline check (build/i13-check.txt):
+
+| check | result |
+|---|---|
+| Picks recorded (Cursor, RustDesk, Telegram) | PASS |
+| Extras stay pending offline: firstboot log "extra AppImage cursor/rustdesk picked, download pending (needs network)" and **no firstboot.done** | PASS |
+| Telegram Flatpak kept (picked) | PASS |
+| ~/AppImages = 10 bundled, 0 removed/extra names (openspot, cursor, rustdesk, shotcut, rebased, grok, teams) | PASS |
+| Optional apt packages installed 24/24; live packages removed (calamares-settings absent) | PASS |
+| omaxian.sources `Enabled: yes`; offline `apt-get update` rc=0, 9 W: lines, 0 E: lines | PASS |
+| xfconf power-button-action = 4 (/etc/xdg default 3, user channel 4) | PASS |
+| JetBrainsMono Nerd Font (36 faces) | PASS |
+| LANG/LC_* en_US.UTF-8, Europe/Rome | PASS |
+| OpenRA content ra 151 / cnc 115 / d2k 590, plus maps | PASS |
+| omaxian-session 1.0.4-1, omaxian-strata 1.1.1-1, base 0.1.7, firstboot 0.2.5, VoxType 1.1.1 | PASS |
+
+  **Round 12b: PASS.** The r12 FAIL (picks not recorded) is fixed by calamares-settings 0.2.12.
+- Final ISOs (`sha256sum -c` OK):
+
+| ISO | bytes | sha256 |
+|---|---|---|
+| out/omaxian-base-0.1-trans-siberian-shaman-amd64.iso | 2467051520 | 36567093a0986383e101679e1e6dead5b4321305bafd269749b1c32dd109257f |
+| out/omaxian-full-0.1-trans-siberian-shaman-amd64.iso | 8874823680 | ad4a51a29a8d45feeb4cca84db374b1b888d01ca25f1b04d21a62d493bc2e01a |
+
+- Cleanup: VMs killed. Test disk, raw export, OVMF vars and throwaway password file deleted. Leftover diag http.server (127.0.0.1:8765) stopped. Nothing uploaded, published or pushed.
