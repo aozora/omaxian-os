@@ -536,3 +536,12 @@ Folded in before the final ISO builds (the Round 11 ISOs were rebuilt).
 | out/omaxian-full-0.1-trans-siberian-shaman-amd64.iso | 8874823680 | ad4a51a29a8d45feeb4cca84db374b1b888d01ca25f1b04d21a62d493bc2e01a |
 
 - Cleanup: VMs killed. Test disk, raw export, OVMF vars and throwaway password file deleted. Leftover diag http.server (127.0.0.1:8765) stopped. Nothing uploaded, published or pushed.
+
+## Publish 0.1.7 (2026-10-27, 06:19–06:31 CET)
+
+Approved by the owner. Done with rclone (R2 S3, Cloudflare, 64M chunks, concurrency 4).
+
+- **apt (s3://omaxian-apt → https://apt.omaxian.org):** published in order: pool (Cache-Control `public, max-age=31536000, immutable`), then dists (`max-age=300`, sync with delete), then keyring (`max-age=3600`). `rclone check --download` against repo-local: 0 differences, 14 matching files. The 5 superseded pool objects were removed: omaxian-base 0.1.6, omaxian-firstboot 0.2.3, omaxian-calamares-settings 0.2.9, omaxian-session 1.0.3-4, omaxian-strata 1.1.0-1 (none of them referenced by the new Packages). branding 0.2.5 and fonts-nerd 3.5.1-1 were byte-identical and left as they were.
+- **HTTPS checks:** InRelease has a Good signature from subkey 5CD4C2DB…AF4C4E75 using the published keyring, which is byte-identical to keys/public and to the keyring in omaxian-base 0.1.7. The 3 index sha256s match Release. All 7 Filename URLs return 200. Isolated apt root with the omaxian.sources shipped in omaxian-base 0.1.7: `apt-get update` rc=0 with no W:/E:. Candidates are base 0.1.7, calamares-settings 0.2.12, session 1.0.4-1, strata 1.1.1-1, the same versions as in out/omaxian-{base,full}.packages. voxtype is not in the repo.
+- **ISOs (s3://omaxian-iso/releases/0.1/ → https://download.omaxian.org/releases/0.1/):** both replaced. Content-Length matches local (2467051520 and 8874823680). The .sha256 files are byte-identical to the local ones. The full streamed sha256 from R2 matches: base 36567093…09257f, full ad4a51a2…2e01a. No unfinished multipart uploads are left in either bucket.
+- R2 answered some uploads with `501 NotImplemented` after the object had been written. It is harmless; the rclone retry then found the object complete.
