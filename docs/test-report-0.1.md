@@ -572,3 +572,37 @@ Reported on both ISOs: no installer icon (i3 has no desktop); Omaxian Menu > ins
 - r13c-fi, full, UEFI, `-nic none`, 40G disk (install VM): the installer started on its own and the welcome page loaded with no spinner (r13c-fi-1). In the live terminal (fi-2/3): `id` includes 101(input); no ~/Desktop; config.d has 50-ydotool.conf and 90-omaxian-live-installer.conf; `pgrep -a ydotoold` shows /home/omaxian/.local/bin/ydotoold; /dev/uinput is `crw-rw---- root input`; `ydotool type 'echo YDO$((40+2))'` typed into the terminal and printed YDO42.
 - Install i14 (same VM): the usual test-only live tweak (partition.conf erase default). Europe/Rome, American English, keyboard English (US), Erase disk (EFI 512 MiB + ext4, swap to file). User Tester / tester / tester-standardpc with a throwaway password; default app selections. Install started 16:38 (r13c-fi-i03…i11).
 - r13c-fb, full, BIOS, `-nic none`, no disk: the installer started on its own and the welcome page loaded (r13c-fb-1; the only spinner is the expected no-disk recheck). Close, then Super+Shift+I (fb-2), then close, then Menu > "install" (fb-3), then close (fb-4) all worked. PASS.
+- i14 finished "All done" at 17:10, about 32 min (r13c-fi-i12…i15).
+- Offline look at the i14 disk (read-only): `id tester` includes 101(input) (and 995(libvirt), 102(kvm)). cmatrix 2.0-6, easyeffects 7.2.3-1, omaxian-ydotool 1.0.4-1 and session 1.0.6-1 are installed; pulseaudio is not. /usr/bin/ydotool{,d}, the uinput udev rule and modules-load are present. calamares, calamares-settings and live-boot are removed, and there is no ~/Desktop. Only one kernel (7.2.11). The installer log is still not copied to the target (a known gap since round 1; no preservefiles module is configured).
+- Installed i14 booted UEFI offline to the greeter (r13c-fi-b1); the Tester desktop came up with **no installer window** (b2). Terminal checks (b3–b5):
+
+| check | result |
+|---|---|
+| `id` includes 101(input) | PASS |
+| ydotoold running from ~/.local/bin/ydotoold (symlink → /usr/bin/ydotoold) | PASS |
+| ~/.config/i3/config.d/50-ydotool.conf = `exec --no-startup-id ~/.local/bin/ydotoold` | PASS |
+| /dev/uinput `crw-rw---- root input`, uinput module loaded | PASS |
+| `ydotool type` types into the terminal (YDO42) | PASS |
+| ~/.local/bin in PATH | PASS |
+| easyeffects 7.2.3-1, cmatrix 2.0-6 (runs), omaxian-ydotool 1.0.4-1; no pulseaudio | PASS |
+| omaxian-session 1.0.6-1; power-button-action 4; keyboard layout us | PASS |
+| No installer autostart, no Calamares process, no live-installer config.d fragment, no menu item ("install" finds only GDebi), no ~/Desktop | PASS |
+| Installer log copied to target | not done (known gap, see open issues) |
+
+**Round 13 result: PASS** (both ISOs, UEFI and BIOS live; full ISO offline install).
+
+| test | base | full |
+|---|---|---|
+| Live UEFI `-nic none`: autostart, welcome page, Super+Shift+I, Menu item | PASS (r13c-bu) | PASS (r13c-fi) |
+| Live BIOS: autostart, welcome page, Super+Shift+I, Menu item | PASS, user NIC + disk, no spinner (r13c-bb) | PASS, `-nic none` (r13c-fb) |
+| Offline install + checks above | n/a | PASS (i14) |
+
+- Final ISOs (`sha256sum -c` OK; .sha256 files in out/):
+
+| ISO | bytes | sha256 |
+|---|---|---|
+| out/omaxian-base-0.1-trans-siberian-shaman-amd64.iso | 2615066624 | 9d49f7c5f8cd2d43917bb02edf7cce7189774e0c152c8ad73fb3434ae6151bbe |
+| out/omaxian-full-0.1-trans-siberian-shaman-amd64.iso | 9206335488 | 434355df6c90264f8c4e5bfcc83945a58ad174f03513505c363564ee33da06fd |
+
+- Open issues: (1) the installer log is not persisted to the target (a Calamares `preservefiles` entry would fix it; not done, to avoid another rebuild). (2) Upstream Omaxian v1.0.6 still has `version` = v1.0.5. (3) The Omarchy pin is an rc (v4.5.0-rc2). (4) Calamares still shows its 5 s recheck spinner when a *mandatory* check fails (no or too small disk); that is expected and the page says why. (5) Membership in `input` lets user processes read all keyboard and mouse events (needed for ydotool and VoxType). (6) The VoxType daemon was not exercised in this round beyond the unit tests. (7) The base ISO is 148 MB larger than 0.1.7 (easyeffects and its deps, cmatrix, ydotool, kernel 7.2.11).
+- Cleanup: VMs killed. Test disks, OVMF vars, screendump ppm and the throwaway password file deleted. Nothing uploaded, published or pushed.
