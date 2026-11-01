@@ -1,0 +1,2 @@
+# Omaxian OS (omaxian-ydotool): seed ~/.local/bin/ydotoold + i3 autostart once per user
+[ -x /usr/libexec/omaxian/ydotool-seed ] && /usr/libexec/omaxian/ydotool-seed >/dev/null 2>&1 || true

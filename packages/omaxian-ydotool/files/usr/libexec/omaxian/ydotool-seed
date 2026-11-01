@@ -1,0 +1,15 @@
+#!/bin/sh
+# Omaxian OS (omaxian-ydotool), once per user: ~/.local/bin/ydotoold ->
+# /usr/bin/ydotoold and the i3 autostart fragment. Deleting either is
+# respected (they are not re-created).
+[ "$(id -u)" = 0 ] && exit 0
+S="${XDG_STATE_HOME:-$HOME/.local/state}/omaxian"; D="$HOME/.config/i3/config.d"
+[ -e "$S/ydotool-seeded" ] && exit 0
+[ -d "$D" ] || exit 0
+mkdir -p "$S" "$HOME/.local/bin"
+[ -e "$HOME/.local/bin/ydotoold" ] || [ -L "$HOME/.local/bin/ydotoold" ] || ln -s /usr/bin/ydotoold "$HOME/.local/bin/ydotoold"
+[ -e "$D/50-ydotool.conf" ] || cat > "$D/50-ydotool.conf" <<'C'
+# ydotool daemon (package omaxian-ydotool), per user; needs the "input" group.
+exec --no-startup-id ~/.local/bin/ydotoold
+C
+date -Is > "$S/ydotool-seeded"

@@ -1,0 +1,16 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ydotool
+Source: https://github.com/ReimuNotMoe/ydotool
+
+Files: upstream/*
+Copyright: 2018-2023 Reimu NotMoe and ydotool contributors
+License: AGPL-3.0+
+ On Debian systems the full text is in /usr/share/common-licenses/AGPL-3
+ (or see https://www.gnu.org/licenses/agpl-3.0.txt).
+
+Files: *
+Copyright: 2026 Omaxian OS
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software, to deal in the Software without restriction. THE SOFTWARE
+ IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

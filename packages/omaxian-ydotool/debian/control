@@ -1,0 +1,23 @@
+Source: omaxian-ydotool
+Section: utils
+Priority: optional
+Maintainer: Omaxian OS <dev@omaxian.org>
+Build-Depends: debhelper-compat (= 13), cmake, scdoc
+Standards-Version: 4.7.0
+Homepage: https://github.com/ReimuNotMoe/ydotool
+Rules-Requires-Root: no
+
+Package: omaxian-ydotool
+Architecture: amd64
+Depends: kmod, ${shlibs:Depends}, ${misc:Depends}
+Provides: ydotool
+Conflicts: ydotool
+Replaces: ydotool
+Description: generic command-line automation tool (ydotool, Omaxian build)
+ ydotool 1.0.4 built from the upstream source (github.com/ReimuNotMoe/ydotool,
+ pinned tag, commit and sha256): /usr/bin/ydotool and /usr/bin/ydotoold.
+ Omaxian integration (sysvinit, X11/i3, no systemd user unit):
+  * /dev/uinput is group "input", mode 0660 (udev rule); uinput is loaded at
+    boot (modules-load.d); installed users are in the "input" group;
+  * ~/.local/bin/ydotoold -> /usr/bin/ydotoold and an i3 autostart line
+    (~/.config/i3/config.d/50-ydotool.conf), seeded once per user.

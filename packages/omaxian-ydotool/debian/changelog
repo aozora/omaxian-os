@@ -1,0 +1,9 @@
+omaxian-ydotool (1.0.4-1) excalibur; urgency=medium
+
+  * Initial package: ydotool v1.0.4 (commit 57ba7d0af525e82da2de0e275d16947
+    7f293b197, source sha256 ba075a43…fde23bd) built from source; udev rule
+    for /dev/uinput (group input, 0660), uinput in modules-load.d, per-user
+    ~/.local/bin/ydotoold symlink and i3 autostart
+    "exec --no-startup-id ~/.local/bin/ydotoold" (config.d fragment).
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 01 Nov 2026 16:20:00 +0100

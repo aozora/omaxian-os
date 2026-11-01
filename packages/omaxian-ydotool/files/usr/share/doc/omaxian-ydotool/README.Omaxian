@@ -1,0 +1,17 @@
+ydotool on Omaxian OS
+=====================
+ydotool 1.0.4, built from https://github.com/ReimuNotMoe/ydotool (tag v1.0.4,
+commit 57ba7d0af525e82da2de0e275d169477f293b197).
+
+- i3 starts the daemon in every session:
+    ~/.config/i3/config.d/50-ydotool.conf: exec --no-startup-id ~/.local/bin/ydotoold
+  (~/.local/bin/ydotoold is a symlink to /usr/bin/ydotoold; both are created
+  once per user at the first session login.)
+- /dev/uinput is group "input", mode 0660; users created by the installer
+  (and the live user) are in "input". Note that "input" can also read every
+  input device (keyboard included).
+- The socket is $XDG_RUNTIME_DIR/.ydotool_socket (or /tmp/.ydotool_socket
+  without XDG_RUNTIME_DIR); ydotool finds it the same way, so YDOTOOL_SOCKET
+  is not needed.
+- Example: ydotool type 'hello'   |   ydotool key 28:1 28:0   (Enter)
+- Disable: delete ~/.config/i3/config.d/50-ydotool.conf (not re-created).

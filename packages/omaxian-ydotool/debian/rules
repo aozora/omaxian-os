@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+# ydotool from the pinned upstream source in upstream/ (put there by
+# prep_omaxian-ydotool in scripts/build-packages.sh, sha256-checked).
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+UV := $(shell cat upstream/.version)
+%:
+	dh $@ --buildsystem=cmake --sourcedirectory=upstream
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DCMAKE_C_FLAGS='$(CFLAGS) $(CPPFLAGS) -DVERSION=\"v$(UV)\"'
+
+override_dh_auto_install:
+	dh_auto_install
+	# no systemd here (sysvinit); ydotoold is started per user by i3
+	rm -rf debian/omaxian-ydotool/usr/lib/systemd debian/omaxian-ydotool/lib/systemd
+
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
+
+override_dh_dwz:

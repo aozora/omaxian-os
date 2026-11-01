@@ -1,0 +1,3 @@
+# Omaxian OS (omaxian-ydotool): ydotoold runs as the user; members of the
+# "input" group may use /dev/uinput.
+KERNEL=="uinput", GROUP="input", MODE="0660"

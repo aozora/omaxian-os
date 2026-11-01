@@ -5,7 +5,7 @@
 # never lands in the git tree.
 . "$(dirname "$0")/lib.sh"
 need dpkg-buildpackage dh rsvg-convert grub-mkfont python3 curl jq
-ALL="omaxian-base omaxian-branding omaxian-fonts-nerd omaxian-session omaxian-strata omaxian-firstboot omaxian-calamares-settings omaxian-voxtype"
+ALL="omaxian-base omaxian-branding omaxian-fonts-nerd omaxian-session omaxian-strata omaxian-firstboot omaxian-calamares-settings omaxian-voxtype omaxian-ydotool"
 PKGS=${*:-$ALL}
 STAGE="$BUILDDIR/pkg"; DEBS="$OUTDIR/debs"; mkdir -p "$STAGE" "$DEBS"
 OMX="$BUILDDIR/src/omaxian"
@@ -94,6 +94,12 @@ prep_omaxian-calamares-settings() {
 prep_omaxian-voxtype() { # integration only; the upstream .deb is fetched by build-rootfs (full)
 	local v; v=$(sed -n '1s/.*(\([^-)]*\).*/\1/p' "$1/debian/changelog")
 	[ "$v" = "$VOXTYPE_VERSION" ] || die "omaxian-voxtype changelog ($v) != VOXTYPE_VERSION ($VOXTYPE_VERSION)"
+}
+
+prep_omaxian-ydotool() { # pinned upstream source (sha256) into upstream/
+	local v; v=$(sed -n '1s/.*(\([^-)]*\).*/\1/p' "$1/debian/changelog")
+	[ "$v" = "$YDOTOOL_VERSION" ] || die "omaxian-ydotool changelog ($v) != YDOTOOL_VERSION ($YDOTOOL_VERSION)"
+	bash "$TOPDIR/scripts/fetch-ydotool.sh" "$1/upstream"
 }
 
 for p in $PKGS; do
