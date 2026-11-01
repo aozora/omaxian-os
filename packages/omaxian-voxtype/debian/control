@@ -19,4 +19,4 @@ Description: Omaxian integration for VoxType voice dictation (X11/i3, sysvinit)
   * omaxian-voxtype-toggle starts the per-user daemon without systemd and
     toggles recording; text goes to the X11 clipboard via xclip;
   * an i3 keybinding (Super+Ctrl+V), seeded once per user.
- The user is NOT added to the "input" group (the evdev hotkey stays off).
+ The built-in evdev hotkey is off (--no-hotkey); i3 owns the key.

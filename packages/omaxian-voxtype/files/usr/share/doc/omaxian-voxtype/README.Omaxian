@@ -7,8 +7,8 @@ VoxType on Omaxian OS
    the X11 clipboard (xclip). Paste it with Ctrl+V (Shift+Insert / middle
    click in terminals).
 The daemon runs per user, started on demand (no systemd, so the upstream
-systemd user unit is unused). Its evdev hotkey is off, so you do NOT need the
-"input" group (that group can read every keystroke). If you want typing at
-the cursor instead of the clipboard, install ydotool (trixie-backports; needs
-a root uinput daemon) and set [output] mode in ~/.config/voxtype/config.toml.
+systemd user unit is unused), with its evdev hotkey off (--no-hotkey): i3
+owns the key. For typing at the cursor instead of the clipboard, Omaxian
+ships ydotool (omaxian-ydotool; ydotoold is started by i3 and your user is
+in the "input" group): set [output] mode in ~/.config/voxtype/config.toml.
 Disable the keybinding: delete ~/.config/i3/config.d/60-voxtype.conf.

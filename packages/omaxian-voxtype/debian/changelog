@@ -1,3 +1,14 @@
+omaxian-voxtype (1.1.1-3) excalibur; urgency=medium
+
+  * Fix: Super+Ctrl+V never started the daemon: "voxtype daemon --clipboard"
+    is rejected by voxtype 1.1.1 ("unexpected argument"); the options must
+    come before the subcommand. Now "voxtype -q --no-hotkey --clipboard
+    daemon": the built-in evdev hotkey stays off now that users are in the
+    "input" group (i3 owns the key).
+  * README: ydotool is shipped (omaxian-ydotool).
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 01 Nov 2026 16:10:00 +0100
+
 omaxian-voxtype (1.1.1-2) excalibur; urgency=medium
 
   * Wrapper: refuse cleanly (exit 132, message) on CPUs without x86-64-v2

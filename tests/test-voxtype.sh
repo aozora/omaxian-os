@@ -94,7 +94,7 @@ TG=packages/omaxian-voxtype/files/usr/bin/omaxian-voxtype-toggle
 grep -q '^kitty .*voxtype setup model' "$S" && ! grep -q '^voxtype record' "$S" && ok "toggle: no model -> 'voxtype setup model' terminal" || { bad "nomodel"; cat "$S"; }
 mkdir -p "$H/.local/share/voxtype/models"; touch "$H/.local/share/voxtype/models/ggml-base.en.bin"
 : > "$S"; HOME=$H PATH="$B:$PATH" sh $TG
-grep -q '^setsid -f voxtype -q daemon --clipboard' "$S" && tail -1 "$S" | grep -q '^voxtype record toggle' && ok "toggle: starts daemon (clipboard) then toggles" || { bad "start"; cat "$S"; }
+grep -q '^setsid -f voxtype -q --no-hotkey --clipboard daemon' "$S" && tail -1 "$S" | grep -q '^voxtype record toggle' && ok "toggle: starts daemon (clipboard) then toggles" || { bad "start"; cat "$S"; }
 : > "$S"; HOME=$H PATH="$B:$PATH" sh $TG
 ! grep -q setsid "$S" && grep -q '^voxtype record toggle' "$S" && ok "toggle: daemon running -> toggle only" || { bad "running"; cat "$S"; }
 echo "--- $pass passed, $fail failed"; [ $fail = 0 ]

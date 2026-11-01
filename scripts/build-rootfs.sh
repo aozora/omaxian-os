@@ -154,7 +154,7 @@ s_configure() {
 LIVE_HOSTNAME="$LIVE_HOSTNAME"
 LIVE_USERNAME="$LIVE_USER"
 LIVE_USER_FULLNAME="Omaxian Live"
-LIVE_USER_DEFAULT_GROUPS="audio cdrom dip floppy video plugdev netdev powerdev scanner bluetooth lpadmin sudo kvm libvirt"
+LIVE_USER_DEFAULT_GROUPS="audio cdrom dip floppy video plugdev netdev powerdev scanner bluetooth lpadmin sudo kvm libvirt input"
 LIVE_LOCALES="$DEFAULT_LOCALE"
 LIVE_KEYBOARD_MODEL="pc105"
 LIVE_KEYBOARD_LAYOUTS="us,it"
