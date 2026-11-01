@@ -1,3 +1,16 @@
 #!/bin/sh
-# Launch Calamares as root from the live session.
-exec pkexec env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" calamares "$@"
+# Launch Calamares as root from the live session (menu, Super+Shift+I,
+# autostart, notification action).
+# pkexec must NOT be exec'ed here: launchers (Quickshell execDetached,
+# setsid -f, i3 exec) leave this script orphaned, and pkexec refuses to run
+# when its parent is init ("Refusing to render service to dead parents").
+# Keeping this shell alive as pkexec's parent avoids that.
+if pgrep -x calamares >/dev/null 2>&1; then
+	# already running (e.g. autostarted): just bring it to the front
+	command -v i3-msg >/dev/null 2>&1 && i3-msg -q '[class="(?i)calamares"] focus' >/dev/null 2>&1
+	exit 0
+fi
+# absolute /usr/bin/env + both variables set: the live polkit rule
+# (49-omaxian-live-installer.rules) only matches that exact command line.
+D=${DISPLAY:-:0}; X=${XAUTHORITY:-$HOME/.Xauthority}
+/usr/bin/pkexec /usr/bin/env DISPLAY="$D" XAUTHORITY="$X" calamares "$@"

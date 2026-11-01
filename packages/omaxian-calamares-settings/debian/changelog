@@ -1,3 +1,25 @@
+omaxian-calamares-settings (0.2.13) excalibur; urgency=medium
+
+  * Fix: "Install Omaxian OS" from the Omaxian Menu did nothing. The shell
+    launches apps detached, so omaxian-install was orphaned and its
+    "exec pkexec" ran with init as parent; pkexec refuses that ("Refusing
+    to render service to dead parents"). omaxian-install now keeps itself
+    as pkexec's parent, uses /usr/bin/pkexec /usr/bin/env with DISPLAY and
+    XAUTHORITY defaulted (exact polkit rule match), and only focuses the
+    window when Calamares already runs.
+  * Fix: Welcome page with a never-ending spinner offline: drop the
+    "internet" requirement (the install is offline; Calamares re-ran the
+    checks every 5 s while it was unsatisfied).
+  * Live session: start the installer automatically once the i3 session
+    and the Omaxian shell are up (once per session; "omaxian.noinstaller"
+    on the kernel command line skips it); "Install Omaxian OS" item at the
+    top level of the Omaxian Menu; the notification now says how to reopen
+    it. The ~/Desktop shortcut is gone (i3 shows no desktop icons).
+  * users: add the installed user to the "input" group (/dev/uinput for
+    ydotool, evdev).
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 01 Nov 2026 16:00:00 +0100
+
 omaxian-calamares-settings (0.2.12) excalibur; urgency=medium
 
   * Fix: the Telegram Flatpak pick and the "Extra apps" AppImage picks

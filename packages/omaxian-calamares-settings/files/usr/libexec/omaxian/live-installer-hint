@@ -1,11 +1,18 @@
 #!/bin/sh
-# live-installer-hint setup|notify   (live session only, see 38omaxian-live-installer)
-#   setup : hide the stock "Install System" (calamares.desktop) so a launcher
-#           search for "install" shows "Install Omaxian OS" first; i3 keybinding
-#           Super+Shift+I; a desktop shortcut in ~/Desktop.
-#   notify: one-time notification (per live user home) with an Install action.
+# live-installer-hint setup|autostart|notify   (live session only, see
+# /etc/X11/Xsession.d/38omaxian-live-installer)
+#   setup    : hide the stock "Install System" (calamares.desktop) so a launcher
+#              search for "install" shows "Install Omaxian OS" first; i3
+#              keybinding Super+Shift+I; "Install Omaxian OS" at the top level
+#              of the Omaxian Menu (Super+Space).
+#   autostart: once per session, wait for i3 and the Omaxian shell, then start
+#              the installer (skipped with "omaxian.noinstaller" on the kernel
+#              command line).
+#   notify   : one-time notification (per live user home) saying how to
+#              reopen the installer, with an Install action.
 set -u
 H=${HOME:?}
+MENU_ID=omaxian-install
 case ${1:-} in
 setup)
 	mkdir -p "$H/.local/share/applications"
@@ -19,21 +26,45 @@ setup)
 bindsym Mod4+Shift+i exec --no-startup-id /usr/bin/omaxian-install
 EOC
 	fi
+	# Omaxian Menu: user extension file (merged over the default menu)
+	m="$H/.config/omarchy/extensions/omarchy-menu.jsonc"
+	item="  \"$MENU_ID\": {\"icon\": \"\", \"label\": \"Install Omaxian OS\", \"aliases\": [\"install\", \"installer\", \"calamares\"], \"action\": \"/usr/bin/omaxian-install\"},"
+	if [ ! -s "$m" ]; then
+		mkdir -p "${m%/*}"
+		printf '{\n  // live session only (omaxian-calamares-settings)\n%s\n}\n' "$item" > "$m"
+	elif ! grep -q "\"$MENU_ID\"" "$m"; then
+		# insert right after the first opening brace
+		awk -v it="$item" '!d && /\{/ { sub(/\{/, "{\n" it); d=1 } { print }' "$m" > "$m.tmp" && mv "$m.tmp" "$m"
+	fi
+	# No ~/Desktop shortcut: i3 draws no desktop icons, and a .desktop file
+	# run from a terminal is parsed as a shell script.
 	d=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$H/Desktop")
-	[ "$d" = "$H" ] && d="$H/Desktop"
-	mkdir -p "$d" && install -m 0755 /usr/share/applications/omaxian-install.desktop "$d/omaxian-install.desktop"
-	command -v gio >/dev/null 2>&1 && gio set "$d/omaxian-install.desktop" metadata::trusted true 2>/dev/null
+	rm -f "$d/omaxian-install.desktop"
+	;;
+autostart)
+	grep -qw 'omaxian.noinstaller' /proc/cmdline 2>/dev/null && exit 0
+	f="/tmp/.omaxian-installer-autostart.$(id -u).${XDG_SESSION_ID:-${DISPLAY:-x}}"
+	[ -e "$f" ] && exit 0
+	: > "$f"
+	# i3 IPC up, then the Omaxian shell (Quickshell: bar, notifications,
+	# polkit agent), then a short settle so the window is placed on the
+	# final layout and is not covered by the shell's startup.
+	i=0; until i3-msg -t get_version >/dev/null 2>&1 || [ $i -ge 120 ]; do sleep 1; i=$((i+1)); done
+	i=0; until pgrep -u "$(id -u)" -x quickshell >/dev/null 2>&1 || [ $i -ge 90 ]; do sleep 1; i=$((i+1)); done
+	sleep 4
+	pgrep -x calamares >/dev/null 2>&1 && exit 0
+	exec /usr/bin/omaxian-install
 	;;
 notify)
 	f="$H/.local/state/omaxian/live-installer-hint.done"
 	[ -e "$f" ] && exit 0
 	mkdir -p "${f%/*}" && : > "$f"
 	command -v notify-send >/dev/null 2>&1 || exit 0
-	body="To install, open the app launcher (Super+Space) and type \"install\", press Super+Shift+I, or middle-click this notification."
+	body="Closed the installer? Reopen it with Super+Shift+I, from the Omaxian Menu (Super+Space) > Install Omaxian OS, or with the button below."
 	a=$(notify-send -a "Omaxian OS" -i calamares -u normal -t 60000 \
 		-A install="Install Omaxian OS" "Welcome to the Omaxian OS live session" "$body" 2>/dev/null) || \
 		{ notify-send -a "Omaxian OS" -i calamares -t 60000 "Welcome to the Omaxian OS live session" "$body"; exit 0; }
 	[ "$a" = install ] && exec /usr/bin/omaxian-install
 	;;
-*) echo "usage: $0 setup|notify" >&2; exit 2 ;;
+*) echo "usage: $0 setup|autostart|notify" >&2; exit 2 ;;
 esac

@@ -17,7 +17,34 @@ sed "s|/usr/share/applications/omaxian-install.desktop|$P/usr/share/applications
 HOME=$W/home PATH=/usr/bin:/bin "$W/hint" setup
 grep -q '^NoDisplay=true' "$W/home/.local/share/applications/calamares.desktop" && ok "stock calamares.desktop hidden for the live user" || ko "calamares override"
 grep -q 'bindsym Mod4+Shift+i exec --no-startup-id /usr/bin/omaxian-install' "$W/home/.config/i3/config.d/90-omaxian-live-installer.conf" && ok "i3 Super+Shift+I" || ko "i3 binding"
-[ -x "$W/home/Desktop/omaxian-install.desktop" ] && ok "desktop shortcut" || ko "desktop shortcut"
+[ ! -e "$W/home/Desktop/omaxian-install.desktop" ] && ok "no ~/Desktop shortcut (i3 draws no icons)" || ko "desktop shortcut still installed"
+M=$W/home/.config/omarchy/extensions/omarchy-menu.jsonc
+if command -v node >/dev/null; then
+	chk_menu() { node -e '
+const s=require("fs").readFileSync(process.argv[1],"utf8").replace(/^\s*\/\/[^\n]*(\n|$)/gm,"").replace(/,(\s*[}\]])/g,"$1");
+const j=JSON.parse(s), i=j["omaxian-install"]; if(!i||i.action!="/usr/bin/omaxian-install"||i.label!="Install Omaxian OS") process.exit(1);
+if(process.argv[2] && !j[process.argv[2]]) process.exit(2);' "$M" "${1:-}"; }
+	chk_menu && ok "Omaxian Menu item (new extension file)" || ko "menu item"
+	# existing user extension: merged, not clobbered, not duplicated on re-run
+	printf '{\n  "mine": {"label": "Mine", "action": "true"}\n}\n' > "$M"
+	HOME=$W/home PATH=/usr/bin:/bin "$W/hint" setup; HOME=$W/home PATH=/usr/bin:/bin "$W/hint" setup
+	chk_menu mine && [ "$(grep -c '"omaxian-install"' "$M")" = 1 ] && ok "menu item merged into an existing extension file" || ko "menu merge ($(cat "$M"))"
+else echo "skip menu item (no node)"; fi
+# omaxian-install: no "exec pkexec" (orphaned pkexec refuses to run), exact
+# command line of the polkit rule, single instance
+L=$P/usr/bin/omaxian-install
+! grep -q '^[^#]*exec .*pkexec' "$L" && ok "omaxian-install keeps pkexec's parent alive" || ko "exec pkexec in omaxian-install"
+grep -q '^/usr/bin/pkexec /usr/bin/env DISPLAY="$D" XAUTHORITY="$X" calamares' "$L" && ok "omaxian-install command line" || ko "omaxian-install command line"
+printf '#!/bin/sh\necho "$*" >> %s/pk.log\n' "$W" > "$W/bin/pkexec"; chmod +x "$W/bin/pkexec"
+sed "s|/usr/bin/pkexec|$W/bin/pkexec|" "$L" > "$W/oi"; chmod +x "$W/oi"
+printf '#!/bin/sh\nexit 1\n' > "$W/bin/pgrep"; chmod +x "$W/bin/pgrep"
+env -u DISPLAY -u XAUTHORITY HOME=/home/x PATH=$W/bin:/usr/bin:/bin "$W/oi"
+grep -qx '/usr/bin/env DISPLAY=:0 XAUTHORITY=/home/x/.Xauthority calamares' "$W/pk.log" && ok "omaxian-install defaults DISPLAY/XAUTHORITY" || ko "omaxian-install env ($(cat "$W/pk.log"))"
+printf '#!/bin/sh\nexit 0\n' > "$W/bin/pgrep"; : > "$W/pk.log"
+HOME=/home/x PATH=$W/bin:/usr/bin:/bin "$W/oi"; [ ! -s "$W/pk.log" ] && ok "omaxian-install: single instance" || ko "second instance started"
+rm -f "$W/bin/pgrep"
+# autostart is wired in the live-only hook
+grep -q 'live-installer-hint autostart' "$P/etc/X11/Xsession.d/38omaxian-live-installer" && ok "autostart wired in the live hook" || ko "autostart hook"
 # notify: once, with the Install action
 printf '#!/bin/sh\necho "$*" >> %s/notify.log\n' "$W" > "$W/bin/notify-send"; chmod +x "$W/bin/notify-send"
 HOME=$W/home PATH=$W/bin:/usr/bin:/bin "$W/hint" notify; HOME=$W/home PATH=$W/bin:/usr/bin:/bin "$W/hint" notify

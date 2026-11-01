@@ -7,5 +7,5 @@ ISO=out/omaxian-full-0.1-trans-siberian-shaman-amd64.iso
 B=(-cdrom $ISO -boot d); [ "$2" = disk ] && B=()
 qemu-system-x86_64 -machine q35 -m 4096 -smp 4 ${CPU:+-cpu $CPU} -vga virtio -display none \
  -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd -drive if=pflash,format=raw,file=build/vars-$VM.fd \
- -drive file=build/$VM.qcow2,if=virtio,format=qcow2 -monitor unix:$M,server,nowait -nic none -accel tcg,thread=multi \
+ -drive file=build/$VM.qcow2,if=virtio,format=qcow2 -monitor unix:$M,server,nowait -nic ${NIC:-none} -accel tcg,thread=multi \
  "${B[@]}" -daemonize -pidfile build/qemu-$VM.pid && date +%T
