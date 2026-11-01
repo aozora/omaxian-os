@@ -59,15 +59,18 @@ prep_omaxian-branding() {
 }
 prep_omaxian-session() {
 	local d=$1
-	[ -d "$OMX/omarchy-quattro/themes" ] || "$TOPDIR/scripts/fetch-omaxian.sh"
+	"$TOPDIR/scripts/fetch-omaxian.sh" # no-op when OMAXIAN_SHELL_REF is already vendored
 	mkdir -p "$d/vendor/src"
 	# runtime pieces of the Omaxian repo (omarchy-quattro is only needed to
 	# render the home template; its themes are already inside it)
 	for x in scripts omaxian packaging version LICENSE README.md; do cp -a "$OMX/$x" "$d/vendor/src/"; done
 	bash "$TOPDIR/scripts/gen-home-template.sh" "$OMX" "$d/vendor/home-template"
 	cp "$OMX/packaging/sysvinit/power-profiles-daemon" "$d/debian/omaxian-session.power-profiles-daemon.init"
-	# upstream version from the Omaxian checkout, Debian revision from our changelog
-	local up rev; up=$(cat "$OMX/version" 2>/dev/null | tr -d 'v\n'); up=${up:-1.0.4}
+	# upstream version = the pinned tag (OMAXIAN_SHELL_REF); the repo's
+	# "version" file can lag behind (v1.0.6 still says v1.0.5): warn only.
+	# Debian revision from our changelog.
+	local up rev fv; up=${OMAXIAN_SHELL_REF#v}; fv=$(tr -d 'v\n' < "$OMX/version" 2>/dev/null)
+	[ "$fv" = "$up" ] || msg "WARNING: omaxian $OMAXIAN_SHELL_REF: its version file says ${fv:-nothing}; packaging as $up"
 	rev=$(sed -n '1s/.*(\([^)]*\)).*/\1/p' "$d/debian/changelog"); rev=${rev##*-}
 	sed -i "1s/([^)]*)/($up-${rev:-2})/" "$d/debian/changelog" || true
 }

@@ -1,3 +1,14 @@
+omaxian-session (1.0.6-1) excalibur; urgency=medium
+
+  * New upstream Omaxian shell v1.0.6 (Omarchy v4.5.0-rc2, from the pin in
+    its scripts/setup.sh). Upstream's "version" file still says v1.0.5; the
+    package version now comes from OMAXIAN_SHELL_REF (build warns on a
+    mismatch). Builds with the unchanged home-template filter: no
+    keyboard.json from the build host; i3 still includes config.d/*.conf
+    and keeps the xfpm power-button 3/unset -> 4 rewrite.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 01 Nov 2026 16:30:00 +0100
+
 omaxian-session (1.0.4-1) excalibur; urgency=medium
 
   * New upstream Omaxian shell v1.0.4 (Omarchy v4.0.6, taken from the pin in
