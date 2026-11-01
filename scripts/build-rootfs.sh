@@ -142,7 +142,13 @@ s_upgrade() { # apply pins (backports kernel/pipewire/quickshell) and drop older
 	# skips those, so always reinstall them from repo-local to pick up the current build.
 	local own; own=$(CH dpkg-query -W -f '${Package} ${Status}\n' 'omaxian-*' | awk '/ installed$/{print $1}')
 	[ -z "$own" ] || CH $APT install --reinstall $own
-	local old; old=$(CH dpkg-query -W -f '${Package} ${Status}\n' 'linux-image-[0-9]*' | awk '/installed$/ && $1 !~ /^linux-image-7\./{print $1}')
+	# keep only the kernel the linux-image-amd64 metapackage depends on (a
+	# backports point release otherwise leaves the previous one installed,
+	# ~200 MB more squashfs plus a second initrd)
+	local keep old; keep=$(CH dpkg-query -W -f '${Depends}' linux-image-amd64 | grep -o 'linux-image-[0-9][^ ,]*' | head -1)
+	[ -n "$keep" ] || die "linux-image-amd64 has no kernel dependency"
+	old=$(CH dpkg-query -W -f '${Package} ${Status}\n' 'linux-image-[0-9]*' 'linux-modules-[0-9]*' 'linux-headers-[0-9]*' 2>/dev/null \
+		| awk -v s="-${keep#linux-image-}" '/ installed$/ && substr($1, length($1)-length(s)+1) != s {print $1}')
 	[ -z "$old" ] || CH $APT purge $old
 	CH dpkg-query -W -f '${Package} ${Version}\n' linux-image-amd64 pipewire wireplumber quickshell
 }
