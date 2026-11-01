@@ -26,10 +26,10 @@ assert re.search(r'packages:\n        - "omaxian-pick:flatpak:org.telegram.deskt
 assert 'post-install' not in s and 'pre-install' not in s
 assert 'telegram-desktop' not in s
 PY
-n=$(grep -c '^    - name: "' $T/ni.conf); [ "$n" = 6 ] && ok "netinstall: 6 groups (base)" || bad "groups: $n"
+n=$(grep -c '^    - name: "' $T/ni.conf); [ "$n" = 9 ] && ok "netinstall: 9 groups (base)" || bad "groups: $n"
 # 4 optional-flatpaks.list for omaxian-firstboot / the full build
 bash scripts/gen-netinstall.sh --optional-flatpaks $G config/optional-groups-full.list $T/of.list
-[ "$(grep -v '^#' $T/of.list)" = "chat-telegram|org.telegram.desktop" ] && ok "optional-flatpaks.list: chat-telegram|org.telegram.desktop" || { bad "optional-flatpaks.list"; cat $T/of.list; }
+[ "$(grep -v '^#' $T/of.list | tr '\n' ' ')" = "chat-telegram|org.telegram.desktop chat-discord|com.discordapp.Discord share-packet|io.github.nozwock.Packet gearlever|it.mijorus.gearlever " ] && ok "optional-flatpaks.list: Telegram, Discord, Packet, Gear Lever" || { bad "optional-flatpaks.list"; cat $T/of.list; }
 grep -q 'gen-netinstall.sh" --optional-flatpaks' scripts/build-packages.sh && grep -q 'gen-netinstall.sh" --optional-flatpaks' scripts/build-rootfs.sh \
 	&& ok "shipped by omaxian-firstboot, preinstalled by the full build" || bad "build wiring"
 # 5 the recording helper (idempotent)

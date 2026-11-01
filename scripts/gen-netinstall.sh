@@ -2,6 +2,7 @@
 # config/optional-groups.list -> Calamares netinstall.conf (local groups)
 #   gen-netinstall.sh <optional-groups.list> <netinstall.conf> [more.list ...] [--appimages <appimages.manifest>]
 # (the full ISO adds config/optional-groups-full.list; --appimages adds the
+# "Apps (AppImages)" group, one ticked checkbox per class "pick" row, and the
 # "Extra apps (downloaded after install)" group: one unselected checkbox per
 # class "optional" row of the manifest)
 #   gen-netinstall.sh --optional-flatpaks <list> [more.list ...] <out>
@@ -46,6 +47,19 @@ done
 # stripped by the omaxianpicks job (before packages); omaxian-firstboot
 # downloads the picked ones once online.
 if [ -n "$manifest" ]; then
+	# class "pick": in the full ISO payload, downloaded at first boot from the
+	# base ISO; one ticked checkbox each
+	printf '    - name: "Apps (AppImages)"\n      description: "AppImages copied into ~/AppImages (bundled in the full ISO; downloaded after install, once online, from the base ISO)"\n      selected: true\n      critical: false\n      hidden: false\n      expanded: true\n      subgroups:\n'
+	n=0
+	while IFS=$'\t' read -r id glob method source class sha label; do
+		[[ -z $id || $id == \#* || ${class:-} != pick ]] && continue
+		[[ $id =~ ^[A-Za-z0-9._-]+$ ]] || { echo "gen-netinstall: bad AppImage id '$id'" >&2; exit 1; }
+		lname=${label%%: *}; ldesc=${label#*: }; [ -n "$label" ] || { lname=$id; ldesc="$id (AppImage)"; }
+		printf '        - name: "%s"\n          description: "%s (AppImage)"\n          selected: true\n          critical: false\n          hidden: false\n          packages:\n            - "omaxian-pick:appimage:%s"\n' \
+			"${lname//\"/}" "${ldesc^}" "$id"
+		n=$((n+1))
+	done < "$manifest"
+	[ $n -gt 0 ] || { echo "gen-netinstall: no pick AppImages in $manifest" >&2; exit 1; }
 	printf '    - name: "Extra apps (downloaded after install)"\n      description: "AppImages not on the ISO: downloaded into ~/AppImages after installation, once the machine is online"\n      selected: false\n      critical: false\n      hidden: false\n      expanded: true\n      subgroups:\n'
 	n=0
 	while IFS=$'\t' read -r id glob method source class sha label; do

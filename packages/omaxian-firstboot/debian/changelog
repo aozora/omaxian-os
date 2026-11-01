@@ -1,3 +1,31 @@
+omaxian-firstboot (0.2.6) excalibur; urgency=medium
+
+  * New omaxian-optional (+ menu entry "Add optional apps", in a terminal):
+    lists and installs after installation the optional groups of the
+    installer (apt / Flathub, /usr/share/omaxian/optional-groups.list),
+    VoxType (pinned, sha256-checked upstream .deb + omaxian-voxtype from
+    /usr/share/omaxian/payload/debs) and any AppImage of the manifest
+    (bundled or extra), then copies the AppImages to ~/AppImages for the
+    calling user. Keeps firstboot's pick records consistent. Uses sudo in
+    a terminal, pkexec otherwise.
+  * appimages.manifest class "base" (OnlyOffice): shipped in both ISOs;
+    omaxian-appimage-fetch does not download it while the bundled copy is
+    there. New OMAXIAN_APPIMAGE_ONLY to fetch selected ids only.
+  * omaxian-user-firstrun: without Gear Lever (base ISO before the first
+    online boot) a copied AppImage gets a plain menu entry built from its
+    own .desktop and icon; removed once Gear Lever integrates it.
+    OMAXIAN_FIRSTRUN_ONLY for omaxian-optional.
+  * Installer picks ticked by default: Packet, Gear Lever and Discord moved
+    from flatpaks.list to optional groups (like Telegram: installed when
+    picked, full ISO prunes the unpicked ones). New manifest class "pick"
+    (LocalSend, ElecWhat, Obsidian, MarkText): bundled in the full ISO,
+    downloaded at first boot from the base ISO, only when picked (no record
+    = picked). Gear Lever not picked: the plain menu entries are final.
+  * --boot waits for the network as long as the machine is up (every 10 s
+    for 10 min, then every minute) instead of giving up after 10 min.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 01 Nov 2026 20:15:00 +0100
+
 omaxian-firstboot (0.2.5) excalibur; urgency=medium
 
   * Extra apps: optional AppImages (appimages.manifest class "optional",

@@ -1,3 +1,11 @@
+omaxian-calamares-settings (0.2.14) excalibur; urgency=medium
+
+  * Applications page: Discord, Packet and Gear Lever Flatpak groups and the
+    "Apps (AppImages)" group (LocalSend, ElecWhat, Obsidian, MarkText, one
+    checkbox each), all ticked by default (scripts/gen-netinstall.sh).
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 01 Nov 2026 20:15:00 +0100
+
 omaxian-calamares-settings (0.2.13) excalibur; urgency=medium
 
   * Fix: "Install Omaxian OS" from the Omaxian Menu did nothing. The shell

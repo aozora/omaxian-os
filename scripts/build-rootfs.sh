@@ -238,6 +238,25 @@ strip_excluded() { # files unpacked before the dpkg excludes were in place (boot
 	find "$d/locale" -mindepth 1 -maxdepth 1 ! -name locale.alias ! -name 'en' ! -name 'en_*' ! -name it -exec rm -rf {} + 2>/dev/null || true
 }
 
+s_payload() { # both ISOs: AppImages of manifest class "base" (OnlyOffice) +
+	# the omaxian-voxtype integration .deb (5 KB; omaxian-optional installs it
+	# with the pinned upstream voxtype .deb on a base install)
+	local d="$R/usr/share/omaxian/payload" id glob method source class rest f n=0
+	mkdir -p "$d/appimages" "$d/debs"
+	shopt -s nullglob nocaseglob
+	while IFS=$'\t' read -r id glob method source class rest; do
+		[[ -z $id || $id == \#* || ${class:-} != base ]] && continue
+		f=( "$PAYLOADDIR"/appimages/$glob )
+		[ ${#f[@]} -gt 0 ] || die "class base AppImage $id missing from payload/appimages"
+		cp -a "${f[0]}" "$d/appimages/"; n=$((n+1))
+	done < "$TOPDIR/config/appimages.manifest"
+	shopt -u nullglob nocaseglob
+	f=$(ls "$OUTDIR"/debs/omaxian-voxtype_*_all.deb 2>/dev/null | sort -V | tail -1)
+	[ -n "$f" ] || die "out/debs/omaxian-voxtype_*.deb missing: run scripts/build-packages.sh"
+	rm -f "$d"/debs/omaxian-voxtype_*.deb; cp "$f" "$d/debs/"
+	msg "payload (base): $n AppImage(s) of class base ($(du -sh "$d/appimages" | cut -f1)), ${f##*/}"
+}
+
 s_finalize() {
 	# official sources for the shipped system
 	rm -f "$R/etc/apt/sources.list.d/omaxian-build.list" "$R/etc/apt/preferences.d/41-omaxian-build.pref" \
@@ -279,7 +298,8 @@ s_full_from_base() {
 	done
 	[ ${#missing[@]} = 0 ] || warn "flatpaks NOT preinstalled (firstboot installs them online): ${missing[*]}"
 	# offline payload (user supplies payload/appimages/*.AppImage, payload/openra/{Content,maps})
-	# Only the manifest's "bundled" rows are copied: "optional" ones (Extra apps,
+	# Only the manifest's "bundled" rows are copied ("base" ones are already
+	# there, s_payload): "optional" ones (Extra apps,
 	# downloaded after install when picked) and files no row matches stay out.
 	mkdir -p "$R/usr/share/omaxian/payload/appimages"
 	cp -a "$PAYLOADDIR/openra" "$R/usr/share/omaxian/payload/"
@@ -291,6 +311,7 @@ s_full_from_base() {
 		[[ -z $id || $id == \#* || ${class:-bundled} == optional ]] && continue
 		f=( "$PAYLOADDIR"/appimages/$glob )
 		[ ${#f[@]} -gt 0 ] || { nomiss+=("$id"); continue; }
+		[ -e "$R/usr/share/omaxian/payload/appimages/${f[0]##*/}" ] && { n=$((n+1)); continue; }
 		cp -a "${f[0]}" "$R/usr/share/omaxian/payload/appimages/"; n=$((n+1))
 	done < "$TOPDIR/config/appimages.manifest"
 	shopt -u nullglob nocaseglob
@@ -406,6 +427,7 @@ else
 	stage live s_live
 	stage upgrade s_upgrade
 	stage configure s_configure
+	stage payload s_payload
 	stage finalize s_finalize
 fi
 "$TOPDIR/scripts/umount-chroot.sh" "$R" >/dev/null 2>&1 || true

@@ -13,6 +13,13 @@ TEMPLATE=/usr/share/omaxian/home-template
 STATE="$HOME/.local/state/omaxian"
 VER=$(cat /usr/share/omaxian/src/version 2>/dev/null || echo unknown)
 FORCE=0; [ "${1:-}" = --force ] && FORCE=1
+# Standard XDG folders (Documents, Downloads, Music, Pictures, Videos,
+# Templates, Public, Desktop) in the session language. Run on every login,
+# before the "already seeded" exit: Xsession.d/25omaxian-home (omaxian-seed-home)
+# seeds the template first, so a fresh home always looked seeded here and the
+# folders were never created. xdg-user-dirs-update is idempotent and keeps an
+# existing ~/.config/user-dirs.dirs (a folder the user deleted is not recreated).
+command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update >/dev/null 2>&1 || true
 if [ $FORCE -eq 0 ] && [ -x "$HOME/.local/share/omarchy/bin/omarchy-launch-shell" ] && [ -f "$HOME/.xsessionrc" ]; then
 	exit 0
 fi
@@ -24,6 +31,5 @@ if [ $FORCE -eq 1 ]; then
 else
 	cp -a -n "$TEMPLATE/." "$HOME/"
 fi
-command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update || true
 command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1 || true
 echo "$VER" > "$STATE/seeded"

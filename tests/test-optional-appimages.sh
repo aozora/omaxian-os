@@ -12,9 +12,9 @@ M=config/appimages.manifest
 rows() { grep -vE '^\s*(#|$)' $M; }
 # 1 manifest: OpenSpot gone; 10 bundled (incl. 3 OpenRA), 6 optional
 ! grep -qi openspot $M && ok "OpenSpot not in the manifest" || bad "OpenSpot still listed"
-b=$(rows | awk -F'\t' '($5==""||$5=="bundled"){print $1}' | sort | tr '\n' ' ')
+b=$(rows | awk -F'\t' '($5==""||$5=="bundled"||$5=="base"||$5=="pick"){print $1}' | sort | tr '\n' ' ')
 o=$(rows | awk -F'\t' '$5=="optional"{print $1}' | sort | tr '\n' ' ')
-[ "$b" = "bleachbit elecwhat localsend marktext obsidian onlyoffice openra-d2k openra-ra openra-td task_manager_tmog " ] && ok "10 bundled AppImages (3 OpenRA)" || bad "bundled: $b"
+[ "$b" = "bleachbit elecwhat localsend marktext obsidian onlyoffice openra-d2k openra-ra openra-td task_manager_tmog " ] && ok "10 bundled AppImages (3 OpenRA; OnlyOffice class base = in both ISOs)" || bad "bundled: $b"
 [ "$o" = "cursor grok_bot rebased rustdesk shotcut teams_for_linux " ] && ok "6 optional AppImages" || bad "optional: $o"
 rows | awk -F'\t' '$5=="optional" && $3=="url" && $6 !~ /^[0-9a-f]{64}$/{bad=1} END{exit bad}' && ok "pinned (url) optional rows carry a sha256" || bad "url rows without sha256"
 rows | awk -F'\t' '$5=="optional" && ($3=="payload" || $7==""){bad=1} END{exit bad}' && ok "every optional row has an upstream source and a label" || bad "optional row without source/label"
@@ -32,10 +32,14 @@ assert ids==["cursor","grok_bot","rebased","rustdesk","shotcut","teams_for_linux
 assert g.count('- name: "')==6
 assert 'post-install' not in s and 'curl' not in g
 PY
-python3 -c 'import yaml' 2>/dev/null && python3 - $T/ni.conf <<'PY' && ok "netinstall.conf parses as YAML (8 groups on the full ISO)" || bad "yaml"
+python3 -c 'import yaml' 2>/dev/null && python3 - $T/ni.conf <<'PY' && ok "netinstall.conf parses as YAML (12 groups on the full ISO; Apps (AppImages) + Discord/Packet/Gear Lever ticked)" || bad "yaml"
 import sys,yaml
 d=yaml.safe_load(open(sys.argv[1]))
-assert len(d["groups"])==8 and len(d["groups"][-1]["subgroups"])==6
+assert len(d["groups"])==12 and len(d["groups"][-1]["subgroups"])==6
+a=d["groups"][-2]; assert a["name"]=="Apps (AppImages)" and a["selected"] is True
+assert [(x["name"],x["selected"],x["packages"]) for x in a["subgroups"]]==[(n,True,["omaxian-pick:appimage:"+i]) for n,i in [("ElecWhat","elecwhat"),("LocalSend","localsend"),("MarkText","marktext"),("Obsidian","obsidian")]]
+for n,f in [("Discord","com.discordapp.Discord"),("Packet","io.github.nozwock.Packet"),("Gear Lever","it.mijorus.gearlever")]:
+    assert [(g["selected"],g["packages"]) for g in d["groups"] if g["name"]==n]==[(True,["omaxian-pick:flatpak:"+f])], n
 assert all(s["selected"] is False for s in d["groups"][-1]["subgroups"])
 assert sorted(s["packages"][0] for s in d["groups"][-1]["subgroups"])==["omaxian-pick:appimage:"+i for i in ["cursor","grok_bot","rebased","rustdesk","shotcut","teams_for_linux"]]
 assert [g["packages"] for g in d["groups"] if g["name"]=="Telegram"]==[["omaxian-pick:flatpak:org.telegram.desktop"]]
@@ -116,4 +120,30 @@ grep -q 'class:-bundled} == optional' scripts/build-rootfs.sh && ! grep -q 'cp -
 	&& ok "full build copies only bundled manifest rows from payload/appimages" || bad "payload filter"
 # 7 user first run: unpicked extra apps skipped
 grep -q 'optional-appimages.list' packages/omaxian-firstboot/files/usr/bin/omaxian-user-firstrun && ok "user firstrun honours the pick" || bad "user firstrun"
+# 8 class "pick" (Apps (AppImages), ticked by default)
+[ "$(rows | awk -F'\t' '$5=="pick"{print $1}' | sort | tr '\n' ' ')" = "elecwhat localsend marktext obsidian " ] && ok "pick rows: elecwhat localsend marktext obsidian" || bad "pick rows"
+printf 'pa\t*pa*\turl\thttps://x.example/Good-pa.AppImage\tpick\t-\tPA: a\npb\t*pb*\turl\thttps://x.example/Good-pb.AppImage\tpick\t-\tPB: b\n' > $T/mp
+rm -rf $T/fp; : > $T/curl.log; rm -f $T/nopicks
+PATH=$T/bin:/usr/bin:/bin OMAXIAN_APPIMAGE_MANIFEST=$T/mp OMAXIAN_OPTIONAL_APPIMAGES=$T/nopicks OMAXIAN_PAYLOAD=$T/none bash $F $T/fp > $T/fp.out 2>&1
+[ -s $T/fp/pa/Good-pa.AppImage ] && [ -s $T/fp/pb/Good-pb.AppImage ] && ok "fetch pick: no installer record -> all fetched" || { bad "fetch pick no record"; cat $T/fp.out; }
+rm -rf $T/fp; : > $T/curl.log; echo pb > $T/picks
+PATH=$T/bin:/usr/bin:/bin OMAXIAN_APPIMAGE_MANIFEST=$T/mp OMAXIAN_OPTIONAL_APPIMAGES=$T/picks OMAXIAN_PAYLOAD=$T/none bash $F $T/fp > $T/fp.out 2>&1
+[ ! -e $T/fp/pa ] && [ -s $T/fp/pb/Good-pb.AppImage ] && ! grep -q Good-pa $T/curl.log && grep -q "pa: not picked" $T/fp.out && ok "fetch pick: record without pa -> pa skipped, pb fetched" || { bad "fetch pick record"; cat $T/fp.out; }
+# user firstrun: unpicked pick row not copied; Gear Lever unticked -> plain entry final (done)
+U=packages/omaxian-firstboot/files/usr/bin/omaxian-user-firstrun
+R=$T/fr; mkdir -p $R/usr/share/omaxian/payload/appimages $R/var/lib/omaxian $T/home
+cp $T/mp $R/usr/share/omaxian/appimages.manifest
+for i in pa pb; do printf '#!/bin/sh\n[ "$1" = --appimage-extract ] || exit 1\nmkdir -p squashfs-root\ncase "$2" in *.desktop) printf "[Desktop Entry]\\nName=%s\\nExec=%s\\nIcon=%s\\n" > squashfs-root/%s.desktop;; esac\n' $i $i $i $i > $R/usr/share/omaxian/payload/appimages/$i-1.AppImage; chmod +x $R/usr/share/omaxian/payload/appimages/$i-1.AppImage; done
+echo pb > $R/var/lib/omaxian/optional-appimages.list
+echo org.telegram.desktop > $R/var/lib/omaxian/optional-flatpaks.list
+HOME=$T/home XDG_DATA_HOME=$T/home/.local/share OMAXIAN_FB_ROOT=$R OMAXIAN_FIRSTRUN_STDOUT=1 OMAXIAN_FIRSTRUN_NO_GEARLEVER=1 bash $U > $T/fr.out 2>&1
+[ ! -e $T/home/AppImages/pa-1.AppImage ] && [ -x $T/home/AppImages/pb-1.AppImage ] && ok "firstrun pick: unpicked pa not copied, pb copied" || { bad "firstrun pick"; cat $T/fr.out; }
+[ -s $T/home/.local/share/applications/omaxian-appimage-pb.desktop ] && [ -e $T/home/.local/state/omaxian/user-firstrun.done ] && ok "firstrun: Gear Lever not picked -> plain menu entry, run done" || { bad "firstrun no gearlever"; cat $T/fr.out; }
+rm -rf $T/home; mkdir -p $T/home; echo it.mijorus.gearlever > $R/var/lib/omaxian/optional-flatpaks.list
+HOME=$T/home XDG_DATA_HOME=$T/home/.local/share OMAXIAN_FB_ROOT=$R OMAXIAN_FIRSTRUN_STDOUT=1 OMAXIAN_FIRSTRUN_NO_GEARLEVER=1 bash $U > $T/fr.out 2>&1
+[ ! -e $T/home/.local/state/omaxian/user-firstrun.done ] && ok "firstrun: Gear Lever picked but not installed yet -> stays pending" || bad "firstrun gl pending"
+rm -rf $T/home; mkdir -p $T/home; rm $R/var/lib/omaxian/optional-appimages.list
+HOME=$T/home XDG_DATA_HOME=$T/home/.local/share OMAXIAN_FB_ROOT=$R OMAXIAN_FIRSTRUN_STDOUT=1 OMAXIAN_FIRSTRUN_NO_GEARLEVER=1 bash $U > $T/fr.out 2>&1
+[ -x $T/home/AppImages/pa-1.AppImage ] && [ -x $T/home/AppImages/pb-1.AppImage ] && ok "firstrun pick: no installer record -> both copied" || { bad "firstrun pick no record"; cat $T/fr.out; }
+grep -q 'class" = pick ] && ! appimage_pick_wanted' packages/omaxian-firstboot/files/usr/sbin/omaxian-firstboot && ok "full_offline_complete ignores unpicked pick rows" || bad "full offline pick"
 echo "$pass passed, $fail failed"; [ $fail = 0 ]

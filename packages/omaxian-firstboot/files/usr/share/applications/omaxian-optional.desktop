@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Add optional apps
+Name[it]=Aggiungi app opzionali
+Comment=Install the optional groups and AppImages offered by the installer and the full ISO
+Comment[it]=Installa i gruppi opzionali e le AppImage offerte dall'installer e dalla ISO completa
+Exec=omaxian-optional
+Icon=system-software-install
+Terminal=true
+Categories=System;Settings;PackageManager;
+Keywords=optional;install;apps;groups;appimage;flatpak;voxtype;

@@ -9,6 +9,7 @@ Rules-Requires-Root: no
 Package: omaxian-firstboot
 Architecture: all
 Depends: ${misc:Depends}, curl, jq, flatpak, ca-certificates
+Recommends: sudo, pkexec
 Description: Omaxian OS first-boot provisioning
  sysvinit service that, on an installed system with network access, adds
  Flathub, installs the Omaxian Flatpak set and downloads fresh AppImages

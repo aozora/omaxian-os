@@ -29,10 +29,10 @@ fi
 bash scripts/gen-netinstall.sh config/optional-groups.list "$T/base.conf"
 bash scripts/gen-netinstall.sh config/optional-groups.list "$T/full.conf" config/optional-groups-full.list
 nb=$(grep -c '^    - name:' "$T/base.conf"); nf=$(grep -c '^    - name:' "$T/full.conf")
-[ "$nb" = 6 ] && ! grep -q voxtype "$T/base.conf" && ok "base netinstall: 6 groups, no VoxType" || bad "base groups=$nb"
-[ "$nf" = 7 ] && ok "full netinstall: 7 groups" || bad "full groups=$nf"
+[ "$nb" = 9 ] && ! grep -q voxtype "$T/base.conf" && ok "base netinstall: 9 groups, no VoxType" || bad "base groups=$nb"
+[ "$nf" = 10 ] && ok "full netinstall: 10 groups" || bad "full groups=$nf"
 sel=$(awk '/^    - name:/{n=$0} /selected:/{print n"|"$2}' "$T/full.conf")
-[ "$(grep -c '|true' <<<"$sel")" = 6 ] && grep -q 'VoxType.*|false' <<<"$sel" && ok "full: 6 groups preselected, VoxType unselected" || { bad "selected"; echo "$sel"; }
+[ "$(grep -c '|true' <<<"$sel")" = 9 ] && grep -q 'VoxType.*|false' <<<"$sel" && ok "full: 9 groups preselected, VoxType unselected" || { bad "selected"; echo "$sel"; }
 grep -q 'netinstall.conf" "$TOPDIR/config/optional-groups.list"' scripts/build-packages.sh ||
 	grep -q 'gen-netinstall.sh" "$TOPDIR/config/optional-groups.list" "$1/files' scripts/build-packages.sh && ok "package netinstall.conf (base) built from optional-groups.list only" || bad "build-packages"
 

@@ -1,3 +1,13 @@
+omaxian-session (1.0.6-2) excalibur; urgency=medium
+
+  * omaxian-user-setup: run xdg-user-dirs-update on every login, before the
+    "already seeded" exit. Xsession.d/25omaxian-home seeds the home first,
+    so on a fresh home the step was always skipped and no Documents,
+    Downloads, Music, Pictures, Videos, Templates, Public (or Desktop)
+    folders were created; i3 does not run the XDG autostart entry either.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 01 Nov 2026 20:15:00 +0100
+
 omaxian-session (1.0.6-1) excalibur; urgency=medium
 
   * New upstream Omaxian shell v1.0.6 (Omarchy v4.5.0-rc2, from the pin in

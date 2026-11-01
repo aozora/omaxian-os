@@ -68,3 +68,27 @@ AppImages are already squashfs-compressed, so they cost their full size on the I
 
 Dropping the 6 optional ones and OpenSpot takes about 1.34 GB off the full ISO
 (from about 10.2 GB). payload/openra (Content + maps, 2.2 GB) is unchanged.
+
+## Base ISO: OnlyOffice and installer picks (round 14, 2026-11-01)
+OnlyOffice is now bundled in the base ISO (class `base` in config/appimages.manifest). The
+build copies it to /usr/share/omaxian/payload/appimages, and first login copies it to
+~/AppImages with a menu entry, so it is never downloaded again.
+
+| | bytes |
+|---|---:|
+| onlyoffice_desktopeditors.appimage | 425 810 424 (~406 MiB; build log "1 AppImage(s) of class base (407M)") |
+| base ISO r13 (no OnlyOffice) | 2 615 066 624 |
+| base ISO r14 (OnlyOffice + picks) | 3 039 420 416 |
+| difference | +424 353 792 (~405 MiB) |
+
+Being an AppImage, it is already compressed and costs its full size on the ISO.
+
+The new installer picks (Flatpaks Telegram, Discord, Packet and Gear Lever; AppImages ElecWhat,
+LocalSend, MarkText and Obsidian, all ticked by default) **add nothing to the base ISO**. They are
+downloaded at first boot, and only when ticked. That's up to about 382 MB of Flatpak downloads
+(Discord 252, Telegram 114, Gear Lever 11.6, Packet 4.4, plus shared runtimes) and about
+474 MB of AppImages (474 205 260 bytes).
+
+The full ISO is **unchanged** by the picks. Discord, Packet and Gear Lever were already
+preinstalled Flatpaks, now pruned when unticked like Telegram. The four pick AppImages were
+already bundled and are no longer copied to ~/AppImages when unticked.

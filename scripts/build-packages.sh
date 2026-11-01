@@ -86,7 +86,14 @@ prep_omaxian-strata() {
 }
 prep_omaxian-firstboot() {
 	mkdir -p "$1/files/usr/share/omaxian"
-	cp "$TOPDIR/config/flatpaks.list" "$TOPDIR/config/appimages.manifest" "$1/files/usr/share/omaxian/"
+	cp "$TOPDIR/config/flatpaks.list" "$TOPDIR/config/appimages.manifest" "$TOPDIR/config/optional-groups.list" \
+		"$TOPDIR/config/optional-groups-full.list" "$1/files/usr/share/omaxian/"
+	# omaxian-optional: VoxType on a base install = this pinned upstream .deb
+	# (the build verifies its signature, scripts/fetch-voxtype.sh) + the
+	# omaxian-voxtype .deb from /usr/share/omaxian/payload/debs
+	printf 'VOXTYPE_URL=https://github.com/%s/releases/download/v%s/voxtype_%s-%s_amd64.deb\nVOXTYPE_SHA256=%s\n' \
+		"$VOXTYPE_REPO" "$VOXTYPE_VERSION" "$VOXTYPE_VERSION" "$VOXTYPE_DEB_REV" "$VOXTYPE_DEB_SHA256" \
+		> "$1/files/usr/share/omaxian/voxtype.pin"
 	bash "$TOPDIR/scripts/gen-netinstall.sh" --optional-flatpaks "$TOPDIR/config/optional-groups.list" \
 		"$1/files/usr/share/omaxian/optional-flatpaks.list"
 }

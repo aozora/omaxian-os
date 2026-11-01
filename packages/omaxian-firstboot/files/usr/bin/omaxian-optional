@@ -1,0 +1,196 @@
+#!/bin/bash
+# omaxian-optional: add after installation what the installer offers as
+# optional (the "Applications" page) and what the full ISO ships:
+#   * optional groups (apt packages and/or Flathub apps):
+#     /usr/share/omaxian/optional-groups.list (+ optional-groups-full.list:
+#     VoxType, pinned upstream .deb + omaxian-voxtype)
+#   * AppImages of /usr/share/omaxian/appimages.manifest (bundled ones and
+#     the "Extra apps"), copied into ~/AppImages and integrated (Gear Lever)
+# Usage:
+#   omaxian-optional                 interactive: list, then ask what to add
+#   omaxian-optional list|status     what is available and what is installed
+#   omaxian-optional install ID ...  install groups/AppImages (asks for your
+#                                    password: sudo, or pkexec without a terminal)
+# Needs network for apt, Flathub and AppImage downloads. Log of the system
+# part: /var/log/omaxian-optional.log
+set -uo pipefail
+FB=${OMAXIAN_FB_ROOT:-}   # path prefix for tests only
+SHARE=$FB/usr/share/omaxian
+GLISTS=("$SHARE/optional-groups.list" "$SHARE/optional-groups-full.list")
+MANIFEST=$SHARE/appimages.manifest
+PAYLOAD=$SHARE/payload
+STATE=$FB/var/lib/omaxian
+CACHE=$STATE/appimages
+PIN=$SHARE/voxtype.pin
+PODMAN_DESKTOP=io.podman_desktop.PodmanDesktop
+FLATHUB=https://dl.flathub.org/repo/flathub.flatpakrepo
+SELF=$(readlink -f "$0")
+
+die() { echo "omaxian-optional: $*" >&2; exit 1; }
+groups() { cat "${GLISTS[@]}" 2>/dev/null | grep -vE '^\s*(#|$)'; }  # id|Name|Description|selected|packages|flatpaks
+appimages() { grep -vE '^\s*(#|$)' "$MANIFEST" 2>/dev/null; }        # TAB: id glob method source class sha label
+group_line() { groups | awk -F'|' -v i="$1" '$1==i{print; exit}'; }
+ai_line() { appimages | awk -F'\t' -v i="$1" '$1==i{print; exit}'; }
+group_flatpaks() { # group line -> its Flatpaks (Podman Desktop comes with Containers)
+	local l=$1 f; f=$(cut -d'|' -f6 <<<"$l"); echo $f
+	[[ " $(cut -d'|' -f5 <<<"$l") " == *" podman "* ]] && echo $PODMAN_DESKTOP
+}
+pkg_ok() { [ "$(dpkg-query -W -f '${db:Status-Status}' "$1" 2>/dev/null)" = installed ]; }
+fp_ok() { command -v flatpak >/dev/null 2>&1 && flatpak info "$1" >/dev/null 2>&1; }
+group_status() { # -> installed | partly installed | not installed
+	local l=$1 p n=0 y=0
+	for p in $(cut -d'|' -f5 <<<"$l"); do n=$((n+1)); pkg_ok "$p" && y=$((y+1)); done
+	for p in $(group_flatpaks "$l"); do n=$((n+1)); fp_ok "$p" && y=$((y+1)); done
+	if [ $y = $n ]; then echo installed; elif [ $y = 0 ]; then echo "not installed"; else echo "partly installed"; fi
+}
+ai_status() { # id glob -> in ~/AppImages | not installed
+	local f c; shopt -s nullglob nocaseglob
+	[ "$2" != - ] && for f in "$HOME/AppImages"/$2; do [ -e "$f" ] || continue; shopt -u nullglob nocaseglob; echo "in ~/AppImages"; return; done
+	for c in "$CACHE/$1"/*.AppImage; do [ -e "$HOME/AppImages/${c##*/}" ] && { shopt -u nullglob nocaseglob; echo "in ~/AppImages"; return; }; done
+	shopt -u nullglob nocaseglob; echo "not installed"
+}
+
+list() {
+	local id name desc sel pk fp l
+	echo "Optional groups (apt / Flathub):"
+	while IFS='|' read -r id name desc sel pk fp; do
+		printf '  %-18s %-18s %s\n' "$id" "[$(group_status "$id|$name|$desc|$sel|$pk|$fp")]" "$name: $desc"
+	done < <(groups)
+	echo; echo "AppImages (into ~/AppImages, menu entry via Gear Lever):"
+	local glob method source class sha label kind
+	while IFS=$'\t' read -r id glob method source class sha label; do
+		case "${class:-bundled}" in optional) kind="extra app";; base) kind="in both ISOs";; pick) kind="installer pick; full ISO";; *) kind="full ISO";; esac
+		printf '  %-18s %-18s %s\n' "$id" "[$(ai_status "$id" "$glob")]" "${label:-$id} ($kind)"
+	done < <(appimages)
+	echo; echo "Install with: omaxian-optional install ID [ID ...]"
+}
+
+online() { curl -fsS --max-time 10 -o /dev/null "${1:-https://deb.devuan.org/}" 2>/dev/null; }
+
+# ---- system part (root) ---------------------------------------------------
+root_install() {
+	[ -n "$FB" ] || [ "$(id -u)" = 0 ] || die "the system part needs root"
+	mkdir -p "$STATE" "$CACHE"
+	local id l rc=0 p apt=() fps=() ais=() vox=0 aptup=0
+	for id in "$@"; do
+		if l=$(group_line "$id") && [ -n "$l" ]; then
+			if [ "$id" = voice-voxtype ]; then vox=1; continue; fi
+			for p in $(cut -d'|' -f5 <<<"$l"); do apt+=("$p"); done
+			for p in $(group_flatpaks "$l"); do fps+=("$p"); done
+		elif l=$(ai_line "$id") && [ -n "$l" ]; then ais+=("$id")
+		else echo "!! unknown id: $id (see: omaxian-optional list)"; rc=1; fi
+	done
+	export DEBIAN_FRONTEND=noninteractive
+	APTI=(apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold install)
+	if [ ${#apt[@]} -gt 0 ] || [ $vox = 1 ]; then
+		# keep omaxian-firstboot's records consistent (Podman Desktop follows podman)
+		touch "$STATE/optional-packages.list"
+		for p in "${apt[@]}"; do grep -qx "$p" "$STATE/optional-packages.list" || echo "$p" >> "$STATE/optional-packages.list"; done
+		echo "== apt-get update"; apt-get update || echo "!! apt-get update reported errors (continuing)"
+		aptup=1
+	fi
+	for p in "${apt[@]}"; do # one package per run (low-memory machines), like firstboot
+		pkg_ok "$p" && { echo "== $p: already installed"; continue; }
+		echo "== apt: $p"; nice -n 10 "${APTI[@]}" "$p" || { echo "!! apt $p failed"; rc=1; }
+	done
+	if [ $vox = 1 ]; then
+		if pkg_ok voxtype && pkg_ok omaxian-voxtype; then echo "== VoxType: already installed"
+		else
+			local VOXTYPE_URL="" VOXTYPE_SHA256="" t ox
+			. "$PIN" 2>/dev/null
+			ox=$(ls "$PAYLOAD"/debs/omaxian-voxtype_*_all.deb 2>/dev/null | sort -V | tail -1)
+			t=$(mktemp -d)
+			if [ -z "$VOXTYPE_URL" ] || [ -z "$ox" ]; then echo "!! VoxType: pin or omaxian-voxtype .deb missing"; rc=1
+			elif ! curl -fL --retry 3 --max-filesize $((512*1024*1024)) -o "$t/${VOXTYPE_URL##*/}" "$VOXTYPE_URL"; then echo "!! VoxType: download failed"; rc=1
+			elif ! echo "$VOXTYPE_SHA256  $t/${VOXTYPE_URL##*/}" | sha256sum -c --status; then echo "!! VoxType: sha256 mismatch, not installed"; rc=1
+			else
+				echo "== apt: VoxType (${VOXTYPE_URL##*/}, sha256 ok) + ${ox##*/}"
+				chmod 0755 "$t"; chmod 0644 "$t"/*.deb
+				nice -n 10 "${APTI[@]}" "$t/${VOXTYPE_URL##*/}" "$ox" || { echo "!! apt VoxType failed"; rc=1; }
+			fi
+			rm -rf "$t"
+		fi
+	fi
+	if [ ${#fps[@]} -gt 0 ]; then
+		# record the pick; no record at all already means "every optional
+		# Flatpak wanted" (creating one would unpick the others)
+		[ -f "$STATE/optional-flatpaks.list" ] && for p in "${fps[@]}"; do [ $p = $PODMAN_DESKTOP ] || grep -qx "$p" "$STATE/optional-flatpaks.list" || echo "$p" >> "$STATE/optional-flatpaks.list"; done
+		flatpak remote-add --system --if-not-exists flathub "$FLATHUB" || { echo "!! could not add Flathub"; rc=1; }
+		for p in "${fps[@]}"; do
+			flatpak info --system "$p" >/dev/null 2>&1 && { echo "== flatpak $p: already installed"; continue; }
+			echo "== flatpak: $p"; flatpak install --system -y --noninteractive flathub "$p" || { echo "!! flatpak $p failed"; rc=1; }
+		done
+	fi
+	if [ ${#ais[@]} -gt 0 ]; then
+		for id in "${ais[@]}"; do
+			case "$(ai_line "$id" | cut -f5)" in
+			optional) OMAXIAN_FB_ROOT=$FB "$FB/usr/sbin/omaxian-optional-appimage" select "$id";;
+			# installer checkbox ticked by default: no record = picked already
+			pick) [ -f "$STATE/optional-appimages.list" ] && OMAXIAN_FB_ROOT=$FB "$FB/usr/sbin/omaxian-optional-appimage" select "$id";;
+			esac
+		done
+		# bundled copies (payload) are used as they are; the rest is downloaded
+		local need=() glob f; shopt -s nullglob nocaseglob
+		for id in "${ais[@]}"; do
+			glob=$(ai_line "$id" | cut -f2); f=( "$CACHE/$id"/*.AppImage )
+			[ "$(ai_line "$id" | cut -f5)" != optional ] && f+=( "$PAYLOAD"/appimages/$glob )
+			[ ${#f[@]} -gt 0 ] && echo "== $id: available offline" || need+=("$id")
+		done; shopt -u nullglob nocaseglob
+		if [ ${#need[@]} -gt 0 ]; then
+			OMAXIAN_APPIMAGE_ONLY="${need[*]}" OMAXIAN_APPIMAGE_MANIFEST=$MANIFEST OMAXIAN_PAYLOAD=$PAYLOAD \
+			OMAXIAN_OPTIONAL_APPIMAGES=$STATE/optional-appimages.list "$FB/usr/bin/omaxian-appimage-fetch" "$CACHE" || rc=1
+		fi
+	fi
+	[ $aptup = 1 ] && command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q 2>/dev/null
+	return $rc
+}
+
+# ---- user part --------------------------------------------------------------
+install() {
+	[ $# -gt 0 ] || die "usage: omaxian-optional install ID [ID ...] (see: omaxian-optional list)"
+	local id ais=() net=0 l
+	for id in "$@"; do
+		if l=$(group_line "$id") && [ -n "$l" ]; then net=1
+		elif l=$(ai_line "$id") && [ -n "$l" ]; then ais+=("$id")
+		else die "unknown id: $id (see: omaxian-optional list)"; fi
+	done
+	[ $net = 1 ] && [ -z "$FB" ] && ! online && ! online https://dl.flathub.org/ && die "no network: connect first, then retry"
+	local rc=0
+	if [ -n "$FB" ] || [ "$(id -u)" = 0 ]; then
+		root_install "$@" 2>&1 | tee -a "${OMAXIAN_OPTIONAL_LOG:-$FB/var/log/omaxian-optional.log}"; rc=${PIPESTATUS[0]}
+	elif [ -t 0 ] && command -v sudo >/dev/null 2>&1; then
+		echo "Administrator password (sudo) for the system part:"
+		sudo "$SELF" --system "$@"; rc=$?
+	elif command -v pkexec >/dev/null 2>&1; then
+		pkexec "$SELF" --system "$@"; rc=$?
+	else die "needs sudo or pkexec"; fi
+	# AppImages: into ~/AppImages and integrated for the calling user
+	if [ ${#ais[@]} -gt 0 ] && [ "$(id -u)" != 0 -o -n "$FB" ]; then
+		OMAXIAN_FIRSTRUN_ONLY="${ais[*]}" OMAXIAN_FIRSTRUN_STDOUT=1 "$FB/usr/bin/omaxian-user-firstrun" || rc=1
+	elif [ ${#ais[@]} -gt 0 ]; then
+		echo "AppImages: each user gets them in ~/AppImages by running: omaxian-optional install ${ais[*]}"
+	fi
+	[ $rc = 0 ] && echo "Done." || echo "Finished with errors (log: /var/log/omaxian-optional.log)."
+	return $rc
+}
+
+interactive() {
+	list; echo
+	local ids
+	read -r -p "IDs to install (space separated, Enter to quit): " ids || return 0
+	[ -n "$ids" ] || return 0
+	# shellcheck disable=SC2086
+	install $ids; local rc=$?
+	read -r -p "Press Enter to close." _ || true
+	return $rc
+}
+
+case "${1:-}" in
+	"")             if [ -t 0 ]; then interactive; else list; fi ;;
+	list|status)    list ;;
+	install)        shift; install "$@" ;;
+	--system)       shift; [ "$(id -u)" = 0 ] || die "--system needs root"
+	                root_install "$@" 2>&1 | tee -a /var/log/omaxian-optional.log; exit "${PIPESTATUS[0]}" ;;
+	-h|--help|help) sed -n '2,16p' "$SELF" | sed 's/^# \{0,1\}//' ;;
+	*)              die "unknown command: $1 (try: omaxian-optional help)" ;;
+esac

@@ -8,7 +8,15 @@
 #   payload  no known upstream URL: only the bundled copy (full ISO) is used
 # class:
 #   bundled  (default) copied from payload/appimages/ into the full ISO and
-#            refreshed by omaxian-firstboot when online
+#            refreshed by omaxian-firstboot when online (the base ISO
+#            downloads them at first boot)
+#   base     copied into BOTH ISOs (OnlyOffice). Never downloaded by
+#            omaxian-firstboot while the bundled copy is there; updates come
+#            from Gear Lever like any integrated AppImage
+#   pick     like bundled (in the full ISO payload) but an installer checkbox,
+#            ticked by default ("Apps (AppImages)"): only the picked ones are
+#            downloaded (base ISO, at first boot) or copied to ~/AppImages.
+#            No pick record (not installed by Calamares) = picked.
 #   optional NOT in any ISO. Offered unselected on the installer's
 #            Applications page ("Extra apps (downloaded after install)", one
 #            checkbox each, scripts/gen-netinstall.sh); omaxian-firstboot
@@ -20,11 +28,11 @@
 # payload-glob matches the file name in payload/appimages/ (case-insensitive).
 # Researched 2026-10-24, optional pins 2026-10-26.
 bleachbit	*bleachbit*	github	bleachbit/bleachbit|BleachBit-.*-x86_64\.AppImage$
-elecwhat	*elecwhat*	github	piec/elecwhat|elecwhat-.*\.AppImage$
-localsend	*localsend*	github	localsend/localsend|LocalSend-.*-linux-x86-64\.AppImage$
-marktext	*marktext*	github	marktext/marktext|marktext-linux-.*\.AppImage$
-obsidian	*obsidian*	github	obsidianmd/obsidian-releases|Obsidian-[0-9.]+\.AppImage$
-onlyoffice	*desktop*editors*	github	ONLYOFFICE/appimage-desktopeditors|DesktopEditors-x86_64\.AppImage$
+elecwhat	*elecwhat*	github	piec/elecwhat|elecwhat-.*\.AppImage$	pick	-	ElecWhat: WhatsApp desktop client
+localsend	*localsend*	github	localsend/localsend|LocalSend-.*-linux-x86-64\.AppImage$	pick	-	LocalSend: share files on the local network
+marktext	*marktext*	github	marktext/marktext|marktext-linux-.*\.AppImage$	pick	-	MarkText: Markdown editor
+obsidian	*obsidian*	github	obsidianmd/obsidian-releases|Obsidian-[0-9.]+\.AppImage$	pick	-	Obsidian: notes and knowledge base
+onlyoffice	*desktop*editors*	github	ONLYOFFICE/appimage-desktopeditors|DesktopEditors-x86_64\.AppImage$	base
 openra-d2k	*dune*	github	OpenRA/OpenRA|OpenRA-Dune-2000-x86_64\.AppImage$
 openra-ra	*red*alert*	github	OpenRA/OpenRA|OpenRA-Red-Alert-x86_64\.AppImage$
 openra-td	*tiberian*	github	OpenRA/OpenRA|OpenRA-Tiberian-Dawn-x86_64\.AppImage$

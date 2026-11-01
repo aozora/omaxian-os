@@ -43,8 +43,11 @@ need_apt() { [ -s "$PENDING" ]; }
 # installer records the picked ids (omaxian-optional-appimage); never bundled,
 # downloaded by omaxian-appimage-fetch once online.
 AI_SELECTED=$STATE/optional-appimages.list
-export OMAXIAN_OPTIONAL_APPIMAGES=$AI_SELECTED OMAXIAN_APPIMAGE_MANIFEST=$MANIFEST
+export OMAXIAN_OPTIONAL_APPIMAGES=$AI_SELECTED OMAXIAN_APPIMAGE_MANIFEST=$MANIFEST OMAXIAN_PAYLOAD=$PAYLOAD
 appimage_picked() { [ -f "$AI_SELECTED" ] && grep -qx "$1" "$AI_SELECTED"; }
+# class "pick" (Apps (AppImages), ticked by default): wanted unless the
+# installer recorded the picks without it
+appimage_pick_wanted() { [ ! -f "$AI_SELECTED" ] || grep -qx "$1" "$AI_SELECTED"; }
 
 installed() { [ "$(dpkg-query -W -f '${db:Status-Status}' "$1" 2>/dev/null)" = installed ]; }
 # Full ISO: done offline once nothing is missing (no pending optional packages,
@@ -91,6 +94,7 @@ full_offline_complete() {
 			[ ${#f[@]} -gt 0 ] || { echo "full ISO: extra AppImage $id picked, download pending (needs network)"; ok=1; }
 			continue
 		fi
+		if [ "$class" = pick ] && ! appimage_pick_wanted "$id"; then continue; fi
 		f=( "$CACHE/$id"/*.AppImage $PAYLOAD/appimages/$glob )
 		[ ${#f[@]} -gt 0 ] || { echo "full ISO: AppImage $id missing"; ok=1; }
 	done < "$MANIFEST"
@@ -104,7 +108,13 @@ if full_offline_complete && ! online; then
 fi
 
 if [ "${1:-}" = --boot ]; then
-	for _ in $(seq 1 60); do online && break; need_apt && apt_online && break; sleep 10; done
+	# (in background from the init script) wait for the network as long as
+	# the machine is up: every 10 s for 10 min, then every minute
+	n=0
+	until online || { need_apt && apt_online; }; do
+		[ $n = 60 ] && echo "offline: still waiting for the network (checking every minute)"
+		[ $n -lt 60 ] && sleep 10 || sleep 60; n=$((n+1))
+	done
 fi
 NET=0; online && NET=1
 APT=0; need_apt && apt_online && APT=1

@@ -5,9 +5,17 @@
 # Rows of class "optional" are fetched only when picked in the installer
 # (one id per line in OMAXIAN_OPTIONAL_APPIMAGES, written by
 # omaxian-optional-appimage). A sha256 column other than "-" must match.
+# Rows of class "pick" (installer checkbox, ticked by default) are fetched
+# unless the installer recorded the picks without them (no record = picked).
+# Rows of class "base" (OnlyOffice) ship in both ISOs: not downloaded while
+# the bundled copy is in the payload (Gear Lever updates it once integrated).
+#   OMAXIAN_APPIMAGE_ONLY="id ..."  fetch only these ids (omaxian-optional);
+#                                   an optional id listed here counts as picked
 set -uo pipefail
 MANIFEST=${OMAXIAN_APPIMAGE_MANIFEST:-/usr/share/omaxian/appimages.manifest}
 PICKED=${OMAXIAN_OPTIONAL_APPIMAGES:-/var/lib/omaxian/optional-appimages.list}
+PAYLOAD=${OMAXIAN_PAYLOAD:-/usr/share/omaxian/payload}
+ONLY=${OMAXIAN_APPIMAGE_ONLY:-}
 DEST=${1:?destdir}; mkdir -p "$DEST"
 UA="Omaxian-OS-firstboot"
 fail=0
@@ -23,10 +31,19 @@ resolve() { # method source -> URL on stdout
 	*)     return 1 ;;
 	esac
 }
-picked() { [ -f "$PICKED" ] && grep -qx "$1" "$PICKED"; }
+picked() { [[ " $ONLY " == *" $1 "* ]] || { [ -f "$PICKED" ] && grep -qx "$1" "$PICKED"; }; }
+in_only() { [ -z "$ONLY" ] || [[ " $ONLY " == *" $1 "* ]]; }
+bundled_copy() { # glob -> a payload file matches
+	local f; shopt -s nullglob nocaseglob
+	for f in "$PAYLOAD"/appimages/$1; do shopt -u nullglob nocaseglob; return 0; done
+	shopt -u nullglob nocaseglob; return 1
+}
 while IFS=$'\t' read -r id glob method source class sha label; do
 	[[ -z $id || $id == \#* ]] && continue
+	in_only "$id" || continue
 	if [ "${class:-bundled}" = optional ] && ! picked "$id"; then continue; fi
+	if [ "${class:-bundled}" = pick ] && [ -f "$PICKED" ] && ! picked "$id"; then echo "-- $id: not picked in the installer"; continue; fi
+	if [ "${class:-bundled}" = base ] && bundled_copy "$glob"; then echo "== $id: bundled in the ISO, not downloaded"; continue; fi
 	if [ "$method" = payload ]; then echo "?? $id: no upstream URL known (bundled copy only)"; continue; fi
 	url=$(resolve "$method" "$source") || url=""
 	if [ -z "$url" ] || [ "$url" = null ]; then echo "!! $id: could not resolve download URL"; fail=1; continue; fi

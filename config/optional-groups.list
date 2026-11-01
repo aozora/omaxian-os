@@ -12,5 +12,8 @@ browser-chromium|Chromium|Chromium web browser (Brave and LibreWolf are always i
 mail-thunderbird|Thunderbird|Thunderbird mail and calendar|true|thunderbird
 graphics|Graphics|GIMP, Inkscape and Krita|true|gimp inkscape krita
 chat-telegram|Telegram|Telegram Desktop (Flatpak)|true||org.telegram.desktop
+chat-discord|Discord|Discord voice and text chat (Flatpak)|true||com.discordapp.Discord
+share-packet|Packet|Packet: quick file sharing with Android Quick Share (Flatpak)|true||io.github.nozwock.Packet
+gearlever|Gear Lever|Gear Lever: AppImage manager, adds the AppImages to the menu and updates them (Flatpak)|true||it.mijorus.gearlever
 containers|Containers|Podman, Buildah, podman-docker, podman-compose, docker-compose, Distrobox (Podman Desktop comes from Flathub)|true|podman podman-docker podman-compose buildah docker-compose distrobox
 virtualization|Virtualization|QEMU/KVM, libvirt, virt-manager and GNOME Boxes|true|qemu-system-x86 qemu-system-gui qemu-utils libvirt-daemon-system libvirt-clients libvirt-daemon libvirt-daemon-driver-qemu bridge-utils virt-manager gnome-boxes spice-client-gtk

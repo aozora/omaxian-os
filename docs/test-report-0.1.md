@@ -616,3 +616,81 @@ Approved by the owner. Done with rclone, the same way as 0.1.7 (R2 S3, 64M chunk
 - **ISOs (s3://omaxian-iso/releases/0.1/):** both ISOs and both .sha256 files replaced. Over HTTPS (download.omaxian.org), Content-Length is 2615066624 and 9206335488, matching the local files. The .sha256 files are byte-identical to the local ones. The full streamed sha256 matches: base 9d49f7c5…6151bbe, full 434355df…ee33da06fd.
 - **HTTPS apt checks:** InRelease and Packages are byte-identical to repo-local. InRelease has a Good signature with the published keyring, which equals the keyring shipped in omaxian-base 0.1.7. All 8 Filename URLs return 200 with the immutable Cache-Control. An isolated apt root using base 0.1.7's omaxian.sources gives `apt-get update` rc=0 with 0 W:/E: lines. Candidates: base 0.1.7, calamares-settings 0.2.13, session 1.0.6-1, strata 1.1.1-1, ydotool 1.0.4-1; voxtype is absent. The downloaded debs are byte-identical to out/debs.
 - No unfinished multipart uploads are left in either bucket. Nothing else in the buckets was changed. Nothing was pushed.
+
+## Round 14 (2026-11-01, 19:55– CET): owner's base VM test follow-ups
+
+Owner feedback after installing the base ISO: no Documents/Downloads/Videos folders, OnlyOffice should be in the base ISO, and questions about docker-compose, Thunar and adding apps later. Nothing uploaded, published or pushed in this round.
+
+### Findings
+
+- **No XDG user folders (bug).** `Xsession.d/25omaxian-home` (omaxian-seed-home) copies the home template first. `35omaxian-user-setup` then sees a seeded home (`omarchy-launch-shell` + `.xsessionrc`) and exits *before* its `xdg-user-dirs-update` line. i3 does not run the XDG autostart entry (`/etc/xdg/autostart/xdg-user-dirs.desktop`), so nothing else creates them. Same in the live session. Fix (omaxian-session 1.0.6-2): `xdg-user-dirs-update` runs on every login before the early exit (idempotent, localized: LANG comes from /etc/default/locale). Desktop is kept: i3 draws no desktop, so the folder is harmless.
+- **docker-compose:** from the **Containers** optional group (`podman podman-docker podman-compose buildah docker-compose distrobox`), which is ticked by default (`selected=true`, like every group except VoxType and the extra apps). It is not in out/omaxian-base.packages; on a base install it comes from Calamares (online) or omaxian-firstboot (offline install, at the first online boot). No change.
+- **Thunar:** a hard `Depends` of omaxian-session (upstream Omaxian `scripts/setup.sh` lists `thunar` as the XFCE file manager) and also pulled in by the `xfce4` metapackage (XFCE alternative session) and `thunar-archive-plugin` (30-desktop.list). In the Omaxian shell it is the fallback of `omarchy-launch-files` (Super+Shift+F, `$file_manager`) and of directory opening: the inode/directory default is Strata (`io.github.lgse.Strata.desktop;thunar.desktop;` in mimeinfo.cache), Thunar is second. It is also the XFCE session's file manager and handles volumes (thunar-volman). Removing it would need dropping `xfce4` too. No change.
+- **Adding apps later:** no command existed (omaxian-optional-appimage/-flatpak only record installer picks). New `omaxian-optional` (omaxian-firstboot 0.2.6), see README "Optional groups and apps".
+
+### Changes
+
+- omaxian-session 1.0.6-2: XDG user folders on every login.
+- appimages.manifest: OnlyOffice → class `base` (in both ISOs). build-rootfs: new stage `payload` (base rootfs): copies class-base AppImages + omaxian-voxtype .deb (5 KB) into /usr/share/omaxian/payload; the full build copies the other bundled rows as before.
+- omaxian-firstboot 0.2.6: omaxian-appimage-fetch skips class `base` while the bundled copy exists (no re-download) and accepts `OMAXIAN_APPIMAGE_ONLY`; omaxian-user-firstrun makes a plain menu entry from the AppImage's own .desktop/icon until Gear Lever integrates it (removed then); new `omaxian-optional` CLI + menu entry "Add optional apps" (Terminal=true); ships optional-groups(.full).list and voxtype.pin.
+- tests/test-omaxian-optional.sh (15 checks) PASS; tests/test-optional-appimages.sh updated (17 PASS); all other tests unchanged and passing.
+- README: optional groups table, base vs full, omaxian-optional, manual apt/flatpak commands.
+
+### Progress log
+
+- 20:02 packages built (session 1.0.6-2, firstboot 0.2.6), repo-local refreshed (local only).
+- 20:03 r14 build chain started (tools/diag/r14-chain.sh).
+- 20:09 owner steering: installer picks ticked by default (Flatpaks Packet, Gear Lever, Telegram, Discord; AppImages LocalSend, ElecWhat, Obsidian, MarkText). First chain stopped during the full ISO squashfs (it had the old configuration).
+
+### Changes (installer picks, 20:10–20:15)
+
+- Flathub IDs checked on flathub.org (API v2, 20:10): `io.github.nozwock.Packet` (Packet, "Share files easily", 4.4 MB download / 10.5 MB installed, GNOME 50), `it.mijorus.gearlever` (Gear Lever, 11.6 / 26.3 MB, GNOME 50), `com.discordapp.Discord` (Discord, 252 / 596 MB, freedesktop 26.08), `org.telegram.desktop` (Telegram, 114 / 249 MB).
+- config/flatpaks.list: Packet, Gear Lever and Discord removed (always-installed list). They are now optional groups `share-packet`, `gearlever` and `chat-discord` (selected=true, Flatpak only, like `chat-telegram`). Base: installed by firstboot from Flathub when picked. Full: preinstalled as before and removed offline at first boot when unticked. **Full ISO size impact: none**, because all three were already preinstalled in r13.
+- appimages.manifest: new class `pick` for elecwhat, localsend, marktext and obsidian. They stay bundled in the full payload (no size change) and get their own ticked checkbox in the new netinstall group "Apps (AppImages)", with the existing `omaxian-pick:appimage:<id>` marker. With no record (not a Calamares install) they count as picked. omaxian-appimage-fetch skips an unpicked pick row; omaxian-user-firstrun does not copy it; full_offline_complete ignores it. The "Extra apps" checkboxes stay unticked.
+- omaxian-user-firstrun: when Gear Lever is unticked, the plain menu entries are final, so the run completes instead of staying pending.
+- omaxian-firstboot --boot: waits for the network as long as the machine is up (10 s polling for 10 min, then every minute), instead of giving up after 10 min until the next boot.
+- omaxian-optional: lists the new groups and pick AppImages ("installer pick; full ISO"). An install without an installer record no longer creates optional-flatpaks.list or optional-appimages.list, because a new record would unpick the other defaults.
+- omaxian-calamares-settings 0.2.14 (netinstall now has 9 groups on base, 10 on full, plus the two AppImage groups). omaxian-firstboot 0.2.6 changelog extended.
+- Tests: test-optional-appimages 25 PASS (8 new pick and Gear Lever checks), test-omaxian-optional 16 PASS, test-optional-flatpaks 11 PASS, test-voxtype 25 PASS; the rest are unchanged and pass (test-omaxian-sources-upgrade needs old/new .deb arguments and was not run).
+- 20:15 packages rebuilt, repo-local refreshed (local only); r14 chain restarted at 20:15:39.
+- 20:28 r14 chain ALLDONE. Base ISO 3 039 420 416 bytes (r13: 2 615 066 624, +424 MB for OnlyOffice). Full ISO 9 204 375 552 bytes (r13: 9 206 335 488). Build log: "payload (base): 1 AppImage(s) of class base (407M)", "payload: 10 bundled AppImages (1.1G)". rootfs-full flatpaks: 9 apps, including Discord, Packet, Gear Lever and Telegram. netinstall.conf has 14 `selected: true`. `sha256sum -c` OK for both .sha256 files (written by build-iso).
+- 20:21 base live UEFI (VM i15, `-nic none`): the desktop came up and **Calamares autostarted** (shots/r14-i15-02). Home dirs Desktop, Documents, Downloads, Music, Pictures, Public, Templates and Videos are present in the live session (r14-i15-04). The payload has onlyoffice_desktopeditors.appimage.
+- 20:27 base install i15: test-only live tweak (partition.conf erase). Europe/Rome, American English, English (US) keyboard, Erase disk. User Tester / tester, throwaway password. Applications page (r14-i15-10): Telegram, Discord, Packet and Gear Lever ticked; "Apps (AppImages)" has ElecWhat, LocalSend, MarkText and Obsidian ticked; the 6 Extra apps are unticked. **Unticked for the test: Discord, Gear Lever, Obsidian** (r14-i15-12). Install started 20:29.
+- docs/iso-size.md: new section "Base ISO: OnlyOffice and installer picks".
+- 20:35 base install i15 finished ("All done", r14-i15-19). First boot of the installed disk, offline (`-nic none`): user dirs Desktop, Documents, Downloads, Music, Pictures, Public, Templates and Videos are present in /home/tester (r14-i15-22). ~/AppImages/onlyoffice is copied from the bundled payload and not downloaded. Its plain menu entry is present because Gear Lever is unticked (r14-i15-22/26). /var/lib/omaxian/optional-flatpaks.list = org.telegram.desktop and io.github.nozwock.Packet (no Discord, no Gear Lever). optional-appimages.list = elecwhat, localsend and marktext (no obsidian); firstrun skips Obsidian (r14-i15-24). `omaxian-optional status` lists the groups and picks with their state (r14-i15-25). /usr/share/applications/omaxian-optional.desktop ("Add optional apps") is present (r14-i15-26). Launching it from the Quickshell menu could not be driven by keyboard in the VM. `omaxian-optional` from a terminal works.
+- 21:17 i15 rebooted with `-nic user`. omaxian-firstboot --boot detected the network and started "apt: installing optional packages" (chromium … docker-compose …). Every HTTPS fetch fails with "SSL: unexpected eof" via the sandbox proxy 198.18.0.1 (r14-i15-30/31), so the picked flatpaks and AppImages were not downloaded here. firstboot keeps retrying (package-by-package fallback seen at 21:26, r14-i15-33); ~/AppImages still has only onlyoffice, and `flatpak list` is empty (r14-i15-32). This is a test-environment limit, not a product failure. Online download of the picks is **not verified** in this round.
+- Cosmetic, not fixed: `omaxian-optional status` shows the bare id as the label for some AppImages (bleachbit, onlyoffice, openra-*, task_manager_tmog).
+- 21:27 full live UEFI (VM i16, `-nic none`): **Calamares autostarted** (shots/r14-i16-01). Home dirs Desktop … Videos are present in the live session. `flatpak list` shows 9 apps, including Discord, Packet, Gear Lever and Telegram (r14-i16-04).
+- 21:33 full install i16: erase tweak, user Tester. The Applications page has all 10 groups, with the picks ticked by default and VoxType and Extra apps unticked (r14-i16-08). **Unticked for the test: Discord and LocalSend** (r14-i16-09). Install started 21:35.
+- 21:50 base live **BIOS** (VM b1, SeaBIOS, `-nic none`, no disk): **Calamares autostarted**. The only warnings are the expected no-disk ones (shots/r14-b1-02). Cancel worked (r14-b1-03). In a terminal (r14-b1-04): /sys/firmware/efi is absent (= BIOS), the home dirs Desktop … Videos are present, and calamares-settings 0.2.14 and firstboot 0.2.6 are installed. PASS. VM killed 21:57.
+- 22:02 full install i16 finished ("All done", r14-i16-16; ~27 min under TCG). It was booted from disk at 22:11 (`-nic none`, fresh OVMF vars) and LightDM showed the Tester login (r14-i16-17). After login **the installer did not autostart** (r14-i16-18). Terminal checks (r14-i16-19):
+  - The home dirs are AppImages, Desktop, Documents, Downloads, Music, Pictures, Public, Templates and Videos.
+  - ~/AppImages has bleachbit, elecwhat, marktext, obsidian, onlyoffice, openra ×3 and task_manager_tmog. **LocalSend was not copied** (unticked).
+  - optional-flatpaks.list = telegram, Packet and gearlever. optional-appimages.list = elecwhat, marktext and obsidian.
+  - `flatpak list`: Proton Mail Bridge, GPU Screen Recorder, G4Music, Packet, Podman Desktop, Gear Lever, Telegram and Zoom. **Discord was removed offline** ("flatpak com.discordapp.Discord: removed (group not selected)").
+  - The firstboot log ends with "full ISO: everything installed offline, first boot provisioning complete".
+  - The user is in the `input` group (plus sudo, kvm, libvirt …). /dev/uinput is `crw-rw---- root input`, and ydotoold is running from ~/.local/bin/ydotoold.
+  - No calamares process, no Xsession.d live file, and 0 calamares packages are installed.
+
+  PASS.
+
+### Round 14 result
+
+| Check | Base ISO | Full ISO |
+|---|---|---|
+| Live UEFI: Calamares autostarts | PASS (r14-i15-02) | PASS (r14-i16-01) |
+| Live BIOS: Calamares autostarts | PASS (r14-b1-02) | not rerun (r13 PASS, unchanged boot path) |
+| Live home dirs (Documents, Downloads, Videos …) | PASS | PASS |
+| Offline install (UEFI, erase) | PASS (i15) | PASS (i16) |
+| Installed XDG home dirs | PASS | PASS |
+| Installer does not autostart on installed system | PASS | PASS |
+| OnlyOffice in ~/AppImages from the payload, no download | PASS (+ plain menu entry without Gear Lever) | PASS |
+| Picks ticked by default on the Applications page | PASS | PASS |
+| Unticked flatpaks | Discord and Gear Lever not recorded, not installed | Discord removed offline at first boot |
+| Unticked pick AppImages | Obsidian not recorded, skipped | LocalSend not copied |
+| Ticked picks | recorded; online download **not verified** (sandbox HTTPS blocked) | present (Telegram, Packet, Gear Lever, ElecWhat, MarkText, Obsidian) |
+| omaxian-optional status + "Add optional apps" .desktop | PASS (menu launch by GUI not driven) | – |
+| input group, /dev/uinput, ydotoold | – | PASS |
+| docker-compose | Containers group (preselected), pending until online | Containers group (preselected), offline pool (not separately checked in r14) |
+| Thunar | omaxian-session Depends + xfce4 | same |
+- 22:25 VMs killed; test disks, vars and password files deleted.

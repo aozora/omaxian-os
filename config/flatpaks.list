@@ -1,10 +1,9 @@
 # Flathub app IDs. Base ISO: installed by omaxian-firstboot when online.
 # Full ISO: preinstalled at build time (system-wide).
+# Packet, Gear Lever, Discord and Telegram are optional groups (installer
+# checkboxes, ticked by default): config/optional-groups.list, field 6.
 ch.protonmail.protonmail-bridge
 com.dec05eba.gpu_screen_recorder
-com.discordapp.Discord
 com.github.neithern.g4music
-io.github.nozwock.Packet
 io.podman_desktop.PodmanDesktop
-it.mijorus.gearlever
 us.zoom.Zoom

@@ -1,43 +1,106 @@
 #!/bin/bash
 # Per-user first run (from /etc/X11/Xsession.d/36omaxian-user-firstrun, in background):
 #  - AppImages: copy into ~/AppImages and integrate with Gear Lever (the
-#    optional "Extra apps" only when picked in the installer).
+#    optional "Extra apps" only when picked in the installer or added later
+#    with omaxian-optional).
 #    Source preference: fresh system cache (/var/lib/omaxian/appimages, filled
-#    by omaxian-firstboot when online), else the offline payload of the full
-#    ISO (/usr/share/omaxian/payload/appimages).
+#    by omaxian-firstboot when online), else the offline payload
+#    (/usr/share/omaxian/payload/appimages: every bundled AppImage on the full
+#    ISO, OnlyOffice (manifest class "base") on both ISOs).
+#    Without Gear Lever yet (base ISO before first online boot) a copied
+#    AppImage gets a plain menu entry built from its own .desktop and icon
+#    (~/.local/share/applications/omaxian-appimage-<id>.desktop) and stays
+#    pending; once Gear Lever integrates it the plain entry is removed. When
+#    Gear Lever was unticked in the installer the plain entry is final.
+#    "Apps (AppImages)" (class pick): only the ones picked (no record = all).
 #  - OpenRA: seed ~/.config/openra (Content + maps) from the payload.
 # Re-runs (e.g. when the cache was empty at first login) until all done.
+#   OMAXIAN_FIRSTRUN_ONLY="id ..."  only these AppImages, even after done
+#                                   (used by omaxian-optional; no done marker)
 set -u
+FB=${OMAXIAN_FB_ROOT:-}   # path prefix for tests only
+ONLY=${OMAXIAN_FIRSTRUN_ONLY:-}
 STATE="$HOME/.local/state/omaxian"; mkdir -p "$STATE"
-LOG="$STATE/user-firstrun.log"; exec >>"$LOG" 2>&1
-[ -e "$STATE/user-firstrun.done" ] && exit 0
-grep -qw 'boot=live' /proc/cmdline && exit 0
-echo "== $(date -Is) user firstrun"
-PAYLOAD=/usr/share/omaxian/payload
-CACHE=/var/lib/omaxian/appimages
-MANIFEST=/usr/share/omaxian/appimages.manifest
+LOG="$STATE/user-firstrun.log"
+[ -n "${OMAXIAN_FIRSTRUN_STDOUT:-}" ] || exec >>"$LOG" 2>&1
+[ -z "$ONLY" ] && [ -e "$STATE/user-firstrun.done" ] && exit 0
+[ -z "$FB" ] && grep -qw 'boot=live' /proc/cmdline && exit 0
+echo "== $(date -Is) user firstrun${ONLY:+ (only: $ONLY)}"
+PAYLOAD=$FB/usr/share/omaxian/payload
+CACHE=$FB/var/lib/omaxian/appimages
+MANIFEST=$FB/usr/share/omaxian/appimages.manifest
+PICKED=$FB/var/lib/omaxian/optional-appimages.list
 APPDIR="$HOME/AppImages"; mkdir -p "$APPDIR"
+APPS="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+ICONS="${XDG_DATA_HOME:-$HOME/.local/share}/icons"
 pending=0
 
 # OpenRA data (never overwrite an existing profile)
-if [ -d "$PAYLOAD/openra" ] && [ ! -e "$HOME/.config/openra/.omaxian-seeded" ]; then
+if [ -z "$ONLY" ] && [ -d "$PAYLOAD/openra" ] && [ ! -e "$HOME/.config/openra/.omaxian-seeded" ]; then
 	mkdir -p "$HOME/.config/openra"
 	cp -a -n "$PAYLOAD/openra/." "$HOME/.config/openra/" && date -Is > "$HOME/.config/openra/.omaxian-seeded"
 	echo "seeded ~/.config/openra"
 fi
 
 gearlever() { flatpak run it.mijorus.gearlever "$@"; }
-have_gl=0; flatpak info it.mijorus.gearlever >/dev/null 2>&1 && have_gl=1
+have_gl=0; command -v flatpak >/dev/null 2>&1 && flatpak info it.mijorus.gearlever >/dev/null 2>&1 && have_gl=1
+[ -n "${OMAXIAN_FIRSTRUN_NO_GEARLEVER:-}" ] && have_gl=0
+# Gear Lever is an installer checkbox (ticked by default): when it was not
+# picked it will never come, so the plain menu entry is final, not pending.
+FP_SELECTED=$FB/var/lib/omaxian/optional-flatpaks.list
+gl_coming=1
+[ $have_gl = 0 ] && [ -f "$FP_SELECTED" ] && ! grep -qx it.mijorus.gearlever "$FP_SELECTED" && gl_coming=0
+
+# plain menu entry from the AppImage's own .desktop (no FUSE needed to extract)
+fallback_entry() { # id appimage
+	local id=$1 ai=$2 t d icon name ex
+	local out="$APPS/omaxian-appimage-$id.desktop"
+	[ -s "$out" ] && return 0
+	t=$(mktemp -d) || return 1
+	( cd "$t" && "$ai" --appimage-extract '*.desktop' && "$ai" --appimage-extract .DirIcon ) >/dev/null 2>&1
+	d=$(find "$t/squashfs-root" -maxdepth 1 -name '*.desktop' 2>/dev/null | head -1)
+	if [ -L "$t/squashfs-root/.DirIcon" ]; then # icon is a symlink inside the image
+		local tgt; tgt=$(readlink "$t/squashfs-root/.DirIcon")
+		( cd "$t" && "$ai" --appimage-extract "$tgt" ) >/dev/null 2>&1
+	fi
+	mkdir -p "$APPS" "$ICONS"
+	icon=""
+	if [ -s "$t/squashfs-root/.DirIcon" ] && cp -L "$t/squashfs-root/.DirIcon" "$ICONS/omaxian-appimage-$id.png" 2>/dev/null; then
+		icon="$ICONS/omaxian-appimage-$id.png"
+	fi
+	name=$id; ex=""
+	if [ -n "$d" ]; then
+		name=$(sed -n 's/^Name=//p' "$d" | head -1)
+		ex=$(sed -n 's/^Exec=//p' "$d" | head -1); ex=${ex#* }; [ "$ex" = "$(sed -n 's/^Exec=//p' "$d" | head -1)" ] && ex=""
+	fi
+	{
+		echo "[Desktop Entry]"; echo "Type=Application"; echo "Name=${name:-$id}"
+		[ -n "$d" ] && grep -E '^(GenericName|Comment|Categories|MimeType|Keywords|StartupWMClass)=' "$d" | awk -F= '!seen[$1]++'
+		echo "Exec=\"$ai\"${ex:+ $ex}"; echo "TryExec=$ai"
+		[ -n "$icon" ] && echo "Icon=$icon"
+		echo "Terminal=false"
+		echo "X-Omaxian-AppImage=$id"
+	} > "$out.tmp" && mv "$out.tmp" "$out"
+	rm -rf "$t"
+	command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APPS" >/dev/null 2>&1
+	echo "-- $id: menu entry $out (until Gear Lever integrates it)"
+}
+in_only() { [ -z "$ONLY" ] || [[ " $ONLY " == *" $1 "* ]]; }
+
 shopt -s nullglob nocaseglob
-PICKED=/var/lib/omaxian/optional-appimages.list
 while IFS=$'\t' read -r id glob method source class rest; do
 	[[ -z $id || $id == \#* ]] && continue
-	# extra apps (class optional): only the ones picked in the installer,
-	# from the download cache only (never bundled)
+	in_only "$id" || continue
+	# extra apps (class optional): only the picked ones, from the download
+	# cache only (never bundled)
 	if [ "${class:-bundled}" = optional ]; then
 		{ [ -f "$PICKED" ] && grep -qx "$id" "$PICKED"; } || continue
 		glob=/nonexistent
 	fi
+	# Apps (AppImages) checkboxes (class pick, ticked by default): skipped
+	# when the installer recorded the picks without it (no record = picked)
+	if [ "${class:-bundled}" = pick ] && [ -f "$PICKED" ] && ! grep -qx "$id" "$PICKED" \
+		&& [[ " $ONLY " != *" $id "* ]]; then continue; fi
 	src=""
 	for f in "$CACHE/$id"/*.AppImage; do src=$f; done
 	if [ -z "$src" ]; then for f in "$PAYLOAD"/appimages/$glob; do src=$f; break; done; fi
@@ -45,10 +108,14 @@ while IFS=$'\t' read -r id glob method source class rest; do
 	dst="$APPDIR/$(basename "$src")"
 	[ -e "$dst" ] || { cp "$src" "$dst"; chmod +x "$dst"; }
 	if [ $have_gl = 1 ]; then
-		gearlever --integrate "$dst" -y </dev/null && echo "ok $id integrated" || { echo "!! $id: gearlever failed"; pending=1; }
+		if gearlever --integrate "$dst" -y </dev/null; then
+			echo "ok $id integrated"
+			rm -f "$APPS/omaxian-appimage-$id.desktop" "$ICONS/omaxian-appimage-$id.png"
+		else echo "!! $id: gearlever failed"; fallback_entry "$id" "$dst"; pending=1; fi
 	else
-		echo "-- $id: copied, Gear Lever not installed yet"; pending=1
+		if [ $gl_coming = 1 ]; then echo "-- $id: copied, Gear Lever not installed yet"; fallback_entry "$id" "$dst"; pending=1
+		else [ -e "$APPS/omaxian-appimage-$id.desktop" ] || { echo "-- $id: copied (Gear Lever not picked)"; fallback_entry "$id" "$dst"; }; fi
 	fi
 done < "$MANIFEST"
-[ $pending -eq 0 ] && date -Is > "$STATE/user-firstrun.done"
+[ -z "$ONLY" ] && [ $pending -eq 0 ] && date -Is > "$STATE/user-firstrun.done"
 exit 0
