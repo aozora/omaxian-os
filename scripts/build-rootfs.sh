@@ -147,7 +147,8 @@ s_upgrade() { # apply pins (backports kernel/pipewire/quickshell) and drop older
 	# ~200 MB more squashfs plus a second initrd)
 	local keep old; keep=$(CH dpkg-query -W -f '${Depends}' linux-image-amd64 | grep -o 'linux-image-[0-9][^ ,]*' | head -1)
 	[ -n "$keep" ] || die "linux-image-amd64 has no kernel dependency"
-	old=$(CH dpkg-query -W -f '${Package} ${Status}\n' 'linux-image-[0-9]*' 'linux-modules-[0-9]*' 'linux-headers-[0-9]*' 2>/dev/null \
+	# (dpkg-query exits 1 when a pattern, e.g. linux-headers-*, matches nothing)
+	old=$( { CH dpkg-query -W -f '${Package} ${Status}\n' 'linux-image-[0-9]*' 'linux-modules-[0-9]*' 'linux-headers-[0-9]*' 2>/dev/null || true; } \
 		| awk -v s="-${keep#linux-image-}" '/ installed$/ && substr($1, length($1)-length(s)+1) != s {print $1}')
 	[ -z "$old" ] || CH $APT purge $old
 	CH dpkg-query -W -f '${Package} ${Version}\n' linux-image-amd64 pipewire wireplumber quickshell
