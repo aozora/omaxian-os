@@ -694,3 +694,23 @@ Owner feedback after installing the base ISO: no Documents/Downloads/Videos fold
 | docker-compose | Containers group (preselected), pending until online | Containers group (preselected), offline pool (not separately checked in r14) |
 | Thunar | omaxian-session Depends + xfce4 | same |
 - 22:25 VMs killed; test disks, vars and password files deleted.
+
+## Publish round 14 (2026-11-02, 08:49–08:58 CET)
+
+Approved by the owner. Same method as round 13 (rclone, pool → dists → keyring, same Cache-Control).
+
+- **repo-local check:** debs byte-identical to `out/debs`, versions equal `out/omaxian-{base,full}.packages`
+  (calamares-settings 0.2.14, firstboot 0.2.6, session 1.0.6-2, base 0.1.7, branding 0.2.5,
+  strata 1.1.1-1, ydotool 1.0.4-1, fonts-nerd 3.5.1-1); voxtype not in repo; InRelease/Release.gpg
+  signed by subkey 5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75.
+- **apt (s3://omaxian-apt):** 3 new debs uploaded; dists synced; keyring uploaded. Superseded pool
+  objects deleted (no longer in Packages): session 1.0.6-1, calamares-settings 0.2.13, firstboot 0.2.5.
+  `rclone check --download`: 0 differences.
+- **HTTPS (apt.omaxian.org):** InRelease/Packages/keyring identical to repo-local, gpgv good signature;
+  all 8 Filename URLs 200; isolated `apt-get update` clean (0 W/E), expected candidates, voxtype absent.
+- **ISOs (s3://omaxian-iso/releases/0.1/), verified via download.omaxian.org:**
+  - base: 3039420416 bytes, sha256 71ff60e3dc1180112059d0261452cbcc012f71690194bdbc1577e9cceee7f62a ✔
+  - full: 9204375552 bytes, sha256 43ac556975bdaac37eb8939a2532a64e76325cbb80e6c860bbe2402a5d76003b ✔
+  - `.sha256` files identical to local.
+- R2 answered `501 NotImplemented` on first attempts (as in round 13); the rclone retry succeeded and content was verified.
+- No leftover multipart uploads in either bucket. Nothing else in the buckets changed. Not pushed.
