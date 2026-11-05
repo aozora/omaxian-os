@@ -1,3 +1,9 @@
+omaxian-base (0.1.8) excalibur; urgency=medium
+
+  * /etc/omaxian-release: OMAXIAN_SHELL="v1.1".
+
+ -- Omaxian OS <dev@omaxian.org>  Thu, 05 Nov 2026 18:02:08 +0100
+
 omaxian-base (0.1.7) excalibur; urgency=medium
 
   * Enable the Omaxian OS repository (https://apt.omaxian.org) by default:

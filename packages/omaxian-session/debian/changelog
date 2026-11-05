@@ -1,3 +1,15 @@
+omaxian-session (1.1.0-1) excalibur; urgency=medium
+
+  * New upstream Omaxian shell v1.1 (tag ae527b75 = main). Upstream's
+    "version" file still says v1.0.8; package version comes from
+    OMAXIAN_SHELL_REF (normalized v1.1 → 1.1.0).
+  * Seed the four community-apps into the home template by default
+    (disktree, monologue, omarchy-meeting-recorder, signed) on both ISOs.
+    community-plugins remain opt-in (not installed).
+  * Runtime Depends for those apps (from each omaxian.deps.json).
+
+ -- Omaxian OS <dev@omaxian.org>  Thu, 05 Nov 2026 18:02:08 +0100
+
 omaxian-session (1.0.6-2) excalibur; urgency=medium
 
   * omaxian-user-setup: run xdg-user-dirs-update on every login, before the

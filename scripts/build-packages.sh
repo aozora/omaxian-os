@@ -66,13 +66,17 @@ prep_omaxian-session() {
 	for x in scripts omaxian packaging version LICENSE README.md; do cp -a "$OMX/$x" "$d/vendor/src/"; done
 	bash "$TOPDIR/scripts/gen-home-template.sh" "$OMX" "$d/vendor/home-template"
 	cp "$OMX/packaging/sysvinit/power-profiles-daemon" "$d/debian/omaxian-session.power-profiles-daemon.init"
-	# upstream version = the pinned tag (OMAXIAN_SHELL_REF); the repo's
-	# "version" file can lag behind (v1.0.6 still says v1.0.5): warn only.
-	# Debian revision from our changelog.
+	# upstream version = the pinned tag (OMAXIAN_SHELL_REF). Normalize a short
+	# vX.Y tag to X.Y.0 so the Debian version sorts above older X.Y.Z releases
+	# (e.g. v1.1 → 1.1.0-1 > 1.0.6-2). The repo's "version" file can lag.
 	local up rev fv; up=${OMAXIAN_SHELL_REF#v}; fv=$(tr -d 'v\n' < "$OMX/version" 2>/dev/null)
-	[ "$fv" = "$up" ] || msg "WARNING: omaxian $OMAXIAN_SHELL_REF: its version file says ${fv:-nothing}; packaging as $up"
+	case "$up" in
+		[0-9]*.[0-9]*.[0-9]*) ;;
+		[0-9]*.[0-9]*) up="${up}.0" ;;
+	esac
+	[ "$fv" = "${OMAXIAN_SHELL_REF#v}" ] || [ "$fv" = "$up" ] 		|| msg "WARNING: omaxian $OMAXIAN_SHELL_REF: its version file says ${fv:-nothing}; packaging as $up"
 	rev=$(sed -n '1s/.*(\([^)]*\)).*/\1/p' "$d/debian/changelog"); rev=${rev##*-}
-	sed -i "1s/([^)]*)/($up-${rev:-2})/" "$d/debian/changelog" || true
+	sed -i "1s/([^)]*)/($up-${rev:-1})/" "$d/debian/changelog" || true
 }
 prep_omaxian-fonts-nerd() {
 	"$TOPDIR/scripts/fetch-nerd-fonts.sh" "$1/upstream"

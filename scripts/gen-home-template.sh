@@ -14,6 +14,16 @@ env -i PATH=/usr/bin:/bin HOME="$T/home" USER=omaxian XDG_RUNTIME_DIR="$T/run" L
 	bash "$SRC/scripts/install.sh" > "$T/install.log" 2>&1 || { cat "$T/install.log"; die "install.sh failed"; }
 env -i PATH=/usr/bin:/bin HOME="$T/home" USER=omaxian XDG_RUNTIME_DIR="$T/run" LANG=C.UTF-8 TERM=dumb \
 	bash "$SRC/scripts/deploy.sh" > "$T/deploy.log" 2>&1 || { cat "$T/deploy.log"; die "deploy.sh failed"; }
+# Default community-apps (disktree, monologue, omarchy-meeting-recorder, signed).
+# Built/fetched by scripts/build-community-apps.sh into build/cache/community-apps/home.
+# community-plugins are intentionally NOT seeded.
+CA="$BUILDDIR/cache/community-apps/home"
+if [ ! -d "$CA/.local/bin" ]; then
+	bash "$TOPDIR/scripts/build-community-apps.sh" "$SRC"
+fi
+[ -d "$CA/.local/bin" ] || die "community-apps stage missing ($CA); run scripts/build-community-apps.sh"
+msg "seeding community-apps into home template"
+cp -a "$CA/." "$T/home/"
 # hardcoded build paths would break on the target
 if grep -rIl --exclude-dir=themes "$T/home" "$T/home" 2>/dev/null | head -5 | grep -q .; then
 	grep -rIl --exclude-dir=themes "$T/home" "$T/home" | head; die "home template contains build paths"

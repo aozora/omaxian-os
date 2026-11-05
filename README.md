@@ -6,7 +6,7 @@
 sources).
 
 A Devuan 6 "Excalibur" based live/installable distribution with the
-[Omaxian](https://github.com/aozora/omaxian) desktop (v1.0.4, Omarchy vendored)
+[Omaxian](https://github.com/aozora/omaxian) desktop (v1.1, Omarchy vendored)
 as the default session and XFCE as the alternative. No systemd: sysvinit + eudev
 + elogind, XLibre X server, PipeWire per user, kernel 7.2 from excalibur-backports.
 
@@ -34,7 +34,9 @@ config/            build.conf, apt sources/prefs/keys, package-lists/*.list,
 packages/          debian packaging of the Omaxian OS packages
   omaxian-base               apt sources/pins/keyrings, os defaults, groups
   omaxian-branding           Plymouth "omaxian", GRUB theme, LightDM gtk-greeter theme, wallpapers
-  omaxian-session            Omaxian v1.0.4 + Omarchy (vendored), session + home template
+  omaxian-session            Omaxian v1.1 + Omarchy (vendored), session + home template
+                             (seeds community-apps: disktree, monologue,
+                             omarchy-meeting-recorder, signed)
   omaxian-strata             Strata file manager (signed release), default for inode/directory
   omaxian-firstboot          firstboot init script: flathub + flatpaks, AppImage refresh;
                              per-user first run: OpenRA content, Gear Lever integration;

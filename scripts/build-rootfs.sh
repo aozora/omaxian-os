@@ -123,7 +123,7 @@ s_fonts()   { # fonts without Recommends (they drag in the Noto extra packs)
 	CH $APT install --no-install-recommends $pk
 }
 s_user()    { inst 40-user.list; }
-s_omaxian() { CH apt-get update; inst 50-omaxian.list; }
+s_omaxian() { CH apt-get update; inst 50-omaxian.list 55-community-apps.list; }
 s_extrepo() {
 	CH extrepo enable brave_release
 	CH extrepo enable librewolf

@@ -1,0 +1,25 @@
+# Runtime Depends of the four default community-apps (also in omaxian-session).
+# Seeded into every home via the omaxian-session home template; not optional.
+libvulkan1
+libx11-6
+libxcb1
+libxkbcommon0
+libxkbcommon-x11-0
+libwayland-client0
+libfontconfig1
+libfreetype6
+ffmpeg
+libpulse0
+libqt6multimedia6
+qml6-module-qtmultimedia
+qml6-module-qtquick
+qt6-qpa-plugins
+qt6-image-formats-plugins
+xdg-desktop-portal
+xdg-desktop-portal-gtk
+libgtk-4-1
+libadwaita-1-0
+libpoppler-qt6-3t64
+libqpdf30
+libnss3
+fonts-noto-core

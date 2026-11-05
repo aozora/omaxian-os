@@ -714,3 +714,70 @@ Approved by the owner. Same method as round 13 (rclone, pool → dists → keyri
   - `.sha256` files identical to local.
 - R2 answered `501 NotImplemented` on first attempts (as in round 13); the rclone retry succeeded and content was verified.
 - No leftover multipart uploads in either bucket. Nothing else in the buckets changed. Not pushed.
+
+## Round 15 (2026-11-05, ~17:50–19:40 CET): Omaxian shell v1.1 + default community-apps
+
+Owner released **v1.1** on github.com/aozora/omaxian (tag = main `ae527b75`; upstream `version` file still says v1.0.8 — packaging uses `OMAXIAN_SHELL_REF`). Community-plugins stay out.
+
+### Build
+- `OMAXIAN_SHELL_REF=v1.1` → Debian session **1.1.0-1** (> 1.0.6-2). `omaxian-base` **0.1.8**.
+- New `scripts/build-community-apps.sh`: seeds four apps into the session home template:
+  - **disktree** 0.11.0 — prebuilt `tobi/disktree` release tarball
+  - **omarchy-meeting-recorder** — upstream `install.sh --binary` (prebuilt)
+  - **monologue**, **signed** — qmake6 build in Devuan chroot via each app's `install.sh --skip-apt`
+- Runtime deps from each app's `omaxian.deps.json` / install needs → `omaxian-session` Depends + `config/package-lists/55-community-apps.list` (both ISOs).
+- Local signed apt repo rebuilt only (`repo-local/`); **not published**. ISOs rebuilt; **no R2 / no GitHub push**.
+
+### Package versions (both ISOs)
+| Package | Version |
+|---|---|
+| omaxian-session | 1.1.0-1 |
+| omaxian-base | 0.1.8 |
+| omaxian-calamares-settings | 0.2.14 |
+| omaxian-firstboot | 0.2.6 |
+| omaxian-branding | 0.2.5 |
+| omaxian-fonts-nerd | 3.5.1-1 |
+| omaxian-strata | 1.1.1-1 |
+| omaxian-ydotool | 1.0.4-1 |
+
+### ISOs
+| Image | Path | Size | sha256 |
+|---|---|---|---|
+| base | `out/omaxian-base-0.1-trans-siberian-shaman-amd64.iso` | 3098339328 (≈2.9G) | `7b1bf01cd0df7e692714a16958fa8e414e00a5ce123bd7e8022af328061ecb7d` |
+| full | `out/omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | 9389113344 (≈8.8G) | `88c29b28b4e07034d96161a6219da7f28f3cd795b9b2b491cc5aed3776b88d99` |
+
+Squashfs / rootfs: all four binaries + `.desktop` under `usr/share/omaxian/home-template/.local/`; plugins dir only `.gitkeep`. `ldd` clean; `--help` smoke OK in rootfs chroot.
+
+### Live UEFI (base ISO, TCG, no disk) — PASS
+- Desktop reached (~6 min). Calamares **autostarted** (shots/r15-base-uefi-0360s.png / now.png). Expected blocking errors with no disk (space / no partitions).
+- Live user `omaxian@omaxian` (after fixing a build-time `box` uid-1000 pollution and rebuilding ISOs).
+- Apps are seeded at first Xsession from the home template (same path as install). Interactive launch in live was not fully driven (Calamares ate focus); presence verified via squashfs + installed-system session.
+
+### Offline base install i17 (UEFI, `-nic none`, 40G virtio) — PASS
+- Test-only live tweak: `initialPartitioningChoice: erase` in partition.conf (same harness limit as rounds 7–14; mouse unreliable).
+- Europe/Rome, American English, English (US) keyboard, Erase disk (EFI 512 MiB + ext4, swap to file). User Tester / tester / tester-pc.
+- Applications: default picks. **"All done."** ~19:18 CET (shots/r15-i17-23-done.png). Reboot to greeter `tester-pc` / Tester (r15-i17-27-installed.png); desktop without installer (r15-i17-28-desktop.png).
+
+### Installed system checks (shots/r15-i17-33-apps.png, 34-r14.png, 35-final.png, 36-input.png)
+| Check | Result |
+|---|---|
+| omaxian-session 1.1.0-1, base 0.1.8, ydotool 1.0.4-1 | PASS |
+| `~/.local/bin/{disktree,monologue,omarchy-meeting-recorder,signed}` + on PATH | PASS |
+| disktree / signed `--help` / `help` | PASS (launchable CLI) |
+| XDG dirs Desktop…Public | PASS |
+| `~/AppImages/onlyoffice_desktopeditors.appimage` | PASS |
+| `input` group (gid 101) | PASS |
+| `/dev/uinput` | PASS (`uinput_ok`) |
+| `ydotoold` running | PASS |
+| calamares / calamares-settings purged | PASS (`calamares_gone`) |
+| No installer window on installed desktop | PASS |
+
+### Caveats
+- Upstream Omaxian tag `v1.1` still ships `version` = 1.0.8; Debian version comes from the shell ref (normalized `v1.1` → `1.1.0`).
+- Community-plugins not installed (only empty `plugins/.gitkeep` from shell layout).
+- Build chroot briefly gained a host `box` uid-1000 user during Qt community-app staging; removed before final ISO rebuild.
+- VM mouse still unusable for Calamares partition radio; erase default remains a **test-only** live overlay.
+- GUI window launch of the four apps in the VM was not screenshot-driven (TCG + focus); CLI `--help` / PATH presence confirmed.
+- Local apt only; **not** uploaded to R2, **not** published, **not** pushed to GitHub.
+
+**Round 15 result: PASS** (live UEFI base; offline base install + community-apps + round-14 behaviours).
