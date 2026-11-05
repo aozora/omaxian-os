@@ -781,3 +781,17 @@ Squashfs / rootfs: all four binaries + `.desktop` under `usr/share/omaxian/home-
 - Local apt only; **not** uploaded to R2, **not** published, **not** pushed to GitHub.
 
 **Round 15 result: PASS** (live UEFI base; offline base install + community-apps + round-14 behaviours).
+
+## Publish round 15 (2026-11-05, 19:44–19:53 CET)
+
+Approved by the owner (widget t62s378). Same method as round 14 (rclone, pool → dists → keyring, same Cache-Control).
+
+- **GitHub:** `aozora/omaxian-os` branch `omaxian-os-build` pushed to `c21355df0175e05bdc4159fb96ed7b7629d85855` (includes Round 15 build `c21355d` + Round 14 publish notes `562e13a`). Bundle → tatodx ff-only merge → push as `aozora`.
+- **repo-local check:** debs byte-identical to `out/debs`; InRelease/Release.gpg signed by subkey 5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75. Versions: session 1.1.0-1, base 0.1.8, calamares-settings 0.2.14, firstboot 0.2.6, branding 0.2.5, strata 1.1.1-1, ydotool 1.0.4-1, fonts-nerd 3.5.1-1; voxtype not in repo.
+- **apt (s3://omaxian-apt):** pool synced (2 new debs: session 1.1.0-1, base 0.1.8); dists synced; keyring present. Superseded pool objects removed: session 1.0.6-2, base 0.1.7. `rclone check --download`: 0 differences (8 pool + 6 dists). R2 `501 NotImplemented` on first attempt; retry succeeded.
+- **HTTPS (apt.omaxian.org):** InRelease/keyring identical to repo-local, gpgv Good signature; all 8 Filename URLs 200; isolated `apt-get update` clean (0 W/E), candidates match; voxtype absent.
+- **ISOs (s3://omaxian-iso/releases/0.1/), verified via re-download sha256 + download.omaxian.org Content-Length:**
+  - base: 3098339328 bytes, sha256 `7b1bf01cd0df7e692714a16958fa8e414e00a5ce123bd7e8022af328061ecb7d` ✔
+  - full: 9389113344 bytes, sha256 `88c29b28b4e07034d96161a6219da7f28f3cd795b9b2b491cc5aed3776b88d99` ✔
+  - `.sha256` files identical to local.
+- No website PR.
