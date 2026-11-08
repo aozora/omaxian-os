@@ -1,3 +1,9 @@
+omaxian-session (1.1.0-2) excalibur; urgency=medium
+
+  * Rebuild requested Omaxian v1.1 for round 16; confirmed live tag unchanged.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 08 Nov 2026 20:20:00 +0100
+
 omaxian-session (1.1.0-1) excalibur; urgency=medium
 
   * New upstream Omaxian shell v1.1 (tag ae527b75 = main). Upstream's

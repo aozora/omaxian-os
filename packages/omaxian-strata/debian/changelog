@@ -1,3 +1,9 @@
+omaxian-strata (1.2.0-1) excalibur; urgency=medium
+
+  * New upstream stable v1.2.0; signed manifest and archive verified with pinned key.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 08 Nov 2026 20:20:00 +0100
+
 omaxian-strata (1.1.1-1) excalibur; urgency=medium
 
   * Package signed upstream release v1.1.1 (source commit fb031552,

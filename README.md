@@ -207,4 +207,4 @@ OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/
 
 ### Round 16 status (2026-11-08)
 
-Release verification completed; rebuild blocked by missing prior `build/` chroots/cache and `out/` artifacts in this box checkout. No round-16 ISO produced or published. See the round-16 checkpoint in `docs/test-report-0.1.md`.
+Release verification and monotonic package source-version preparation completed. Fresh reconstruction authorized; currently blocked by host apt HTTPS transport failure preventing installation of missing mmdebstrap/build/test tools. No round-16 ISO produced or published. See the round-16 checkpoint in `docs/test-report-0.1.md`.

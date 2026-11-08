@@ -1,3 +1,9 @@
+omaxian-base (0.1.9) excalibur; urgency=medium
+
+  * Round 16 refresh with Strata 1.2.0 and current Devuan packages.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 08 Nov 2026 20:20:00 +0100
+
 omaxian-base (0.1.8) excalibur; urgency=medium
 
   * /etc/omaxian-release: OMAXIAN_SHELL="v1.1".
