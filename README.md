@@ -204,3 +204,7 @@ sudo omaxian-optional-appimage select shotcut     # extra apps only
 sudo OMAXIAN_APPIMAGE_ONLY=shotcut omaxian-appimage-fetch /var/lib/omaxian/appimages
 OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/.local/state/omaxian/user-firstrun.log)
 ```
+
+### Round 16 status (2026-11-08)
+
+Release verification completed; rebuild blocked by missing prior `build/` chroots/cache and `out/` artifacts in this box checkout. No round-16 ISO produced or published. See the round-16 checkpoint in `docs/test-report-0.1.md`.

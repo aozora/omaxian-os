@@ -795,3 +795,14 @@ Approved by the owner (widget t62s378). Same method as round 14 (rclone, pool �
   - full: 9389113344 bytes, sha256 `88c29b28b4e07034d96161a6219da7f28f3cd795b9b2b491cc5aed3776b88d99` ✔
   - `.sha256` files identical to local.
 - No website PR.
+
+## Round 16 checkpoint (2026-11-08, 20:19 CET) — NOT BUILT
+
+Requested: Omaxian v1.1, Strata v1.2 and current Devuan updates; local-only.
+
+- Live GitHub Omaxian v1.1 release was published 2026-11-08 20:14:59 CET, has no binary assets, and resolves to **ae527b75bf54a1715c381d7cab037886e595ad2c**. This is exactly the round-15 source commit despite the fresh release publication. No main substitution. Fresh public source tarball downloaded rather than trusting the old tag cache: sha256 `1e82cd1aa2d2f6a94a12526d4a152c581932eeb4b204380158e77ded8f962c07`.
+- Requested Strata v1.2 is stable tag **v1.2.0**, signed manifest source commit **3305d04d10e21c8be286bcd9bff91d55644bbd13**. Existing fetch-strata.sh verification succeeded unchanged with the established pinned Ed25519 key (key_id `69826741d2ffd2e48b0b4bd21ce9d700bdd376431b2fd1c887b392ab9a56be88`). amd64 archive: **21663352 bytes**, sha256 `1cb68428d6079473862523f0ff35e48ff092c7ed21cd72b536356f6c51df46e3`.
+- Environment mismatch blocks the requested cached-rootfs update path: at task start the existing checkout had **no build/ directory and no out/ directory**. Both cached rootfs, apt-cache and previous ISO rollback artifacts are absent. Payload (4.4G) and repo-local (303M) survive. Do not assume round-15 chroots or ISOs still exist. Pre-existing tracked deletion `build/diag/liveboot.sh` was not staged or repaired.
+- Download/verification checkpoint: `build/round16/` holds release JSON, resolved Omaxian commit JSON, fresh source tarball, extracted verified Strata and verification log; Strata archive/manifest/signatures are in `build/dl/strata-1.2.0/`.
+- No Devuan index refresh/full-upgrade, package rebuild, apt re-sign, ISO build or VM test performed. No new ISO paths/hashes or package diff can be claimed. No uploads, publication, GitHub push or website PR.
+- Continuation: locate/restore the original cached build/out environment without overwriting surviving payload/signing material; otherwise obtain direction for a fresh environment rebuild. Then use monotonic session **1.1.0-2**, base **0.1.9**, Strata **1.2.0-1**; update STRATA_VERSION to 1.2.0, refresh Devuan indexes and full supported upgrades for both rootfs, record before/after packages/kernel, rebuild and sign local apt, rebuild both ISOs and execute the requested regression tests. Preserve sysvinit, four default community apps, optional picks/OnlyOffice, XDG/input/ydotool behaviours; plugins opt-in.
