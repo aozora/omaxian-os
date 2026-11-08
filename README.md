@@ -207,4 +207,4 @@ OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/
 
 ### Round 16 status (2026-11-08)
 
-APT transport repaired through the supported explicit box proxy; build/test toolchain installed. Monotonic packages and signed local apt rebuilt; fresh base rootfs through base/XLibre complete, desktop downloads checkpointed for continuation. No round-16 ISO produced or published. See the round-16 checkpoint in `docs/test-report-0.1.md`.
+Both fresh round-16 ISOs are complete locally: Omaxian v1.1 (session 1.1.0-2), verified Strata v1.2.0, base 0.1.9 and current Devuan packages (kernel 7.2.12). Base/full UEFI live, fully offline UEFI installation and installed-system regressions passed; base/full BIOS live boots passed. Signed local apt verified. Nothing uploaded, published or pushed. Exact ISO paths, sizes, SHA256, source identities and test limitations: `docs/test-report-0.1.md`, final round-16 section.

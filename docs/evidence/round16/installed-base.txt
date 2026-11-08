@@ -1,0 +1,96 @@
+ROUND16_INSTALLED_START
+2026-11-08T22:14:13+01:00
+7.2.12+deb13-amd64
+eudev	3.2.14-4
+omaxian-base	0.1.9
+omaxian-session	1.1.0-2
+omaxian-strata	1.2.0-1
+pipewire:amd64	1.6.9-2~bpo13+1
+quickshell	0.3.0-1~bpo13+1
+sysvinit-core	3.14-4devuan1
+wireplumber	0.5.12-1~bpo13+1
+strata 1.2.0
+2801 quickshell -n -p /home/tester/.local/share/omarchy/shell
+2191 /home/tester/.local/bin/ydotoold
+uid=1000(tester) gid=1000(tester) groups=1000(tester),24(cdrom),25(floppy),27(sudo),29(audio),30(dip),44(video),46(plugdev),100(users),101(input),102(kvm),107(netdev),109(scanner),115(lpadmin),116(bluetooth),995(libvirt)
+crw-rw---- 1 root input 10, 223 Nov  8 22:12 /dev/uinput
+UINPUT_WRITABLE_PASS
+XDG_PASS Desktop
+XDG_PASS Documents
+XDG_PASS Downloads
+XDG_PASS Music
+XDG_PASS Pictures
+XDG_PASS Videos
+XDG_PASS Templates
+XDG_PASS Public
+EXEC_PASS disktree
+LDD_PASS disktree
+EXEC_PASS monologue
+LDD_PASS monologue
+EXEC_PASS omarchy-meeting-recorder
+LDD_PASS omarchy-meeting-recorder
+EXEC_PASS signed
+LDD_PASS signed
+disktree — a treemap of what is using your disk
+
+usage: disktree [OPTIONS] [PATH]
+
+arguments:
+  PATH              directory to scan (default: the home directory)
+
+The window opens on a treemap of the root, largest first. Space marks the
+selected tile, Enter opens it, c reviews the marked list, ? lists every key.
+
+options:
+  -a, --apparent-size   measure apparent length instead of allocated blocks
+  -l, --follow-links    follow symlinks
+  -H, --no-hidden       skip dotfiles and dot-directories
+  -D, --disk            scan the whole disk the home directory is on
+  -X, --cross-filesystems
+                        also measure other disks, network shares and pseudo
+                        filesystems mounted below PATH (off by default)
+  -d, --depth N         how many levels to draw at once (1-6, default 3)
+      --power-efficiency PRESET
+                        miser, balanced (default), aggressive, drain-my-battery
+      --scan-threads N  fixed scan workers, capped by available CPU count
+      --adaptive-threads
+                        experimental adaptive admission (opt-in)
+      --fixed-threads   disable adaptive admission and CPU governor
+      --thread-throughput-percent N
+                        retain this percent of sampled initial throughput (80)
+      --thread-system-cpu-percent N
+                        best-effort host CPU budget; 0 disables it (80)
+      --metric files    rank by file count instead of bytes
+  -h, --help            show this help
+
+Usage: signed <command> [options]
+
+App:
+  open [pdf]                        Open Signed, on a PDF if one is named
+
+Commands that need no display (signed help <command> for options):
+  signatures                        List the saved signatures
+  add-signature <name> <image>      Save a signature from a scan or photo
+  remove-signature <name>           Delete a saved signature
+  pages <pdf>                       Page sizes in points
+  text <pdf>                        Lines of text with their positions
+  render <pdf>                      Render pages to PNG, optionally with a grid
+  sign <pdf> <output>               Write a signed copy with items placed on it
+  help items                        How to describe what to place
+  skill [install]                   Print the skill for coding agents, or install it
+ONLYOFFICE_PASS
+CALAMARES_REMOVED_PASS
+NO_INSTALLER_RUNNING_PASS
+Types: deb
+URIs: https://packages.devuan.org/merged
+Suites: excalibur excalibur-updates excalibur-security excalibur-backports
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/devuan-archive-keyring.gpg
+APT_CONFIG_PASS
+find: warning: you have specified the global option -maxdepth after the argument -path, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+/home/tester/.config/omarchy/plugins/.gitkeep
+ROUND16_INSTALLED_DONE
+/home/tester/.local/bin/disktree
+/home/tester/.local/bin/monologue
+/home/tester/.local/bin/omarchy-meeting-recorder
+/home/tester/.local/bin/signed

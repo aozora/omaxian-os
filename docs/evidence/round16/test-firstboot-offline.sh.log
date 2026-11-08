@@ -1,0 +1,23 @@
+ok   full complete offline (--boot): done in 0s
+ok   full complete offline (--now): done
+ok   pending krita: not done
+ok   Zoom missing: not done
+ok   AppImage missing: not done
+ok   AppImage from cache: done
+ok   Podman Desktop skipped (containers not picked): done
+ok   Podman Desktop missing (containers picked): not done
+ok   base ISO offline: not done, retries
+ok   full online: normal online path
+ok   VoxType group installed offline: done
+ok   apt-get update failing: firstboot continues, krita installed
+ok   full ISO, Telegram picked: kept, done offline
+ok   full ISO, Telegram not picked: removed offline, done
+ok   full ISO, Telegram picked but missing: not done
+ok   base ISO online, Telegram picked: installed from Flathub
+ok   base ISO online, Telegram not picked: not installed
+ok   no pick record: Telegram kept (group default)
+ok   full ISO, extra AppImage not picked: done offline
+ok   full ISO, extra AppImage picked: pending offline, not done
+ok   full ISO, extra AppImage picked and downloaded: done
+ok   payload copy is ignored for extra apps (cache only)
+22 passed, 0 failed

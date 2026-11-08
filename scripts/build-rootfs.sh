@@ -268,7 +268,8 @@ s_finalize() {
 	# official sources for the shipped system
 	rm -f "$R/etc/apt/sources.list.d/omaxian-build.list" "$R/etc/apt/preferences.d/41-omaxian-build.pref" \
 		"$R/etc/apt/preferences.d/42-omaxian-build-nofonts.pref" \
-		"$R/etc/apt/apt.conf.d/91omaxian-build"
+		"$R/etc/apt/apt.conf.d/91omaxian-build" \
+		"$R/etc/apt/apt.conf.d/99mmdebstrap"
 	: > "$R/etc/apt/sources.list"
 	cat > "$R/etc/apt/sources.list.d/devuan.sources" <<EOS
 Types: deb
@@ -292,6 +293,12 @@ s_full_from_base() {
 	[ -e "$BUILDDIR/rootfs-base.stamps/finalize" ] || die "build the base rootfs first"
 	rm_rootfs "$R"; cp -a "$BUILDDIR/rootfs-base" "$R"
 	printf '#!/bin/sh\nexit 101\n' > "$R/usr/sbin/policy-rc.d"; chmod +x "$R/usr/sbin/policy-rc.d"
+	# Full is a fresh copy, but refresh all indexes and supported upgrades too.
+	serve_repo
+	s_apt_setup
+	CH dpkg-query -W -f '${Package}\t${Version}\n' > "$OUTDIR/omaxian-full.before-upgrade.packages"
+	s_upgrade
+	CH dpkg-query -W -f '${Package}\t${Version}\n' > "$OUTDIR/omaxian-full.after-upgrade.packages"
 	# Flatpaks preinstalled system-wide (firstboot only updates them)
 	CH flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 	# One app at a time, via BW: "extra-data" apps (Zoom) run apply_extra under
@@ -335,8 +342,7 @@ s_full_from_base() {
 	# marker for omaxian-firstboot: this system ships everything offline, so
 	# first boot is complete without network once nothing is missing
 	mkdir -p "$R/var/lib/omaxian"; date -Is > "$R/var/lib/omaxian/full-offline"
-	rm -f "$R/usr/sbin/policy-rc.d"
-	CH dpkg-query -W -f '${Package}\t${Version}\n' > "$OUTDIR/omaxian-$FLAVOR.packages"
+	s_finalize
 }
 
 full_only_pkgs() { grep -vE '^\s*(#|$)' "$TOPDIR/config/optional-groups-full.list" | cut -d'|' -f5 | tr '\n' ' '; }
@@ -363,6 +369,13 @@ EOS
 	# reuse debs from an earlier build (build/dl/optional-pool)
 	mkdir -p "$BUILDDIR/dl/optional-pool"
 	cp -n "$BUILDDIR"/dl/optional-pool/*.deb "$R$pool/" 2>/dev/null || true
+	# Optional verified parallel prefetch for reconstructed builds on slow mirrors.
+	# The helper consumes SHA256 values from authenticated APT indexes; apt
+	# still performs its normal archive checks on installation/resolution.
+	if [ -n "${OMAXIAN_SIGNED_PREFETCH_HELPER:-}" ]; then
+		CH apt-get "${O[@]}" -qq --print-uris --download-only -o Acquire::ForceHash=sha256 install $pk > "$BUILDDIR/full-pool-uris.sha256"
+		python3 "$OMAXIAN_SIGNED_PREFETCH_HELPER" "$BUILDDIR/full-pool-uris.sha256" "$R$pool"
+	fi
 	# everything the groups need on top of the base system (the base already
 	# has the rest): download only, into the pool
 	CH apt-get "${O[@]}" -y --download-only -o Dir::Cache::archives="$pool" install $pk

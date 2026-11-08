@@ -830,3 +830,127 @@ Fresh reconstruction is authorized; absence of old chroots is not an approval bl
 - Desktop stage had reached active downloads. Paused deliberately with SIGINT to apt during downloading to provide a bounded durable checkpoint (not a new technical failure). No dpkg inconsistency; cleanup unmounted chroot filesystems. ~800 cached debs preserved, 103 GiB free. Do not clear stamps/cache. Rootfs job terminated cleanly with rc130; no job left running.
 - Resume exactly: `bash build/round16/continue-build.sh` (run background). This resumes base desktop stage, then base ISO, full rootfs and full ISO with supported proxy. Logs are separate for each stage. Inspect failures, do not run make clean. Existing rootfs s_upgrade performs supported dist-upgrade; verify all-suite index freshness and capture before/after upgrade diff on continuation. Round-15 full package baseline did not survive; do not invent a round15→16 package count.
 - Still pending: remaining rootfs stages/full supported upgrade, full ISO offline payload integration, both ISOs, final package/kernel lists and SHA256/bytes, live UEFI and offline base installation plus regression tests (ideally BIOS/full too). No ISO or runtime test success claimed. No uploads, publication, push or website work.
+
+## Round 16 final build (2026-11-08 CET) — LOCAL ONLY
+
+This section supersedes the earlier reconstruction checkpoints. Both fresh ISOs
+are built; no R2 upload, apt publication, GitHub push or website work was done.
+
+### Release identity and package versions
+- Requested Omaxian **v1.1**: live remote release/tag resolves to
+  `ae527b75bf54a1715c381d7cab037886e595ad2c`, unchanged from round 15 despite its
+  fresh release publication. Fresh public source was downloaded; no main substitution.
+  Upstream `version` remains **1.0.8**; package identity is **1.1.0-2**. All **295**
+  canonical shell files match that source byte-for-byte in both final rootfs;
+  actual live Quickshell runs `~/.local/share/omarchy/shell` in both VMs.
+- Pinned Omarchy v4.5.0: `ac2690cd7be4f47e4a255f5e2e78d904d436b068`.
+- Requested Strata v1.2 resolves to stable **v1.2.0**, signed source
+  `3305d04d10e21c8be286bcd9bff91d55644bbd13`. Established pinned Ed25519 manifest
+  verification passed unchanged; amd64 archive 21663352 bytes,
+  SHA256 `1cb68428d6079473862523f0ff35e48ff092c7ed21cd72b536356f6c51df46e3`.
+  Actual `strata --version` in both live VMs: **strata 1.2.0**.
+- Monotonic rebuilt packages: **omaxian-session 1.1.0-2**, **omaxian-base 0.1.9**,
+  **omaxian-strata 1.2.0-1**, full-only wrapper **omaxian-voxtype 1.1.1-3**.
+  Existing branding 0.2.5, calamares-settings 0.2.14, firstboot 0.2.6,
+  fonts-nerd 3.5.1-1 and ydotool 1.0.4-1 retained.
+- Community executables/home payload reused from previous signed session package
+  (requested shell source is unchanged), not freshly compiled. All four default
+  apps remain executable with no missing ldd dependencies: disktree, Monologue,
+  Meeting Recorder, Signed. Community plugins remain opt-in.
+
+### Fresh Devuan reconstruction and updates
+Both rootfs were reconstructed from authenticated current Devuan excalibur,
+updates/security/backports indexes, rather than reusing stale package caches.
+Both received a supported `dist-upgrade`; the full copy refreshes all indexes
+again before its upgrade. **1955 packages** in each final rootfs. Before/after
+upgrade snapshots are each 1955 packages with **0 version changes**: the fresh
+bootstrap/desktop had already selected the current candidates. The round-15
+rootfs/package baseline did not survive migration, so no round15→16 package
+count or version delta is fabricated.
+
+Final versions: kernel **7.2.12-1~bpo13+1** (booted **7.2.12+deb13-amd64**),
+sysvinit-core **3.14-4devuan1**, eudev **3.2.14-4**, PipeWire **1.6.9-2~bpo13+1**,
+Quickshell **0.3.0-1~bpo13+1**, WirePlumber **0.5.12-1~bpo13+1**. Both dpkg audits
+are empty. Sysvinit preserved; no systemd migration.
+
+The supported explicit box HTTPS proxy repaired APT transport with TLS and apt
+signature verification intact. Prefetched packages were checked against exact
+size/SHA256 from authenticated APT indexes; official Debian CDN supplied identical
+Devuan DEBIAN/DEBIAN-SECURITY pool objects. Finalization now also removes bootstrap
+`99mmdebstrap` so the box-only proxy is **absent from both final images**. First
+artifacts were retained in `build/round16/pre-proxy-fix/`; the table below lists
+only the corrected final builds.
+
+### Final artifacts
+| Flavor | Path (under `/workspace/omaxian-os/`) | Bytes | SHA256 |
+|---|---|---:|---|
+| base | `out/omaxian-base-0.1-trans-siberian-shaman-amd64.iso` | 3057502208 | `66e87240f3452107e83e200cec8143fb9f884f2c348ff9c364fa6a99cab5d108` |
+| full | `out/omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | 8956463104 | `ea82614f2149d128682b1716e9b3c0051b8e6547a77a46a7172e8939d6a0fa8a` |
+
+Matching `.sha256` sidecars exist; full artifact re-read with `sha256sum -c` passed
+for both. Both El Torito catalogs contain BIOS/UEFI entries.
+
+The full offline pool contains **402 debs / 895 MiB**, simulated offline dependency
+resolution passed (**312 packages to install**); all **9 Flatpaks** are deployed.
+Ten AppImages plus OpenRA payload bundled in full; OnlyOffice payload in both.
+
+### Signed local apt
+Local repository rebuilt with new session/base/Strata packages and established
+signing subkey `5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75`.
+`gpgv` reports Good signature. An isolated `apt-get update` against `file:`
+repo-local passed with **zero W/E lines**. Previous local repo retained under
+`build/round16/repo-local-before/`. No signing material moved and nothing published.
+
+### Regression evidence and limitations
+Eight hermetic test scripts passed: firstboot-offline, live-installer-hint,
+locale-formats, omaxian-optional, optional-appimages, optional-flatpaks,
+xfpm-power-button and ydotool. Final base/full UEFI live sessions reached the
+shell and automatically opened Calamares. Final base BIOS live boot also passed.
+Actual live checks confirmed Strata, package versions, shell process, all four
+community executable/ldd checks, input group, `/dev/uinput`, running ydotoold and
+absence of build proxy in both.
+
+Detailed build logs, before/after package TSVs, test fixtures and serial results
+persist under `build/round16/`; final ISO logs are `iso-base-final.log` and
+`iso-full-final.log`. Package snapshots also in `out/omaxian-*.packages`.
+The first slow TCG install attempt was OOM-killed while multiple guests were
+running; it is **not** counted as a successful install. Final install tests use
+root-only KVM, final corrected ISOs, disposable 40-GiB disks, no network adapters,
+and a test-only live-overlay erase default (not an ISO modification).
+
+### Final installation results (2026-11-08, 22:12–22:16 CET)
+
+| Test on corrected final ISO | Base | Full |
+|---|---|---|
+| UEFI live desktop + installer autostart | PASS | PASS |
+| BIOS live desktop + installer autostart | PASS | PASS |
+| Fully offline UEFI erase/install, 40-GiB disposable disk | PASS | PASS |
+| Installed disk boot with live ISO detached | PASS | PASS |
+| Omaxian session 1.1.0-2 loaded / Strata reports 1.2.0 | PASS | PASS |
+| All four community executables / ldd dependencies | PASS | PASS |
+| disktree --help / signed help | PASS | PASS |
+| Eight XDG user directories | PASS | PASS |
+| Input membership, user-writable /dev/uinput, running ydotoold | PASS | PASS |
+| OnlyOffice AppImage in user's ~/AppImages | PASS | PASS |
+| Calamares removed and no installer running on installed desktop | PASS | PASS |
+| No build proxy or disabled apt/TLS verification | PASS | PASS |
+| Community plugins opt-in (only .gitkeep) | PASS | PASS |
+
+Both installations used default optional picks. Full installed its optional apt
+packages from the bundled pool without a network adapter; base completed offline
+with the established first-online-boot pending behavior. User login PATH lookup
+confirmed the four community commands on both installed systems. Installed serial transcripts are `build/round16/installed-{base,full}.serial.log`;
+representative clean excerpts are retained in `docs/evidence/round16/`.
+
+**Limits:** no real hardware, Secure Boot, BIOS-mode installation, IME/non-US
+input, live/installed network connectivity, audio/microphone/capture/dictation,
+OnlyOffice GUI editing, Flatpak GUI workflow or four community-app GUI workflows
+were exercised. Community apps were checked for executability/dependencies and
+CLI help where appropriate, not end-to-end GUI functionality. Virtual keyboard
+input used the US layout; XDG/input/ydotool checks are functional/configuration
+smoke tests, not hardware certification. The test-only erase-default overlay and
+read-only test fixture were never incorporated into the ISOs.
+
+**Round 16 result: local build and tested regressions PASS**, with the above
+explicit limits. Final README/report/code changes are committed locally only;
+publishing requires separate approval.

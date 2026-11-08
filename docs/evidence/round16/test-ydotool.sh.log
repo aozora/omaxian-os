@@ -1,0 +1,17 @@
+ok   udev rule
+ok   uinput in modules-load.d
+ok   installer adds users to input
+ok   live user in input
+ok   ~/.local/bin/ydotoold -> /usr/bin/ydotoold
+ok   i3 autostart line (exact)
+ok   deleted fragment not re-created
+ok   waits for the i3 config.d (home seeding)
+ok   deb: ./usr/bin/ydotool
+ok   deb: ./usr/bin/ydotoold
+ok   deb: ./usr/lib/udev/rules.d/60-omaxian-uinput.rules
+ok   deb: ./etc/modules-load.d/omaxian-uinput.conf
+ok   deb: ./etc/X11/Xsession.d/36omaxian-ydotool
+ok   deb: no systemd unit
+ok   deb: conflicts/replaces Debian ydotool
+ok   ydotoold --version v1.0.4
+--- 16 passed, 0 failed

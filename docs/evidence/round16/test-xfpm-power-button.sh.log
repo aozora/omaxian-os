@@ -1,0 +1,10 @@
+ok   helper executable
+ok   Xsession.d/36omaxian-xfpm calls it
+ok   fresh home: created, value 4
+ok   existing file: added, other props kept
+ok   user value 1 kept
+ok   idempotent
+ok   malformed file untouched, exit 0
+ok   root: no-op
+ok   37omaxian-live: value 4
+ok   xfpm conffile not diverted/shipped

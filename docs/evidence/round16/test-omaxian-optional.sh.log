@@ -1,0 +1,17 @@
+ok   list: 7 groups (incl. VoxType) and the AppImages with status
+ok   install containers: 6 apt runs + Podman Desktop; podman recorded for firstboot
+ok   status after install: installed
+ok   install chat-discord without an installer record: Flathub, no record created (would unpick the others)
+ok   install chat-telegram: Flathub + recorded in optional-flatpaks.list
+ok   install voice-voxtype: pinned upstream .deb + omaxian-voxtype
+ok   VoxType sha256 mismatch: refused
+ok   unknown id rejected
+ok   install office: payload copy into ~/AppImages, menu entry from its .desktop + icon, no download
+ok   install extra: picked + only that AppImage downloaded
+ok   fetch: OnlyOffice (class base, bundled) skipped, bundled rows still fetched
+ok   firstrun without Gear Lever: OnlyOffice menu entry, still pending
+ok   firstrun with Gear Lever: integrated, plain entry removed, done
+ok   build wiring: class base, s_payload, group lists + voxtype pin in omaxian-firstboot, menu entry
+ok   OnlyOffice is not offered as an installer checkbox
+ok   user-setup: xdg-user-dirs-update runs on an already seeded home
+omaxian-optional/onlyoffice/xdg: 16 passed, 0 failed

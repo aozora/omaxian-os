@@ -1,0 +1,26 @@
+ok   OpenSpot not in the manifest
+ok   10 bundled AppImages (3 OpenRA; OnlyOffice class base = in both ISOs)
+ok   6 optional AppImages
+ok   pinned (url) optional rows carry a sha256
+ok   every optional row has an upstream source and a label
+ok   netinstall: 'Extra apps (downloaded after install)', 6 unselected subgroups, each the marker omaxian-pick:appimage:<id>
+ok   netinstall.conf parses as YAML (12 groups on the full ISO; Apps (AppImages) + Discord/Packet/Gear Lever ticked)
+ok   build wiring: base (calamares-settings) and full netinstall.conf
+ok   omaxian-optional-appimage records each once
+ok   settings.conf: omaxianpicks runs right before packages, omaxianoptional right after
+ok   omaxianpicks: cursor+rustdesk+shotcut recorded once, markers stripped (emptied op dropped), malformed ignored; omaxianoptional: packages=krita
+ok   fetch: picked + sha256 OK -> cached
+ok   fetch: sha256 mismatch rejected, rc=1 (retried)
+ok   fetch: unpicked optional row skipped
+ok   fetch: payload-only row reported
+ok   full build copies only bundled manifest rows from payload/appimages
+ok   user firstrun honours the pick
+ok   pick rows: elecwhat localsend marktext obsidian
+ok   fetch pick: no installer record -> all fetched
+ok   fetch pick: record without pa -> pa skipped, pb fetched
+ok   firstrun pick: unpicked pa not copied, pb copied
+ok   firstrun: Gear Lever not picked -> plain menu entry, run done
+ok   firstrun: Gear Lever picked but not installed yet -> stays pending
+ok   firstrun pick: no installer record -> both copied
+ok   full_offline_complete ignores unpicked pick rows
+25 passed, 0 failed

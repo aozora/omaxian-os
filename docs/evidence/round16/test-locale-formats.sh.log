@@ -1,0 +1,20 @@
+ok   job: auto formats 'en' (English US, Europe/Rome) -> en_US
+ok   job: auto formats 'it' (Italian, America/New_York) -> it_IT
+ok   job: explicit it_IT with English kept
+ok   job: explicit en_GB kept
+ok   job: empty LC -> LANG
+ok   job: bare LANG resolved to a full locale
+ok   job: no localeConf -> LANG en_US
+ok   post: bare 'en' -> en_US
+ok   post: explicit it_IT with English kept
+ok   post: explicit en_GB kept
+ok   post: it_IT unchanged
+ok   postinst generates bare tags (206 languages)
+ok   postrm removes the diversion
+ok   calamares-port: stock SUPPORTED: en_US + IT -> it_IT (the bug)
+ok   calamares-port: Omaxian SUPPORTED: en_US + IT -> en
+ok   calamares-port: Omaxian SUPPORTED: LANG 'en' + IT -> en_US.UTF-8 / en
+ok   calamares-port: Omaxian SUPPORTED: it_IT + US -> it
+ok   calamares-port: Omaxian SUPPORTED: de_DE + IT -> de
+ok   exec: locale < omaxianlocale < localecfg
+ok   calamares-post safety net

@@ -1,0 +1,12 @@
+ok   telegram-desktop not in the apt groups
+ok   Telegram group: no apt packages, Flatpak org.telegram.desktop, preselected
+ok   24 optional apt packages
+ok   netinstall: Telegram = marker omaxian-pick:flatpak:org.telegram.desktop, no post-install
+ok   netinstall: 9 groups (base)
+ok   optional-flatpaks.list: Telegram, Discord, Packet, Gear Lever
+ok   shipped by omaxian-firstboot, preinstalled by the full build
+ok   omaxian-optional-flatpak records once
+ok   helper: usage error without args
+ok   omaxianpicks+omaxianoptional, Telegram picked: marker stripped, packages=krita, flatpaks=org.telegram.desktop
+ok   omaxianpicks+omaxianoptional, Telegram not picked: empty flatpak record exists
+11 passed, 0 failed

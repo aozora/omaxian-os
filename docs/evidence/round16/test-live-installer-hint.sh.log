@@ -1,0 +1,16 @@
+ok   stock calamares.desktop hidden for the live user
+ok   i3 Super+Shift+I
+ok   no ~/Desktop shortcut (i3 draws no icons)
+ok   Omaxian Menu item (new extension file)
+ok   menu item merged into an existing extension file
+ok   omaxian-install keeps pkexec's parent alive
+ok   omaxian-install command line
+ok   omaxian-install defaults DISPLAY/XAUTHORITY
+ok   omaxian-install: single instance
+ok   autostart wired in the live hook
+ok   one-time notification with Install action
+ok   hook gated on boot=live
+ok   calamares-post removes the hook
+ok   calamares-post removes the polkit rule
+ok   polkit rule: installer yes; other programs, non-sudo, non-live no
+ok   "install" -> omaxian-install gdebi
