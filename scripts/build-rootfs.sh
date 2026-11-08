@@ -62,9 +62,13 @@ serve_repo() { # local Omaxian repo over http, reachable from inside the chroot
 }
 
 s_bootstrap() {
+	local proxy_opts=()
+	if [ -n "${OMAXIAN_BUILD_HTTPS_PROXY:-}" ]; then
+		proxy_opts+=(--aptopt="Acquire::https::Proxy \"$OMAXIAN_BUILD_HTTPS_PROXY\"")
+	fi
 	rm_rootfs "$R"; mkdir -p "$BUILDDIR/keyring"
 	cp "$TOPDIR/config/apt/keys/devuan-archive-keyring.pgp" "$BUILDDIR/keyring/devuan-archive-keyring.gpg"
-	mmdebstrap --mode=root --variant=minbase --arch="$ARCH" \
+	mmdebstrap --mode=root --variant=minbase --arch="$ARCH" "${proxy_opts[@]}" \
 		--keyring="$BUILDDIR/keyring" \
 		--include=devuan-keyring,ca-certificates,sysvinit-core,eudev,locales,debconf-utils,apt-utils \
 		--components="$(echo $DEVUAN_COMPONENTS | tr ' ' ,)" \
@@ -92,6 +96,9 @@ deb [signed-by=/usr/share/keyrings/omaxian-archive-keyring.pgp] http://127.0.0.1
 EOS
 	printf 'Package: *\nPin: release o=apt.omaxian.org\nPin-Priority: 700\n' > "$R/etc/apt/preferences.d/41-omaxian-build.pref"
 	echo 'Acquire::https::Pipeline-Depth "0";' > "$R/etc/apt/apt.conf.d/91omaxian-build"
+	if [ -n "${OMAXIAN_BUILD_HTTPS_PROXY:-}" ]; then
+		printf 'Acquire::https::Proxy "%s";\n' "$OMAXIAN_BUILD_HTTPS_PROXY" >> "$R/etc/apt/apt.conf.d/91omaxian-build"
+	fi
 	# build only: never pull the big Noto extra packs (not even via Recommends)
 	printf 'Package: fonts-noto-extra fonts-noto-ui-extra fonts-noto-cjk-extra fonts-noto\nPin: release *\nPin-Priority: -1\n' \
 		> "$R/etc/apt/preferences.d/42-omaxian-build-nofonts.pref"
