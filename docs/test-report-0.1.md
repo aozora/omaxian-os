@@ -954,3 +954,38 @@ read-only test fixture were never incorporated into the ISOs.
 **Round 16 result: local build and tested regressions PASS**, with the above
 explicit limits. Final README/report/code changes are committed locally only;
 publishing requires separate approval.
+
+## Publish round 16 (2026-11-09, 06:25–06:31 CET)
+
+Approved by the owner (widget t70u: upload, publish and push). Same method as
+round 15 (rclone R2 S3, 64M chunks, concurrency 4; size checked after each
+upload; no `--ignore-times`). No rebuild. Disk-constrained verification streamed
+remote ISO bytes to `sha256sum` without storing re-downloads.
+
+- **GitHub:** `aozora/omaxian-os` branch `omaxian-os-build` pushed to
+  `4adbeb3ec5c512a389063e2d5681b7972e7fae5c` (round-16 build through final
+  local commit). Bundle → tatodx `/home/marcello/` → ff-only merge → push as
+  `aozora`. Temp import branch and bundle removed after push.
+  https://github.com/aozora/omaxian-os/commit/4adbeb3ec5c512a389063e2d5681b7972e7fae5c
+- **repo-local check:** debs byte-identical to `out/debs` for session 1.1.0-2,
+  base 0.1.9, strata 1.2.0-1. InRelease/Release.gpg signed by subkey
+  `5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75`. Other packages unchanged:
+  branding 0.2.5, calamares-settings 0.2.14, firstboot 0.2.6, fonts-nerd
+  3.5.1-1, ydotool 1.0.4-1; voxtype not in repo.
+- **apt (s3://omaxian-apt):** pool synced then dists then keyring (same
+  Cache-Control as before). `rclone check --download`: 0 differences
+  (8 pool + 6 dists). Harmless R2 `501 NotImplemented` on first attempts;
+  retries succeeded. Superseded round-15 pool objects removed by sync because
+  they are absent from the new Packages.
+- **HTTPS (apt.omaxian.org):** InRelease/keyring/Packages identical to
+  repo-local; gpgv Good signature; Packages sha256 matches Release; all 8
+  Filename URLs HTTP 200 with expected Content-Length. Isolated
+  `apt-get update` rc=0 with 0 W/E; candidates base 0.1.9, session 1.1.0-2,
+  strata 1.2.0-1; voxtype absent.
+- **ISOs (s3://omaxian-iso/releases/0.1/ → https://download.omaxian.org/releases/0.1/):**
+  - base: 3057502208 bytes, sha256 `66e87240f3452107e83e200cec8143fb9f884f2c348ff9c364fa6a99cab5d108` ✔
+  - full: 8956463104 bytes, sha256 `ea82614f2149d128682b1716e9b3c0051b8e6547a77a46a7172e8939d6a0fa8a` ✔
+  - `.sha256` files identical to local; Content-Length matches; full streamed
+    HTTPS sha256 matches expected. Disk free remained 9.1 GiB (no ISO re-store).
+- No website PR.
+
