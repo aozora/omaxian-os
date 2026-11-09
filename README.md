@@ -72,21 +72,9 @@ resumes there. Useful environment variables: `BUILD_MIRROR` (local cache/proxy),
 `build-rootfs.sh` refuses an image that ended up with firefox, systemd,
 pulseaudio or the real Xorg server.
 
-## Publishing (Cloudflare R2)
+## Apt repository
 
-| What | Bucket | URL |
-|---|---|---|
-| apt repo | `omaxian-apt` | https://apt.omaxian.org |
-| ISOs | `omaxian-iso` | https://download.omaxian.org/releases/<ver>/ |
-
-```sh
-export R2_ACCESS_KEY_ID=... R2_SECRET_ACCESS_KEY=... R2_ENDPOINT=https://<account>.r2.cloudflarestorage.com
-DRY_RUN=1 scripts/publish-r2.sh apt    # default is dry-run
-DRY_RUN=0 scripts/publish-r2.sh iso
-```
-
-It refuses to publish a repo signed with the test key. The repo is live at
-https://apt.omaxian.org: since omaxian-base 0.1.7 images ship
+The repo is live at https://apt.omaxian.org: since omaxian-base 0.1.7 images ship
 `/etc/apt/sources.list.d/omaxian.sources` with `Enabled: yes` (upgrades from
 0.1.6 enable it too unless the file was customised; see the 0.1.7 changelog).
 During the rootfs build that file is dpkg-diverted out of `sources.list.d`, so
