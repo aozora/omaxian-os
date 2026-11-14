@@ -1,3 +1,12 @@
 #!/usr/bin/make -f
 %:
 	dh $@
+
+# sysvinit bootstraps for hardware daemons Debian only starts via systemd
+# (debian/omaxian-base.<name>.init); enabled with update-rc.d, not started
+# from the maintainer scripts (live build chroot, upgrades from a desktop).
+override_dh_installinit:
+	dh_installinit --name=omaxian-thermald --no-start
+	dh_installinit --name=omaxian-iio-sensor-proxy --no-start
+	dh_installinit --name=omaxian-switcheroo-control --no-start
+	dh_installinit --name=omaxian-bolt --no-start

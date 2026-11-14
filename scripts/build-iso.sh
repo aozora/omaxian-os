@@ -28,6 +28,12 @@ msg "grub (BIOS + UEFI) with Omaxian theme"
 cp -r "$R/usr/share/grub/themes/omaxian" "$IMG/boot/grub/themes-omaxian.tmp"
 mkdir -p "$IMG/boot/grub/themes"; mv "$IMG/boot/grub/themes-omaxian.tmp" "$IMG/boot/grub/themes/omaxian"
 cp /usr/share/grub/unicode.pf2 "$IMG/boot/grub/" 2>/dev/null || true
+# per-model kernel options from SMBIOS (omaxian-base >= 0.1.10), the same
+# block the installed system's grub.cfg gets from /etc/grub.d/05_omaxian_quirks
+Q="$R/usr/share/omaxian/grub/quirks.cfg"
+[ -f "$Q" ] || die "$Q missing (omaxian-base < 0.1.10 in the rootfs?)"
+cp "$Q" "$IMG/boot/grub/omaxian-quirks.cfg"
+QK='${omaxian_quirks}' # expanded by GRUB at boot, not here
 LABEL="Omaxian OS $OMAXIAN_VERSION ($OMAXIAN_CODENAME) $FLAVOR"
 ARGS="boot=live components username=$LIVE_USER hostname=$LIVE_HOSTNAME locales=$DEFAULT_LOCALE"
 cat > "$IMG/boot/grub/grub.cfg" <<EOG
@@ -36,6 +42,7 @@ set timeout=8
 insmod all_video
 insmod gfxterm
 insmod png
+source /boot/grub/omaxian-quirks.cfg
 if loadfont /boot/grub/themes/omaxian/omaxian-16.pf2; then
 	loadfont /boot/grub/themes/omaxian/omaxian-24.pf2
 	set gfxmode=1920x1080,1280x800,1024x768,auto
@@ -43,19 +50,19 @@ if loadfont /boot/grub/themes/omaxian/omaxian-16.pf2; then
 	set theme=/boot/grub/themes/omaxian/theme.txt
 fi
 menuentry "Try or install $LABEL" --class omaxian {
-	linux /live/vmlinuz $ARGS quiet splash
+	linux /live/vmlinuz $ARGS quiet splash $QK
 	initrd /live/initrd.img
 }
 menuentry "$LABEL - safe graphics" --class omaxian {
-	linux /live/vmlinuz $ARGS nomodeset
+	linux /live/vmlinuz $ARGS nomodeset $QK
 	initrd /live/initrd.img
 }
 menuentry "$LABEL - load to RAM" --class omaxian {
-	linux /live/vmlinuz $ARGS toram quiet splash
+	linux /live/vmlinuz $ARGS toram quiet splash $QK
 	initrd /live/initrd.img
 }
 menuentry "$LABEL - verbose boot (no splash)" --class omaxian {
-	linux /live/vmlinuz $ARGS console=tty0 console=ttyS0,115200
+	linux /live/vmlinuz $ARGS console=tty0 console=ttyS0,115200 $QK
 	initrd /live/initrd.img
 }
 if [ "\$grub_platform" = "efi" ]; then

@@ -34,6 +34,11 @@ if [ -f $POOL/Packages ]; then
 	apt-get update -o Dir::Etc::sourcelist=/etc/apt/sources.list.d/omaxian-optional-pool.list \
 		-o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0 >/dev/null 2>&1 || true
 fi
+# the packages module purges the live packages next and autoremoves their
+# dependencies: keep user-facing packages (fdisk, ...) manually installed.
+# The image already has these marks (build-rootfs.sh); this covers an image
+# built without them.
+/usr/libexec/omaxian/keep-manual >/dev/null 2>&1 || true
 # make sure the first-boot provisioning runs on the installed system
 rm -f /var/lib/omaxian/firstboot.done
 update-rc.d omaxian-firstboot defaults >/dev/null 2>&1 || true

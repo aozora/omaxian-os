@@ -1,0 +1,8 @@
+# Omaxian OS (omaxian-base): start ipp-usb for IPP-over-USB printers/scanners
+# (USB interface class 07/01/04) without systemd. Debian's 71-ipp-usb.rules
+# only asks systemd (SYSTEMD_WANTS=ipp-usb.service), which eudev ignores.
+# "udev" mode exits again after the last such device is unplugged; -bg puts
+# it in the background so udev is not blocked, and ipp-usb's own lock file
+# (/var/ipp-usb/lock) keeps a single instance. Coldplug at boot (udevadm
+# trigger) covers printers that are already connected.
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ENV{ID_USB_INTERFACES}=="*:070104:*", TEST=="/usr/sbin/ipp-usb", RUN+="/usr/sbin/ipp-usb udev -bg"

@@ -19,3 +19,17 @@ Pin-Priority: 600
 Package: mesa-* libgl1-mesa-dri libglx-mesa0 libegl-mesa0 libgbm1 libgbm-dev libosmesa6 libxatracker2 libd3dadapter9-mesa libdrm* libwayland-* libgallium*
 Pin: release n=excalibur-backports
 Pin-Priority: 600
+
+# Firmware for new hardware (AMD/Intel GPUs, Intel/Realtek/MediaTek Wi-Fi and
+# Bluetooth, Intel SOF/Cirrus laptop audio, Intel ISH sensors): the binary
+# packages of the firmware-nonfree source, by name, from backports. All of
+# them, so they stay on one upstream drop: firmware-linux-nonfree depends on
+# firmware-misc-nonfree and firmware-amd-graphics with "=" versions. Only
+# installed (or explicitly requested) ones are affected; nothing else in
+# backports is pulled in. firmware-qcom-media (another drop, ARM SoCs) and
+# firmware-nvidia-gsp (another source) are left out; firmware-sof-signed and
+# firmware-linux-free have no backports build. Idea from LCOS
+# (lcos-live config/archives/lcos-amd-backports.pref.chroot).
+Package: firmware-linux firmware-linux-nonfree firmware-misc-nonfree firmware-amd-graphics firmware-nvidia-graphics firmware-intel-graphics firmware-intel-misc firmware-intel-sound firmware-iwlwifi firmware-realtek firmware-mediatek firmware-atheros firmware-brcm80211 firmware-cirrus firmware-libertas firmware-ti-connectivity firmware-ipw2x00 firmware-samsung firmware-siano firmware-ivtv firmware-bnx2 firmware-bnx2x firmware-cavium firmware-myricom firmware-netronome firmware-netxen firmware-qlogic firmware-marvell-prestera firmware-qcom-soc
+Pin: release n=excalibur-backports
+Pin-Priority: 600

@@ -26,6 +26,27 @@ session (live-boot + live-config-sysvinit, user `omaxian`) and install with
 Calamares (branding `omaxian`), which removes the live packages and installs
 grub-pc or grub-efi-amd64 to match the firmware.
 
+### Hardware support (no systemd)
+
+Both ISOs carry the laptop/VM support packages in `config/package-lists/00-base.list`
+(chrony, thermald, iio-sensor-proxy, switcheroo-control, bolt, ipp-usb,
+sane-airscan, intel-media-va-driver, open-vm-tools, cifs-utils, Intel/Cirrus/SOF
+firmware, alsa-ucm-conf). Debian starts several of them only from systemd units,
+so `omaxian-base` adds sysvinit scripts `omaxian-thermald` (Intel CPUs, not in
+VMs), `omaxian-iio-sensor-proxy`, `omaxian-switcheroo-control` (2+ GPUs) and
+`omaxian-bolt` (Thunderbolt present), each a no-op without the hardware, plus a
+udev rule that runs `ipp-usb udev -bg` for IPP-over-USB printers. The
+firmware-nonfree packages come from excalibur-backports, pinned by name
+(`10-omaxian-backports.pref`). Per-model kernel options are picked at boot from
+SMBIOS by `/usr/share/omaxian/grub/quirks.cfg` (live and installed GRUB,
+`${omaxian_quirks}`); `/usr/lib/sysctl.d/99-omaxian-hardening.conf` turns
+unprivileged BPF off (user namespaces stay on). The build fails when dpkg keeps
+removed-but-not-purged packages (bootlogd, x11-common are purged) or when the
+installer's removal of the live packages would autoremove anything outside the
+installer stack (`/usr/libexec/omaxian/keep-manual --check`). Several of these
+ideas come from LCOS (Lunduke Computer Operating System, also Devuan-based);
+the implementations are our own.
+
 ## Layout
 
 ```
@@ -204,6 +225,14 @@ sudo omaxian-optional-appimage select shotcut     # extra apps only
 sudo OMAXIAN_APPIMAGE_ONLY=shotcut omaxian-appimage-fetch /var/lib/omaxian/appimages
 OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/.local/state/omaxian/user-firstrun.log)
 ```
+
+### Pending for round 17 (not built yet)
+
+Committed, not built or published: hardware support packages and sysvinit
+scripts, firmware from backports, GRUB per-model quirks, BPF sysctl, dpkg
+"rc" purge check, keep-manual (omaxian-base 0.1.10, omaxian-calamares-settings
+0.2.15). The next build needs a fresh base rootfs (new packages are installed
+in the `base` stage).
 
 ### Round 16 status (2026-11-08)
 

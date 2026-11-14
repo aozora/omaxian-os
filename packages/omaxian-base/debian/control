@@ -14,4 +14,7 @@ Description: Omaxian OS base configuration
  Apt sources (Devuan Excalibur + backports, XLibre, apt.omaxian.org),
  apt pinning (backports kernel/PipeWire/Quickshell; systemd, PulseAudio,
  Xorg server, Firefox and default games blocked), keyrings, GRUB
- distributor name and /etc/omaxian-release.
+ distributor name, per-model kernel options from SMBIOS (GRUB), a kernel
+ hardening sysctl, sysvinit scripts for thermald, iio-sensor-proxy,
+ switcheroo-control and boltd, a udev rule for ipp-usb, and
+ /etc/omaxian-release.
