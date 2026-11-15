@@ -46,7 +46,7 @@ omarchy-meeting-recorder, omawrite, plain, signed.
 | bs | installed boot -> greeter -> login; check.sh: inode/directory=io.github.lgse.Strata.desktop, /etc/omaxian/file-manager=strata, xdg-mime -> Strata; Super+Shift+F opens Strata; DesktopEditors.conf `[General] titlebar=system` tester:tester 644 (dir 755); calamares removed; kept fdisk/parted/…; dpkg audit clean; GRUB quirks block in grub.cfg | PASS |
 | bf | base, UEFI install choosing Folio | PASS: inode/directory=folio.desktop, file-manager=folio, Super+Shift+F opens Folio |
 | fs | full, UEFI live + install (Strata, default app groups) + installed checks; 9 Flatpaks, 10 AppImages | PASS |
-| ff | full, UEFI install choosing Folio | see below |
+| ff | full, UEFI live + install choosing Folio + installed checks | PASS: folio.desktop default, Super+Shift+F opens Folio, Telegram present (attempt 1 discarded: test keystrokes landed in Calamares before the terminal opened) |
 | bb / fb | base / full, BIOS (SeaBIOS) live + live checks | PASS |
 
 Notes:
