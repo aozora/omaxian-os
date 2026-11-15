@@ -1,0 +1,27 @@
+diff -ruN a/src/fileops.cpp b/src/fileops.cpp
+--- a/src/fileops.cpp	2026-11-15 09:23:32.134950880 +0100
++++ b/src/fileops.cpp	2026-11-15 09:26:17.071161377 +0100
+@@ -1308,6 +1308,14 @@
+ // the same time, then goes in, as the freedesktop Trash spec has it. Other
+ // drives' trash folders, with their own rules, are GIO's to fill, and the
+ // item is looked for there once it's gone.
++// Omaxian OS: Qt 6.8 (Devuan Excalibur) has no QDir::mkpath(path, perms)
++// (added in Qt 6.10). Create the path, then set the leaf's mode.
++static bool omaxianMkpath(const QString &path, QFile::Permissions perms) {
++    if (!QDir().mkpath(path))
++        return false;
++    return QFile::setPermissions(path, perms);
++}
++
+ QString FileOps::trashOne(const QString &path, QString *error) {
+     const QFileInfo item(path);
+     const QString trash = homeTrash();
+@@ -1316,7 +1324,7 @@
+         return {};
+     }
+     const auto owner = QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner;
+-    if (QDir().mkpath(trash + "/files", owner) && QDir().mkpath(trash + "/info", owner)
++    if (omaxianMkpath(trash + "/files", owner) && omaxianMkpath(trash + "/info", owner)
+         && sameDrive(path, trash)) {
+         const QByteArray note = "[Trash Info]\nPath=" + QUrl::toPercentEncoding(item.absoluteFilePath(), "/")
+                                 + "\nDeletionDate=" + QDateTime::currentDateTime().toString("yyyy-MM-ddTHH:mm:ss").toUtf8() + "\n";

@@ -14,16 +14,43 @@ env -i PATH=/usr/bin:/bin HOME="$T/home" USER=omaxian XDG_RUNTIME_DIR="$T/run" L
 	bash "$SRC/scripts/install.sh" > "$T/install.log" 2>&1 || { cat "$T/install.log"; die "install.sh failed"; }
 env -i PATH=/usr/bin:/bin HOME="$T/home" USER=omaxian XDG_RUNTIME_DIR="$T/run" LANG=C.UTF-8 TERM=dumb \
 	bash "$SRC/scripts/deploy.sh" > "$T/deploy.log" 2>&1 || { cat "$T/deploy.log"; die "deploy.sh failed"; }
-# Default community-apps (disktree, monologue, omarchy-meeting-recorder, signed).
-# Built/fetched by scripts/build-community-apps.sh into build/cache/community-apps/home.
-# community-plugins are intentionally NOT seeded.
+# Default community-apps: ALL of Omaxian's community-apps/ (disktree, folio,
+# monologue, omacalc, omacut, omarchy-meeting-recorder, omawrite, plain,
+# signed in v1.1.3). Built/fetched by scripts/build-community-apps.sh into
+# build/cache/community-apps/home. community-plugins are intentionally NOT seeded.
 CA="$BUILDDIR/cache/community-apps/home"
-if [ ! -d "$CA/.local/bin" ]; then
+# Rebuild when the stage is missing or was built from another Omaxian commit /
+# builder / patch set (a stale 4-app stage from 0.1 must not be reused).
+CA_KEY=$(bash "$TOPDIR/scripts/build-community-apps.sh" --key "$SRC")
+if [ ! -d "$CA/.local/bin" ] || [ "$(cat "$BUILDDIR/cache/community-apps/stamp" 2>/dev/null)" != "$CA_KEY" ]; then
 	bash "$TOPDIR/scripts/build-community-apps.sh" "$SRC"
 fi
 [ -d "$CA/.local/bin" ] || die "community-apps stage missing ($CA); run scripts/build-community-apps.sh"
 msg "seeding community-apps into home template"
+INI="$TOPDIR/packages/omaxian-session/files/usr/libexec/omaxian/ini-set"
+MA=.config/mimeapps.list
+[ -f "$T/home/$MA" ] && cp -a "$T/home/$MA" "$T/mimeapps.shell"
 cp -a "$CA/." "$T/home/"
+# Both trees may carry ~/.config/mimeapps.list (deploy.sh / the apps' own
+# xdg-mime calls): merge them; the shell's entries win on a clash.
+if [ -f "$T/mimeapps.shell" ]; then
+	cp "$T/mimeapps.shell" "$T/home/$MA.new"
+	if [ -f "$CA/$MA" ]; then
+		awk '/^[ \t]*\[.*\][ \t]*$/ { s = $0; sub(/^[ \t]*\[/, "", s); sub(/\][ \t]*$/, "", s); next }
+			s != "" && /=/ { k = $0; sub(/[ \t]*=.*/, "", k); v = $0; sub(/^[^=]*=/, "", v); print s "\t" k "\t" v }' "$CA/$MA" |
+		while IFS="$(printf '\t')" read -r sec key val; do
+			"$INI" --if-missing "$T/home/$MA.new" "$sec" "$key" "$val"
+		done
+	fi
+	mv "$T/home/$MA.new" "$T/home/$MA"
+fi
+# The default file manager is NOT set in the template: Strata's
+# /etc/xdg/mimeapps.list is the system default and the installer's choice is
+# written per user (omaxian-default-file-manager). Folio/disktree register for
+# inode/directory, so drop any default an app's installer wrote.
+[ -f "$T/home/$MA" ] && sed -i '/^[[:space:]]*inode\/directory[[:space:]]*=/d' "$T/home/$MA"
+# OnlyOffice (base AppImage) uses the system title bar (also in /etc/skel).
+"$INI" "$T/home/.config/onlyoffice/DesktopEditors.conf" General titlebar system
 # hardcoded build paths would break on the target
 if grep -rIl --exclude-dir=themes "$T/home" "$T/home" 2>/dev/null | head -5 | grep -q .; then
 	grep -rIl --exclude-dir=themes "$T/home" "$T/home" | head; die "home template contains build paths"
