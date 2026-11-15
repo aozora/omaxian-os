@@ -61,3 +61,26 @@ Notes:
 - Real hardware (LCOS services actually starting, GRUB quirk matching a listed model).
 - Online paths (firstboot updates, Extra apps downloads), Secure Boot, BIOS *install*.
 - Interactive use of every community app beyond offscreen QML load / CLI checks.
+
+## Publish round 17 (2026-11-15, 13:30–13:40 CET)
+
+Approved by the owner (2026-11-15 13:28: upload, apt publish, push). Same method as round 16
+(rclone R2 S3, 64M chunks, concurrency 4, size check after upload; harmless R2 `501 NotImplemented`
+on first attempts, retries succeeded). Logs: /workspace/publog/r17.
+
+- **ISOs (s3://omaxian-iso/releases/0.2/ → https://download.omaxian.org/releases/0.2/)**, sha256
+  streamed over HTTPS (no local re-store), Content-Length = local size, `.sha256` sidecars and
+  `SHA256SUMS` identical to local:
+  - base: 3065659392 bytes, `45aeaef9ef2884c9932edd8407879786c2910b3ea5576f1a51dbd0e626c2b590` ✔
+  - full: 8967221248 bytes, `d0437b326d8f484cf4e0745b29d9608adcbdf0eec059d8f74d0551f5f366f5d8` ✔
+- **apt (s3://omaxian-apt ← build/r17/repo):** pool copied (add-only), then dists, then keyring
+  (same Cache-Control). Superseded 0.1 pool objects no longer in Packages removed, as in round 16:
+  base 0.1.9, branding 0.2.5, calamares-settings 0.2.14, firstboot 0.2.6, session 1.1.0-2.
+  fonts-nerd 3.5.1-1 / strata 1.2.0-1 / ydotool 1.0.4-1 are the unchanged 0.1 bytes.
+  `rclone check --download`: 0 differences (8 pool + 6 dists).
+- **HTTPS (apt.omaxian.org):** InRelease gpgv Good signature (subkey
+  `5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75`); Packages sha256 listed in InRelease; all 8 debs'
+  streamed sha256 match Packages: base 0.2.0, branding 0.3.0, calamares-settings 0.3.0,
+  firstboot 0.3.0, fonts-nerd 3.5.1-1, session 1.1.3-1, strata 1.2.0-1, ydotool 1.0.4-1. Keyring identical.
+- **GitHub:** bundle of `main` for branch `omaxian-os-build` (fast-forward from d177fab), pushed via the owner's computer.
+- No website change.

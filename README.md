@@ -244,15 +244,17 @@ sudo OMAXIAN_APPIMAGE_ONLY=shotcut omaxian-appimage-fetch /var/lib/omaxian/appim
 OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/.local/state/omaxian/user-firstrun.log)
 ```
 
-### 0.2 "Space Cat" (round 17, not built yet)
+### 0.2 "Space Cat" (round 17, published 2026-11-15)
 
-Committed, not built or published: Omaxian shell v1.1.3, all community apps,
-installer file-manager page, XFCE/Thunar removed, OnlyOffice titlebar=system,
-0.2 version/codename, plus the LCOS-derived hardware support (sysvinit
-scripts for thermald / iio-sensor-proxy / switcheroo-control / bolt, firmware
-from backports, GRUB per-model quirks, BPF sysctl, dpkg "rc" purge check,
-keep-manual). Needs a fresh base rootfs. Release dir:
-download.omaxian.org/releases/0.2/.
+Omaxian shell v1.1.3, all community apps, installer file-manager page
+(Strata default, or Folio), XFCE/Thunar removed, OnlyOffice titlebar=system,
+plus the LCOS-derived hardware support (sysvinit scripts for thermald /
+iio-sensor-proxy / switcheroo-control / bolt, firmware from backports, GRUB
+per-model quirks, BPF sysctl, dpkg "rc" purge check, keep-manual).
+ISOs on https://download.omaxian.org/releases/0.2/; signed apt on
+apt.omaxian.org (base 0.2.0, session 1.1.3-1, calamares-settings 0.3.0,
+firstboot 0.3.0, branding 0.3.0). Tests and publish details:
+`docs/test-report-0.2.md`.
 
 ### Round 16 status (2026-11-08)
 
