@@ -4,18 +4,16 @@ lightdm-gtk-greeter
 # Omaxian (i3 + Quickshell) – pulled in fully by omaxian-session Depends
 i3-wm
 quickshell
-# XFCE as alternative session (no task-xfce-desktop: it drags games/extras)
-xfce4
-xfce4-terminal
+# No XFCE desktop and no Thunar since 0.2 "Space Cat" (file managers: Strata,
+# default, and Folio). Only the XFCE pieces the Omaxian shell itself runs:
+# i3_autostart starts xfce4-power-manager and tunes it with xfconf-query
+# (also omarchy-idle-lock-apply). Its panel plugin is useless without
+# xfce4-panel: the trailing "-" keeps apt from pulling it in as a Recommends.
 xfce4-power-manager
-xfce4-screenshooter
-xfce4-taskmanager
-xfce4-whiskermenu-plugin
-xfce4-pulseaudio-plugin
-xfce4-notifyd
-thunar-archive-plugin
-mousepad
-ristretto
+xfconf
+xfce4-power-manager-plugins-
+# image viewer (Omaxian's choice; replaces ristretto)
+viewnior
 xdg-user-dirs-gtk
 xdg-desktop-portal-gtk
 gnome-keyring

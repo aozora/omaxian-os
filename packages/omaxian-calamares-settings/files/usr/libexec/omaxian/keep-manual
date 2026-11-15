@@ -25,7 +25,9 @@ PKGCONF=${OMAXIAN_PACKAGES_CONF:-/etc/calamares/modules/packages.conf}
 
 # Desktop metapackages whose direct dependencies stay even when the
 # metapackage itself is removed later (no "autoremove the whole desktop").
-METAS="xfce4 network-manager-gnome"
+# (0.2: no xfce4 any more; xfce4-power-manager and xfconf, which the Omaxian
+# shell runs, are installed explicitly and so are manual already.)
+METAS="network-manager-gnome"
 # Tools users expect that usually arrive only as dependencies.
 TOOLS="fdisk parted wget lsof psmisc pciutils usbutils x11-utils x11-xserver-utils
 xdg-utils python3 perl gpg bc bzip2 acl initramfs-tools uuid-runtime

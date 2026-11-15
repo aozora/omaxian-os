@@ -31,6 +31,11 @@ cleanup() { "$TOPDIR/scripts/umount-chroot.sh" "$R" >/dev/null 2>&1 || true
 	[ -n "${REPO_PID:-}" ] && kill "$REPO_PID" 2>/dev/null || true; }
 trap cleanup EXIT
 APT="apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
+# XFCE desktop + Thunar: must not be in the image (0.2 "Space Cat")
+XFCE_GONE="xfce4 xfce4-session xfce4-panel xfdesktop4 xfwm4 xfce4-settings xfce4-appfinder
+xfce4-terminal xfce4-notifyd xfce4-screenshooter xfce4-taskmanager xfce4-whiskermenu-plugin
+xfce4-pulseaudio-plugin xfce4-power-manager-plugins libxfce4panel-2.0-4 xfce4-helpers
+thunar thunar-data libthunarx-3-0 thunar-archive-plugin thunar-volman tumbler mousepad ristretto"
 REPO_PORT=${REPO_PORT:-8098}
 
 # omaxian-base (>= 0.1.7) ships /etc/apt/sources.list.d/omaxian.sources with
@@ -190,6 +195,10 @@ EOC
 	for p in firefox firefox-esr systemd systemd-sysv pulseaudio xserver-xorg-core; do
 		if CH dpkg-query -W -f '${Status}' "$p" 2>/dev/null | grep -q ' installed'; then die "$p got installed"; fi
 	done
+	# no XFCE desktop / Thunar since 0.2 (only xfce4-power-manager + xfconf,
+	# which the Omaxian shell runs). Fail loudly if a dependency drags one in.
+	local xf; xf=$( { CH dpkg-query -W -f '${Package} ${Status}\n' $XFCE_GONE 2>/dev/null || true; } | awk '/ installed$/{print $1}')
+	[ -z "$xf" ] || die "XFCE desktop / Thunar packages got installed: $xf"
 	# services (sysvinit)
 	for s in lightdm network-manager elogind dbus bluetooth cups libvirtd omaxian-firstboot \
 		chrony open-vm-tools omaxian-thermald omaxian-iio-sensor-proxy omaxian-switcheroo-control omaxian-bolt; do
