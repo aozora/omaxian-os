@@ -1,10 +1,22 @@
 #!/bin/sh
 # Seed $HOME from the Omaxian home template once (first login). Never
 # overwrites existing files. Re-run by hand with --force to re-seed missing files.
-T=/usr/share/omaxian/home-template
+T=${OMAXIAN_HOME_TEMPLATE:-/usr/share/omaxian/home-template}
 M="$HOME/.local/state/omaxian/home-seeded"
+INI=${OMAXIAN_INI_SET:-/usr/libexec/omaxian/ini-set}
 [ -d "$T" ] && [ -n "$HOME" ] && [ -d "$HOME" ] || exit 0
 [ "$(id -u)" -ne 0 ] || exit 0
 [ -e "$M" ] && [ "${1:-}" != --force ] && exit 0
 cp -a -n "$T/." "$HOME/" 2>/dev/null || cp -R -n "$T/." "$HOME/"
+# INI files the installer may already have written into this home (default
+# file manager, OnlyOffice title bar): cp -n kept those, so add the
+# template's keys that are missing instead of dropping them.
+for f in .config/mimeapps.list .config/onlyoffice/DesktopEditors.conf; do
+	[ -f "$T/$f" ] && [ -f "$HOME/$f" ] && [ -x "$INI" ] || continue
+	awk '/^[ \t]*\[.*\][ \t]*$/ { s = $0; sub(/^[ \t]*\[/, "", s); sub(/\][ \t]*$/, "", s); next }
+		s != "" && /=/ { k = $0; sub(/[ \t]*=.*/, "", k); v = $0; sub(/^[^=]*=/, "", v); print s "\t" k "\t" v }' "$T/$f" |
+	while IFS="$(printf '\t')" read -r sec key val; do
+		"$INI" --if-missing "$HOME/$f" "$sec" "$key" "$val" || true
+	done
+done
 mkdir -p "${M%/*}" && date > "$M"
