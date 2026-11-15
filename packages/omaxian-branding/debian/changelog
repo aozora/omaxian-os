@@ -1,3 +1,9 @@
+omaxian-branding (0.3.0) excalibur; urgency=medium
+
+  * 0.2 "Space Cat": GRUB theme, Plymouth and Calamares branding strings.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 15 Nov 2026 09:42:01 +0100
+
 omaxian-branding (0.2.5) excalibur; urgency=medium
 
   * Calamares slideshow: draw the wordmark in the top-left sky; at the bottom-left it overlapped the wallpaper's own wordmark.

@@ -1,3 +1,23 @@
+omaxian-session (1.1.3-1) excalibur; urgency=medium
+
+  * New upstream Omaxian shell v1.1.3 (main @ 2ffd66d8, "Merge pull request
+    #13"; its version file says v1.1.3; the git tag is not pushed yet, so
+    fetch-omaxian.sh pins and verifies the commit). Vendors Omarchy v4.5.0.
+  * The home template seeds ALL nine community-apps: disktree, folio,
+    monologue, omacalc, omacut, omarchy-meeting-recorder, omawrite, plain,
+    signed (Qt 6.8 compat patches for folio and monologue in
+    patches/community-apps/). community-plugins stay opt-in.
+  * Depends: runtime packages of the new apps; xfce4-power-manager and xfconf
+    (run by i3_autostart) move from Recommends to Depends; thunar dropped.
+  * omaxian-default-file-manager (strata|folio, --system, --user, --login)
+    and Xsession.d/26omaxian-defaults: apply the installer's file-manager
+    choice and OnlyOffice titlebar=system at login, never over a user choice.
+  * /etc/skel/.config/onlyoffice/DesktopEditors.conf ([General]
+    titlebar=system); omaxian-seed-home merges INI files the installer
+    already wrote instead of skipping them.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 15 Nov 2026 09:42:01 +0100
+
 omaxian-session (1.1.0-2) excalibur; urgency=medium
 
   * Rebuild requested Omaxian v1.1 for round 16; confirmed live tag unchanged.

@@ -1,21 +1,22 @@
 # Omaxian OS
 
-**Release 0.1 "Trans-Siberian Shaman"** (os-release `VERSION="0.1 (Trans-Siberian Shaman)"`,
-`VERSION_CODENAME=trans-siberian-shaman`; the Devuan base codename is in
+**Release 0.2 "Space Cat"** (os-release `VERSION="0.2 (Space Cat)"`,
+`VERSION_CODENAME=space-cat`; previous release 0.1 "Trans-Siberian Shaman"; the Devuan base codename is in
 `DEVUAN_CODENAME=excalibur` / `DEBIAN_CODENAME=trixie`, apt keeps using its own
 sources).
 
 A Devuan 6 "Excalibur" based live/installable distribution with the
-[Omaxian](https://github.com/aozora/omaxian) desktop (v1.1, Omarchy vendored)
-as the default session and XFCE as the alternative. No systemd: sysvinit + eudev
+[Omaxian](https://github.com/aozora/omaxian) desktop (v1.1.3, Omarchy v4.5.0
+vendored) as the only session (no XFCE desktop and no Thunar since 0.2; only
+xfce4-power-manager + xfconf, which the Omaxian shell runs). No systemd: sysvinit + eudev
 + elogind, XLibre X server, PipeWire per user, kernel 7.2 from excalibur-backports.
 
 Two images are made:
 
 | ISO | Contents |
 |---|---|
-| `omaxian-base-0.1-trans-siberian-shaman-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Flatpaks Telegram / Discord / Packet / Gear Lever, Containers, Virtualization, AppImages LocalSend / ElecWhat / Obsidian / MarkText, all ticked by default) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot (the picked ones), except ONLYOFFICE (AppImage bundled, in `~/AppImages` with a menu entry from the first login) |
-| `omaxian-full-0.1-trans-siberian-shaman-amd64.iso` | same plus an offline pool for the optional groups and a 7th, unselected group **Voice dictation (VoxType)** (full ISO only, docs/voxtype.md), Flatpaks preinstalled (Telegram, Discord, Packet, Gear Lever too; removed on first boot when unticked) and `payload/` (10 AppImages, OpenRA content) bundled for offline install |
+| `omaxian-base-0.2-space-cat-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Flatpaks Telegram / Discord / Packet / Gear Lever, Containers, Virtualization, AppImages LocalSend / ElecWhat / Obsidian / MarkText, all ticked by default) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot (the picked ones), except ONLYOFFICE (AppImage bundled, in `~/AppImages` with a menu entry from the first login) |
+| `omaxian-full-0.2-space-cat-amd64.iso` | same plus an offline pool for the optional groups and a 7th, unselected group **Voice dictation (VoxType)** (full ISO only, docs/voxtype.md), Flatpaks preinstalled (Telegram, Discord, Packet, Gear Lever too; removed on first boot when unticked) and `payload/` (10 AppImages, OpenRA content) bundled for offline install |
 
 The live image has no man pages/docs and only en/it translations (dpkg
 path-excludes, live only); installed systems get the normal dpkg policy back,
@@ -25,6 +26,23 @@ Both boot BIOS and UEFI (hybrid grub-mkrescue image, GRUB theme), run a live
 session (live-boot + live-config-sysvinit, user `omaxian`) and install with
 Calamares (branding `omaxian`), which removes the live packages and installs
 grub-pc or grub-efi-amd64 to match the firmware.
+
+### Apps and defaults (0.2)
+
+- **Community apps**: every app in Omaxian's `community-apps/` is in every
+  home on both ISOs (seeded from the omaxian-session home template, built by
+  `scripts/build-community-apps.sh`): disktree, Folio, Monologue, Omacalc,
+  Omacut, Meeting Recorder, Omawrite, Plain (the default editor), Signed.
+  Qt 6.8 (Excalibur) compat patches live in `patches/community-apps/<app>/`.
+  community-plugins stay opt-in.
+- **File manager**: the installer's *File manager* page picks Strata (default)
+  or Folio; both stay installed. The choice goes to `/etc/omaxian/file-manager`
+  and the user's `~/.config/mimeapps.list` (`inode/directory`), which the
+  shell's Super+Shift+F (`omarchy-launch-files` → `xdg-mime`) opens. Change it
+  later with `omaxian-default-file-manager strata|folio`.
+- **OnlyOffice**: every user (live, installer-created, later ones via
+  `/etc/skel`) gets `~/.config/onlyoffice/DesktopEditors.conf` with
+  `[General] titlebar=system`, merged into an existing file.
 
 ### Hardware support (no systemd)
 
@@ -55,9 +73,9 @@ config/            build.conf, apt sources/prefs/keys, package-lists/*.list,
 packages/          debian packaging of the Omaxian OS packages
   omaxian-base               apt sources/pins/keyrings, os defaults, groups
   omaxian-branding           Plymouth "omaxian", GRUB theme, LightDM gtk-greeter theme, wallpapers
-  omaxian-session            Omaxian v1.1 + Omarchy (vendored), session + home template
-                             (seeds community-apps: disktree, monologue,
-                             omarchy-meeting-recorder, signed)
+  omaxian-session            Omaxian v1.1.3 + Omarchy (vendored), session + home template
+                             (seeds all community-apps), default file manager /
+                             OnlyOffice per-user defaults
   omaxian-strata             Strata file manager (signed release), default for inode/directory
   omaxian-firstboot          firstboot init script: flathub + flatpaks, AppImage refresh;
                              per-user first run: OpenRA content, Gear Lever integration;
@@ -226,13 +244,15 @@ sudo OMAXIAN_APPIMAGE_ONLY=shotcut omaxian-appimage-fetch /var/lib/omaxian/appim
 OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/.local/state/omaxian/user-firstrun.log)
 ```
 
-### Pending for round 17 (not built yet)
+### 0.2 "Space Cat" (round 17, not built yet)
 
-Committed, not built or published: hardware support packages and sysvinit
-scripts, firmware from backports, GRUB per-model quirks, BPF sysctl, dpkg
-"rc" purge check, keep-manual (omaxian-base 0.1.10, omaxian-calamares-settings
-0.2.15). The next build needs a fresh base rootfs (new packages are installed
-in the `base` stage).
+Committed, not built or published: Omaxian shell v1.1.3, all community apps,
+installer file-manager page, XFCE/Thunar removed, OnlyOffice titlebar=system,
+0.2 version/codename, plus the LCOS-derived hardware support (sysvinit
+scripts for thermald / iio-sensor-proxy / switcheroo-control / bolt, firmware
+from backports, GRUB per-model quirks, BPF sysctl, dpkg "rc" purge check,
+keep-manual). Needs a fresh base rootfs. Release dir:
+download.omaxian.org/releases/0.2/.
 
 ### Round 16 status (2026-11-08)
 

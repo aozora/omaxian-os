@@ -1,3 +1,17 @@
+omaxian-calamares-settings (0.3.0) excalibur; urgency=medium
+
+  * New installer page "File manager" (packagechooser@filemanager): Strata
+    (default) or Folio. Both stay installed; the omaxianuserdefaults job
+    writes /etc/omaxian/file-manager and the new user's inode/directory
+    default (~/.config/mimeapps.list), which the shell's Super+Shift+F
+    (omarchy-launch-files -> xdg-mime) opens.
+  * omaxianuserdefaults also merges [General] titlebar=system into the
+    user's ~/.config/onlyoffice/DesktopEditors.conf (owned by the user,
+    other settings kept).
+  * keep-manual: xfce4 is gone, METAS is network-manager-gnome only.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 15 Nov 2026 09:42:01 +0100
+
 omaxian-calamares-settings (0.2.15) excalibur; urgency=medium
 
   * New /usr/libexec/omaxian/keep-manual: marks Priority required/important

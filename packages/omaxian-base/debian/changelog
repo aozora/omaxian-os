@@ -1,3 +1,12 @@
+omaxian-base (0.2.0) excalibur; urgency=medium
+
+  * Omaxian OS 0.2 "Space Cat": os-release / omaxian-release now say
+    VERSION="0.2 (Space Cat)", VERSION_CODENAME=space-cat (generated from
+    config/build.conf).
+  * Rebuilt on the latest Devuan Excalibur + backports.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 15 Nov 2026 09:42:01 +0100
+
 omaxian-base (0.1.10) excalibur; urgency=medium
 
   * Hardware services without systemd: init scripts omaxian-thermald (Intel
