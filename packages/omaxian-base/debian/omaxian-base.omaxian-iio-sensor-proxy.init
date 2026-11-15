@@ -1,0 +1,31 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          omaxian-iio-sensor-proxy
+# Required-Start:    $remote_fs $syslog dbus
+# Required-Stop:     $remote_fs $syslog dbus
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: IIO sensor proxy (accelerometer, light sensor)
+# Description:       Exposes accelerometers, ambient light and proximity sensors
+#                    on D-Bus (screen rotation, auto brightness).
+### END INIT INFO
+# Omaxian OS (omaxian-base): Debian starts /usr/libexec/iio-sensor-proxy from a systemd unit (udev
+# SYSTEMD_WANTS / WantedBy); there is no working sysvinit script.
+
+# used by the sourced hw-service.sh
+# shellcheck disable=SC2034
+NAME=omaxian-iio-sensor-proxy
+DESC="IIO sensor proxy (accelerometer, light sensor)"
+DAEMON=/usr/libexec/iio-sensor-proxy
+DAEMON_ARGS=""
+
+omx_hw_present() {
+	# an IIO device (the udev rule also matches hwmon light sensors and input
+	# accelerometers; those are rare on current hardware)
+	for d in /sys/bus/iio/devices/iio:device*; do [ -e "$d" ] && return 0; done
+	return 1
+}
+
+# shellcheck source=/dev/null
+. /usr/lib/omaxian/hw-service.sh
+omx_hw_service "$@"

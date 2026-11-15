@@ -1,3 +1,31 @@
+omaxian-base (0.2.0) excalibur; urgency=medium
+
+  * Omaxian OS 0.2 "Space Cat": os-release / omaxian-release now say
+    VERSION="0.2 (Space Cat)", VERSION_CODENAME=space-cat (generated from
+    config/build.conf).
+  * Rebuilt on the latest Devuan Excalibur + backports.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 15 Nov 2026 09:42:01 +0100
+
+omaxian-base (0.1.10) excalibur; urgency=medium
+
+  * Hardware services without systemd: init scripts omaxian-thermald (Intel
+    CPUs on real hardware; thermald's own script never starts it),
+    omaxian-iio-sensor-proxy (IIO sensors present), omaxian-switcheroo-control
+    (more than one GPU) and omaxian-bolt (Thunderbolt/USB4 present), sharing
+    /usr/lib/omaxian/hw-service.sh; udev rule 72-omaxian-ipp-usb.rules starts
+    "ipp-usb udev -bg" for IPP-over-USB printers.
+  * apt pinning: the firmware-nonfree packages (and nothing else new) by name
+    from excalibur-backports, one upstream firmware drop for all of them.
+  * GRUB: per-model kernel options chosen at boot from SMBIOS
+    (/usr/share/omaxian/grub/quirks.cfg via /etc/grub.d/05_omaxian_quirks,
+    ${omaxian_quirks} on every Linux entry). First entry: Dell XPS 13
+    DX13260 (SKU 0E53) gets xe.enable_panel_replay=0 (as LCOS 1.0.1).
+  * /usr/lib/sysctl.d/99-omaxian-hardening.conf:
+    kernel.unprivileged_bpf_disabled=1; user namespaces stay enabled.
+
+ -- Omaxian OS <dev@omaxian.org>  Sat, 14 Nov 2026 13:07:37 +0100
+
 omaxian-base (0.1.9) excalibur; urgency=medium
 
   * Round 16 refresh with Strata 1.2.0 and current Devuan packages.

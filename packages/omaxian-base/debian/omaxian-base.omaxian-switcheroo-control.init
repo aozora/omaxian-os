@@ -1,0 +1,34 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          omaxian-switcheroo-control
+# Required-Start:    $remote_fs $syslog dbus
+# Required-Stop:     $remote_fs $syslog dbus
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: switcheroo-control (dual GPU)
+# Description:       Tells desktops which GPU is discrete on hybrid graphics
+#                    laptops (switcherooctl, "launch on discrete GPU").
+### END INIT INFO
+# Omaxian OS (omaxian-base): Debian starts /usr/libexec/switcheroo-control from a systemd unit (udev
+# SYSTEMD_WANTS / WantedBy); there is no working sysvinit script.
+
+# used by the sourced hw-service.sh
+# shellcheck disable=SC2034
+NAME=omaxian-switcheroo-control
+DESC="switcheroo-control (dual GPU)"
+DAEMON=/usr/libexec/switcheroo-control
+DAEMON_ARGS=""
+
+omx_hw_present() {
+	# more than one GPU (DRM card nodes, not their connectors)
+	n=0
+	for c in /sys/class/drm/card[0-9]*; do
+		case ${c##*/} in *-*) continue ;; esac
+		[ -e "$c" ] && n=$((n + 1))
+	done
+	[ "$n" -gt 1 ]
+}
+
+# shellcheck source=/dev/null
+. /usr/lib/omaxian/hw-service.sh
+omx_hw_service "$@"

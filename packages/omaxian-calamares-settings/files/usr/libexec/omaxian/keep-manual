@@ -1,0 +1,102 @@
+#!/bin/sh
+# word splitting of the option variables and package lists is intended
+# shellcheck disable=SC2086
+# omaxian keep-manual: protect user-facing packages from the installer's
+# cleanup. Calamares' packages module purges the live-only packages (see
+# /etc/calamares/modules/packages.conf) and then runs "apt-get autoremove":
+# anything that only those packages pulled in is purged from the installed
+# system with them (round 16: fdisk, switcheroo-control, uuid-runtime and
+# media-player-info all went that way).
+#
+#   keep-manual          mark the packages below "manually installed"
+#   keep-manual --check  simulate the installer's removal + autoremove and
+#                        fail (exit 1) when it would purge anything outside
+#                        the installer-only stack (ALLOWED below)
+#
+# Runs inside the image/target root: build-rootfs.sh (s_configure), and
+# calamares-post before the packages module (a no-op on an image that already
+# has the marks). Extra apt / dpkg-query options: OMAXIAN_APT_OPTS, OMAXIAN_DPKG_OPTS
+# (tests against a copied dpkg status only).
+# Idea from LCOS (lcos-live 0116-lcos-mark-manual); own implementation.
+set -eu
+APT_OPTS=${OMAXIAN_APT_OPTS:-}
+APT_OPTS_DPKG=${OMAXIAN_DPKG_OPTS:-}
+PKGCONF=${OMAXIAN_PACKAGES_CONF:-/etc/calamares/modules/packages.conf}
+
+# Desktop metapackages whose direct dependencies stay even when the
+# metapackage itself is removed later (no "autoremove the whole desktop").
+# (0.2: no xfce4 any more; xfce4-power-manager and xfconf, which the Omaxian
+# shell runs, are installed explicitly and so are manual already.)
+METAS="network-manager-gnome"
+# Tools users expect that usually arrive only as dependencies.
+TOOLS="fdisk parted wget lsof psmisc pciutils usbutils x11-utils x11-xserver-utils
+xdg-utils python3 perl gpg bc bzip2 acl initramfs-tools uuid-runtime
+media-player-info switcheroo-control"
+# What the installer may take with it: live-boot/config, Calamares, its
+# partitioner (kpmcore), the KF6/Kirigami/Qt6 libraries only it uses, and
+# its helpers. Extended regexp, matched against whole package names.
+ALLOWED='live-.*|calamares.*|omaxian-calamares-settings|libkpmcore[0-9]+|libkf6.*|kf6-.*|kio6|kded6|kwallet6|kactivitymanagerd|libkirigami.*|qml6-module-org-kde-.*|libplasmaactivities[0-9]+|plasma-activities-bin|libqca-qt6.*|libqt6.*|qt6-.*|qml6-module-qt.*|libpolkit-qt6.*|systemsettings|libyaml-cpp[0-9.]+|squashfs-tools|user-setup|libxcb-res0'
+
+
+# shellcheck disable=SC2086
+status() { dpkg-query $APT_OPTS_DPKG -W -f='${db:Status-Status}' "$1" 2>/dev/null || true; }
+
+live_pkgs() { # the "remove:" list of packages.conf
+	sed -n 's/^[[:space:]]*-[[:space:]]*\([a-z0-9][a-z0-9.+-]*\)[[:space:]]*$/\1/p' "$PKGCONF" | tr '\n' ' '
+}
+
+mark() {
+	set --
+	# 1. every installed Priority required/important package (what a
+	#    debootstrap/debian-installer system has marked manual anyway)
+	for p in $(dpkg-query $APT_OPTS_DPKG -W -f='${db:Status-Status} ${Priority} ${Package}\n' |
+		awk '$1 == "installed" && ($2 == "required" || $2 == "important") { print $3 }'); do
+		set -- "$@" "$p"
+	done
+	# 2. direct dependencies (first alternative) of the desktop metapackages
+	for m in $METAS; do
+		[ "$(status "$m")" = installed ] || { echo "keep-manual: $m not installed, skipped"; continue; }
+		for p in $(dpkg-query $APT_OPTS_DPKG -W -f='${Depends}\n' "$m" | tr ',' '\n' |
+			sed -e 's/|.*//' -e 's/(.*)//' -e 's/:any//' -e 's/[[:space:]]//g' | sed '/^$/d'); do
+			[ "$(status "$p")" = installed ] && set -- "$@" "$p"
+		done
+	done
+	# 3. the tools list (only what is installed)
+	for p in $TOOLS; do
+		[ "$(status "$p")" = installed ] && set -- "$@" "$p"
+	done
+	[ $# -gt 0 ] || { echo "keep-manual: nothing to mark" >&2; exit 1; }
+	# shellcheck disable=SC2086
+	apt-mark $APT_OPTS manual "$@" >/dev/null
+	echo "keep-manual: $(printf '%s\n' "$@" | sort -u | wc -l) packages marked manual"
+}
+
+check() {
+	live=$(live_pkgs)
+	[ -n "$live" ] || { echo "keep-manual: no remove list in $PKGCONF" >&2; exit 1; }
+	# the image itself must have nothing to autoremove
+	# shellcheck disable=SC2086
+	auto=$(LC_ALL=C apt-get $APT_OPTS -s autoremove | awk '$1 == "Remv" { print $2 }')
+	if [ -n "$auto" ]; then
+		echo "keep-manual: the image has autoremovable packages:" $auto >&2
+		exit 1
+	fi
+	# shellcheck disable=SC2086
+	out=$(LC_ALL=C apt-get $APT_OPTS -s --purge --auto-remove remove $live) || {
+		echo "$out" >&2; echo "keep-manual: removal simulation failed" >&2; exit 1; }
+	gone=$(echo "$out" | awk '$1 == "Purg" || $1 == "Remv" { print $2 }' | sort -u)
+	bad=$(echo "$gone" | grep -Ev "^($ALLOWED)\$" || true)
+	echo "keep-manual: installer removal purges $(echo "$gone" | sed '/^$/d' | wc -l) packages"
+	if [ -n "$bad" ]; then
+		echo "keep-manual: the installer would also purge (mark them manual here, or" >&2
+		echo "allow them in ALLOWED if they really are installer-only):" $bad >&2
+		exit 1
+	fi
+	echo "$gone" | grep -qx calamares || { echo "keep-manual: simulation did not remove calamares" >&2; exit 1; }
+}
+
+case "${1:-}" in
+	"") mark ;;
+	--check) check ;;
+	*) echo "usage: $0 [--check]" >&2; exit 2 ;;
+esac

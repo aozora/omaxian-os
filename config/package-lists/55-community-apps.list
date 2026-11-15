@@ -1,25 +1,47 @@
-# Runtime Depends of the four default community-apps (also in omaxian-session).
-# Seeded into every home via the omaxian-session home template; not optional.
-libvulkan1
-libx11-6
-libxcb1
-libxkbcommon0
-libxkbcommon-x11-0
-libwayland-client0
+# Runtime Depends of ALL default community-apps (union of each app's
+# omaxian.deps.json "apt"; also in omaxian-session Depends). Apps: disktree,
+# folio, monologue, omacalc, omacut, omarchy-meeting-recorder, omawrite, plain,
+# signed. Seeded into every home via the omaxian-session home template; not optional.
+ffmpeg
+ffmpegthumbnailer
+fonts-noto-core
+gvfs
+gvfs-backends
+libadwaita-1-0
+libarchive-tools
 libfontconfig1
 libfreetype6
-ffmpeg
+libgtk-4-1
+libnss3
+libpoppler-qt6-3t64
 libpulse0
+libqpdf30
 libqt6multimedia6
+libqt6printsupport6
+libvulkan1
+libwayland-client0
+libx11-6
+libxcb1
+libxkbcommon-x11-0
+libxkbcommon0
+poppler-utils
+pulseaudio-utils
+qml6-module-qt-labs-folderlistmodel
+qml6-module-qtcore
 qml6-module-qtmultimedia
+qml6-module-qtqml
+qml6-module-qtqml-workerscript
 qml6-module-qtquick
-qt6-qpa-plugins
+qml6-module-qtquick-controls
+qml6-module-qtquick-dialogs
+qml6-module-qtquick-effects
+qml6-module-qtquick-layouts
+qml6-module-qtquick-pdf
+qml6-module-qtquick-shapes
+qml6-module-qtquick-templates
 qt6-image-formats-plugins
+qt6-qpa-plugins
+udisks2
 xdg-desktop-portal
 xdg-desktop-portal-gtk
-libgtk-4-1
-libadwaita-1-0
-libpoppler-qt6-3t64
-libqpdf30
-libnss3
-fonts-noto-core
+xdg-terminal-exec

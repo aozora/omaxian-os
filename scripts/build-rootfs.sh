@@ -31,6 +31,11 @@ cleanup() { "$TOPDIR/scripts/umount-chroot.sh" "$R" >/dev/null 2>&1 || true
 	[ -n "${REPO_PID:-}" ] && kill "$REPO_PID" 2>/dev/null || true; }
 trap cleanup EXIT
 APT="apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
+# XFCE desktop + Thunar: must not be in the image (0.2 "Space Cat")
+XFCE_GONE="xfce4 xfce4-session xfce4-panel xfdesktop4 xfwm4 xfce4-settings xfce4-appfinder
+xfce4-terminal xfce4-notifyd xfce4-screenshooter xfce4-taskmanager xfce4-whiskermenu-plugin
+xfce4-pulseaudio-plugin xfce4-power-manager-plugins libxfce4panel-2.0-4 xfce4-helpers
+thunar thunar-data libthunarx-3-0 thunar-archive-plugin thunar-volman tumbler mousepad ristretto"
 REPO_PORT=${REPO_PORT:-8098}
 
 # omaxian-base (>= 0.1.7) ships /etc/apt/sources.list.d/omaxian.sources with
@@ -190,8 +195,13 @@ EOC
 	for p in firefox firefox-esr systemd systemd-sysv pulseaudio xserver-xorg-core; do
 		if CH dpkg-query -W -f '${Status}' "$p" 2>/dev/null | grep -q ' installed'; then die "$p got installed"; fi
 	done
+	# no XFCE desktop / Thunar since 0.2 (only xfce4-power-manager + xfconf,
+	# which the Omaxian shell runs). Fail loudly if a dependency drags one in.
+	local xf; xf=$( { CH dpkg-query -W -f '${Package} ${Status}\n' $XFCE_GONE 2>/dev/null || true; } | awk '/ installed$/{print $1}')
+	[ -z "$xf" ] || die "XFCE desktop / Thunar packages got installed: $xf"
 	# services (sysvinit)
-	for s in lightdm network-manager elogind dbus bluetooth cups libvirtd omaxian-firstboot; do
+	for s in lightdm network-manager elogind dbus bluetooth cups libvirtd omaxian-firstboot \
+		chrony open-vm-tools omaxian-thermald omaxian-iio-sensor-proxy omaxian-switcheroo-control omaxian-bolt; do
 		[ -e "$R/etc/init.d/$s" ] && CH update-rc.d "$s" defaults >/dev/null 2>&1 || true
 	done
 	# Boot without "startpar: service(s) returned failure: smartmontools plymouth":
@@ -264,6 +274,57 @@ s_payload() { # both ISOs: AppImages of manifest class "base" (OnlyOffice) +
 	msg "payload (base): $n AppImage(s) of class base ($(du -sh "$d/appimages" | cut -f1)), ${f##*/}"
 }
 
+# dpkg must only know installed packages: no "rc" (removed, config files
+# left) entries, nothing half-installed. bootlogd (Priority: required, so
+# mmdebstrap installs it) Conflicts: plymouth and stays behind as "rc" with
+# its init scripts and rcS.d links; x11-common is "rc" after xlibre-x11-common
+# took over /etc/init.d/x11-common. Calamares copies the squashfs, so every
+# installed system would carry them. Purge them all; a purge runs
+# "update-rc.d <name> remove", so re-link any init script a still-installed
+# package owns that lost its links that way (x11-common). Idea from LCOS
+# (lcos-live hooks/live/9800-lcos-purge-bootlogd); own implementation.
+dpkg_hygiene() {
+	local st rc linked f n
+	st=$(CH dpkg-query -W -f '${db:Status-Status}' bootlogd 2>/dev/null || true)
+	case "$st" in
+		""|not-installed|config-files) ;;
+		*) die "bootlogd is '$st' (plymouth should have removed it)";;
+	esac
+	rc=$(CH dpkg-query -W -f '${db:Status-Status} ${binary:Package}\n' | awk '$1 == "config-files" {print $2}')
+	if [ -n "$rc" ]; then
+		# init scripts with rc?.d links before the purge
+		linked=$(cd "$R/etc/init.d" && for f in *; do
+			[ -f "$f" ] && ls "$R"/etc/rc[S0-6].d/[SK][0-9][0-9]"$f" >/dev/null 2>&1 && echo "$f"; done; true)
+		msg "dpkg: purging removed-but-not-purged packages: $(echo "$rc" | tr '\n' ' ')"
+		# shellcheck disable=SC2086
+		CH dpkg --purge $rc
+		for f in $linked; do
+			[ -f "$R/etc/init.d/$f" ] || continue
+			ls "$R"/etc/rc[S0-6].d/[SK][0-9][0-9]"$f" >/dev/null 2>&1 && continue
+			CH dpkg-query -S "/etc/init.d/$f" >/dev/null 2>&1 || continue # nobody owns it any more
+			msg "dpkg: re-enabling $f (its links went with a purged package)"
+			CH update-rc.d "$f" defaults >/dev/null
+		done
+	fi
+	for f in bootlogd stop-bootlogd stop-bootlogd-single; do
+		[ ! -e "$R/etc/init.d/$f" ] || die "/etc/init.d/$f still there after purging bootlogd"
+		! ls "$R"/etc/rc[S0-6].d/[SK][0-9][0-9]"$f" >/dev/null 2>&1 || die "rc links of $f still there"
+	done
+	n=$(CH dpkg-query -W -f '${db:Status-Status} ${binary:Package}\n' | awk '$1 != "installed" && $1 != "not-installed"')
+	[ -z "$n" ] || die "dpkg entries that are not cleanly installed: $(echo "$n" | tr '\n' ' ')"
+	[ ! -e "$R/etc/init.d/x11-common" ] || [ -x "$R/etc/init.d/x11-common" ] || die "/etc/init.d/x11-common not executable"
+	msg "dpkg: only installed packages left"
+}
+
+# The installer removes the live packages and autoremoves their dependencies
+# (packages.conf): mark what must stay manual, then fail the build when the
+# simulated removal would still take anything outside the installer stack
+# (omaxian-calamares-settings: /usr/libexec/omaxian/keep-manual).
+keep_manual() {
+	CH /usr/libexec/omaxian/keep-manual
+	CH /usr/libexec/omaxian/keep-manual --check || die "the installer's package removal would purge needed packages (see above)"
+}
+
 s_finalize() {
 	# official sources for the shipped system
 	rm -f "$R/etc/apt/sources.list.d/omaxian-build.list" "$R/etc/apt/preferences.d/41-omaxian-build.pref" \
@@ -280,6 +341,8 @@ Signed-By: /usr/share/keyrings/devuan-archive-keyring.gpg
 EOS
 	[ -e "$R/usr/share/keyrings/devuan-archive-keyring.gpg" ] || sed -i '/^Signed-By/d' "$R/etc/apt/sources.list.d/devuan.sources"
 	unpark_omaxian_sources
+	dpkg_hygiene
+	keep_manual
 	rm -f "$R/usr/sbin/policy-rc.d" "$R/tmp/preseed.cfg"
 	CH apt-get clean
 	strip_excluded

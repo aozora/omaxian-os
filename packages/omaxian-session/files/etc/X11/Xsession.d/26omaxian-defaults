@@ -1,0 +1,8 @@
+# Omaxian OS: per-user defaults chosen in the installer, applied after the home
+# is seeded (25omaxian-home) and never over a choice the user made:
+# - default file manager (/etc/omaxian/file-manager: strata|folio)
+# - OnlyOffice uses the system title bar (DesktopEditors.conf titlebar=system)
+if [ "$(id -u)" -ne 0 ]; then
+	[ -x /usr/bin/omaxian-default-file-manager ] && /usr/bin/omaxian-default-file-manager --login || true
+	[ -x /usr/libexec/omaxian/onlyoffice-defaults ] && /usr/libexec/omaxian/onlyoffice-defaults || true
+fi

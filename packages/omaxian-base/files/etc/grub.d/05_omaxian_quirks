@@ -1,0 +1,9 @@
+#!/bin/sh
+# Omaxian OS (omaxian-base): put the per-model kernel options block
+# (/usr/share/omaxian/grub/quirks.cfg, sets ${omaxian_quirks} from SMBIOS)
+# into grub.cfg before the Linux entries (10_linux).
+set -e
+Q=/usr/share/omaxian/grub/quirks.cfg
+[ -r "$Q" ] || exit 0
+echo "### per-model kernel options ($Q) ###"
+cat "$Q"

@@ -1,0 +1,29 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          omaxian-bolt
+# Required-Start:    $remote_fs $syslog dbus
+# Required-Stop:     $remote_fs $syslog dbus
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Thunderbolt device manager (boltd)
+# Description:       Authorizes enrolled Thunderbolt/USB4 devices at boot
+#                    (D-Bus activation alone only starts it when a client asks).
+### END INIT INFO
+# Omaxian OS (omaxian-base): Debian starts /usr/libexec/boltd from a systemd unit (udev
+# SYSTEMD_WANTS / WantedBy); there is no working sysvinit script.
+
+# used by the sourced hw-service.sh
+# shellcheck disable=SC2034
+NAME=omaxian-bolt
+DESC="Thunderbolt device manager (boltd)"
+DAEMON=/usr/libexec/boltd
+DAEMON_ARGS=""
+
+omx_hw_present() {
+	for d in /sys/bus/thunderbolt/devices/*; do [ -e "$d" ] && return 0; done
+	return 1
+}
+
+# shellcheck source=/dev/null
+. /usr/lib/omaxian/hw-service.sh
+omx_hw_service "$@"

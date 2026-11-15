@@ -1,0 +1,30 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          omaxian-thermald
+# Required-Start:    $remote_fs $syslog dbus
+# Required-Stop:     $remote_fs $syslog dbus
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Intel thermal daemon (thermald)
+# Description:       Starts thermald on Intel CPUs on real hardware. The thermald
+#                    package's own init script never starts it (it tests an unset
+#                    variable), the excalibur build has none.
+### END INIT INFO
+# Omaxian OS (omaxian-base): Debian starts /usr/sbin/thermald from a systemd unit (udev
+# SYSTEMD_WANTS / WantedBy); there is no working sysvinit script.
+
+# used by the sourced hw-service.sh
+# shellcheck disable=SC2034
+NAME=omaxian-thermald
+DESC="Intel thermal daemon (thermald)"
+DAEMON=/usr/sbin/thermald
+DAEMON_ARGS="--no-daemon --dbus-enable"
+
+omx_hw_present() {
+	# Intel only, not in VMs (as the systemd unit: ConditionVirtualization=no)
+	grep -q "^vendor_id[[:space:]]*:[[:space:]]*GenuineIntel" /proc/cpuinfo 2>/dev/null && ! omx_in_vm
+}
+
+# shellcheck source=/dev/null
+. /usr/lib/omaxian/hw-service.sh
+omx_hw_service "$@"

@@ -1,3 +1,33 @@
+omaxian-calamares-settings (0.3.0) excalibur; urgency=medium
+
+  * New installer page "File manager" (packagechooser@filemanager): Strata
+    (default) or Folio. Both stay installed; the omaxianuserdefaults job
+    writes /etc/omaxian/file-manager and the new user's inode/directory
+    default (~/.config/mimeapps.list), which the shell's Super+Shift+F
+    (omarchy-launch-files -> xdg-mime) opens.
+  * omaxianuserdefaults also merges [General] titlebar=system into the
+    user's ~/.config/onlyoffice/DesktopEditors.conf (owned by the user,
+    other settings kept).
+  * keep-manual: xfce4 is gone, METAS is network-manager-gnome only.
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 15 Nov 2026 09:42:01 +0100
+
+omaxian-calamares-settings (0.2.15) excalibur; urgency=medium
+
+  * New /usr/libexec/omaxian/keep-manual: marks Priority required/important
+    packages, the direct dependencies of xfce4/network-manager-gnome and a
+    list of user tools manual, so the packages module's removal of the live
+    packages (and its autoremove) no longer purges fdisk, switcheroo-control,
+    uuid-runtime and media-player-info from installed systems;
+    "keep-manual --check" simulates that removal and fails when anything
+    outside the installer stack would go (run by build-rootfs.sh).
+    calamares-post runs keep-manual before the packages module.
+  * shellprocess-rc: enable chrony, open-vm-tools and omaxian-base's
+    omaxian-thermald, omaxian-iio-sensor-proxy, omaxian-switcheroo-control
+    and omaxian-bolt init scripts.
+
+ -- Omaxian OS <dev@omaxian.org>  Sat, 14 Nov 2026 13:09:44 +0100
+
 omaxian-calamares-settings (0.2.14) excalibur; urgency=medium
 
   * Applications page: Discord, Packet and Gear Lever Flatpak groups and the

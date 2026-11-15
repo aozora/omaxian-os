@@ -1,0 +1,47 @@
+#!/bin/sh
+# Set one key in an INI-style file (Qt/GLib/XDG mimeapps.list), keeping every
+# other line, section and comment as is.
+#   ini-set [--if-missing] FILE SECTION KEY VALUE
+# --if-missing: leave an existing KEY in SECTION untouched.
+# Creates FILE (and its directory) and SECTION when needed. Writes through a
+# temp file in the same directory, then renames (keeps the file's mode).
+set -eu
+ifmissing=0
+[ "${1:-}" = --if-missing ] && { ifmissing=1; shift; }
+[ $# -eq 4 ] || { echo "usage: ini-set [--if-missing] FILE SECTION KEY VALUE" >&2; exit 2; }
+f=$1 sec=$2 key=$3 val=$4
+mkdir -p "$(dirname "$f")"
+[ -e "$f" ] || : > "$f"
+tmp=$(mktemp "$f.XXXXXX")
+awk -v sec="$sec" -v key="$key" -v val="$val" -v ifm="$ifmissing" '
+# blank lines are held back so a new key lands right after the section body
+function blanks() { while (nb > 0) { print ""; nb-- } }
+function flush() { if (insec && !done) { print key "=" val; done = 1 } }
+{
+	line = $0
+	if (line ~ /^[ \t]*$/) { nb++; next }
+	if (line ~ /^[ \t]*\[.*\][ \t]*$/) {
+		flush(); blanks()
+		name = line; sub(/^[ \t]*\[/, "", name); sub(/\][ \t]*$/, "", name)
+		insec = (name == sec); if (insec) seen = 1
+		print line; next
+	}
+	blanks()
+	if (insec && !done) {
+		k = line; sub(/[ \t]*=.*/, "", k); sub(/^[ \t]*/, "", k)
+		if (line ~ /=/ && k == key) {
+			if (ifm == 1) print line; else print key "=" val
+			done = 1; next
+		}
+	}
+	print line
+}
+END {
+	flush()
+	if (!seen) { if (NR > 0) print ""; print "[" sec "]"; print key "=" val }
+	else blanks()
+}' "$f" > "$tmp"
+# keep owner/mode of an existing file
+chmod --reference="$f" "$tmp" 2>/dev/null || true
+chown --reference="$f" "$tmp" 2>/dev/null || true
+mv -f "$tmp" "$f"

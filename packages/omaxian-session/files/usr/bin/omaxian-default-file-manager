@@ -1,0 +1,75 @@
+#!/bin/sh
+# Omaxian OS: pick the default file manager (Strata or Folio). Both stay
+# installed; only the inode/directory handler changes. The Omaxian shell's
+# Super+Shift+F runs omarchy-launch-files, which honours $OMARCHY_FILE_MANAGER
+# first and otherwise opens `xdg-mime query default inode/directory`, so the
+# per-user ~/.config/mimeapps.list entry written here is what the shell uses.
+#
+#   omaxian-default-file-manager                  print the current default
+#   omaxian-default-file-manager strata|folio     set it for yourself
+#   omaxian-default-file-manager --system strata|folio
+#                         (root) system choice in /etc/omaxian/file-manager,
+#                         applied to each user at login when unset (installer)
+#   omaxian-default-file-manager --user NAME strata|folio
+#                         (root) set it in NAME's home, owned by NAME
+#   omaxian-default-file-manager --login          apply the system choice if
+#                         the user has no inode/directory default yet
+set -eu
+SYS=${OMAXIAN_FM_SYS:-/etc/omaxian/file-manager}
+INI=${OMAXIAN_INI_SET:-/usr/libexec/omaxian/ini-set}
+SEC="Default Applications"
+
+desktop_of() {
+	case "$1" in
+	strata) echo io.github.lgse.Strata.desktop ;;
+	folio) echo folio.desktop ;;
+	*) echo "omaxian-default-file-manager: unknown file manager '$1' (strata|folio)" >&2; return 1 ;;
+	esac
+}
+has_default() { # FILE
+	[ -f "$1" ] && awk -v s="$SEC" '
+		/^[ \t]*\[/ { ins = ($0 ~ "^[ \t]*\\[" s "\\]") ; next }
+		ins && /^[ \t]*inode\/directory[ \t]*=/ { f = 1 }
+		END { exit !f }' "$1"
+}
+set_in_home() { # HOME DESKTOP [OWNER]
+	h=$1 d=$2 o=${3:-}
+	cfg="$h/.config"
+	if [ -n "$o" ] && [ ! -d "$cfg" ]; then
+		install -d -m 0755 -o "$o" -g "$(id -gn "$o")" "$cfg"
+	fi
+	"$INI" "$cfg/mimeapps.list" "$SEC" inode/directory "$d"
+	if [ -n "$o" ]; then chown "$o:$(id -gn "$o")" "$cfg/mimeapps.list"; fi
+}
+
+case "${1:-}" in
+"")
+	if command -v xdg-mime >/dev/null 2>&1; then xdg-mime query default inode/directory
+	else cat "$SYS" 2>/dev/null || echo strata; fi
+	;;
+--system)
+	d=$(desktop_of "${2:-}")
+	mkdir -p "${SYS%/*}"; printf '%s\n' "$2" > "$SYS"
+	;;
+--user)
+	[ "$(id -u)" -eq 0 ] || { echo "--user needs root" >&2; exit 1; }
+	u=${2:-}; d=$(desktop_of "${3:-}")
+	h=$(getent passwd "$u" | cut -d: -f6)
+	[ -n "$h" ] && [ -d "$h" ] || { echo "no home for user '$u'" >&2; exit 1; }
+	set_in_home "$h" "$d" "$u"
+	;;
+--login)
+	[ -f "$SYS" ] || exit 0
+	[ "$(id -u)" -ne 0 ] && [ -n "${HOME:-}" ] || exit 0
+	has_default "${XDG_CONFIG_HOME:-$HOME/.config}/mimeapps.list" && exit 0
+	d=$(desktop_of "$(head -n1 "$SYS")") || exit 0
+	set_in_home "$HOME" "$d"
+	;;
+strata|folio)
+	d=$(desktop_of "$1")
+	set_in_home "$HOME" "$d"
+	echo "Default file manager: $1 ($d)"
+	;;
+*)
+	sed -n "s/^#   /  /p" "$0" >&2; exit 2 ;;
+esac

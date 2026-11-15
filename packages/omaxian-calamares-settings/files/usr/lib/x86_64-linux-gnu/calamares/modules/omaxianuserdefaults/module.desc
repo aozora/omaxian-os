@@ -1,0 +1,5 @@
+---
+type:       "job"
+name:       "omaxianuserdefaults"
+interface:  "python"
+script:     "main.py"

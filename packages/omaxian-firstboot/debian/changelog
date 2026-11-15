@@ -1,3 +1,9 @@
+omaxian-firstboot (0.3.0) excalibur; urgency=medium
+
+  * Rebuild for Omaxian OS 0.2 "Space Cat".
+
+ -- Omaxian OS <dev@omaxian.org>  Sun, 15 Nov 2026 09:42:01 +0100
+
 omaxian-firstboot (0.2.6) excalibur; urgency=medium
 
   * New omaxian-optional (+ menu entry "Add optional apps", in a terminal):

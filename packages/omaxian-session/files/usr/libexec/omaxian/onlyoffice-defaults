@@ -1,0 +1,24 @@
+#!/bin/sh
+# Omaxian OS: OnlyOffice Desktop Editors (base AppImage) uses the system title
+# bar. Merge [General] titlebar=system into the user's
+# ~/.config/onlyoffice/DesktopEditors.conf, keeping every other setting.
+#   onlyoffice-defaults USER      (root; installer post step: sets the key)
+#   onlyoffice-defaults           (as the user; only when the key is missing)
+set -eu
+INI=${OMAXIAN_INI_SET:-/usr/libexec/omaxian/ini-set}
+if [ $# -ge 1 ]; then
+	[ "$(id -u)" -eq 0 ] || { echo "onlyoffice-defaults USER needs root" >&2; exit 1; }
+	u=$1
+	h=$(getent passwd "$u" | cut -d: -f6)
+	[ -n "$h" ] && [ -d "$h" ] || { echo "no home for user '$u'" >&2; exit 1; }
+	g=$(id -gn "$u")
+	# create only what is missing, owned by the user (never chown existing dirs)
+	for d in "$h/.config" "$h/.config/onlyoffice"; do
+		[ -d "$d" ] || install -d -m 0755 -o "$u" -g "$g" "$d"
+	done
+	f="$h/.config/onlyoffice/DesktopEditors.conf"
+	"$INI" "$f" General titlebar system
+	chown "$u:$g" "$f"; chmod 0644 "$f"
+else
+	"$INI" --if-missing "${XDG_CONFIG_HOME:-$HOME/.config}/onlyoffice/DesktopEditors.conf" General titlebar system
+fi
