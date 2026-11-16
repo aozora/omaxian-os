@@ -7,28 +7,31 @@
 # tree, bin, arch, qt): Omaxian's CI release apps-<sha7> for the Qt/Rust apps,
 # tobi/disktree's upstream release for disktree.
 #
-# EXCEPTION: an app with Qt 6.8 compat patches in patches/community-apps/<app>/
-# is still built from source (patched). The v1.2.0 Folio and Monologue binaries
-# link against Qt 6.8 but their compiled-in QML uses Qt >= 6.9 properties
-# (Flickable.acceptedButtons, VideoOutput.mirrored / endOfStreamPolicy) and
-# does not load on Excalibur. Drop the patch dir once upstream's pin loads on
-# Qt 6.8 (the QML smoke test below proves it); that needs Qt 6.8 dev packages
-# on the build host (Debian trixie host or Devuan chroot) only while any
-# patched app remains.
+# Nothing is compiled here: no Qt dev packages, no cargo, no local compat
+# patches. Since v1.2.1 Folio and Monologue's pinned binaries load on Qt 6.8
+# too (upstream's CI lints QML against Qt 6.8), so patches/community-apps/ is
+# gone; an app that tries to build from source fails the build.
 #
 #   1. read each manifest, download the tarball into build/cache/community-apps/dl
 #      and check its sha256 (cached across runs; re-verified every run);
-#   2. run the app's own install.sh --skip-apt (patched apps: --from-source
-#      on a patched scratch copy) with a curl shim that serves the
+#   2. run the app's own install.sh --skip-apt with a curl shim that serves the
 #      verified tarball, so install.sh's own prebuilt_fetch re-checks the same
 #      bytes and installs the desktop file, icons, i3 rules and plugins from the
 #      pinned tree;
-#   3. fail if any install.sh fell back to a source build;
+#   3. fail if any install.sh fell back to a source build (and keep compilers
+#      shims on install.sh's PATH make cmake, qmake6, cargo, rustup and cc fail);
 #   4. ldd every staged ELF (no unresolved libraries on this host) and load each
 #      Qt app's QML offscreen.
 #
 #   build-community-apps.sh [omaxian-src]
 #   COMMUNITY_APPS_SKIP="omacut plain" build-community-apps.sh   # opt out
+#   COMMUNITY_APPS_STALE_OK="monologue" build-community-apps.sh  # see below
+#
+# install.sh refuses a pin whose tree= is older than the app's current
+# sources (it would compile instead, which fails here). COMMUNITY_APPS_STALE_OK
+# lists apps whose pinned binary is installed anyway (from a copy outside
+# git, so upstream's stale check cannot run); each one is warned about and
+# marked "stale-pin" in installed.txt. Default: empty (strict).
 #
 # Run on a Debian trixie / Devuan excalibur host (Qt 6.8): install.sh checks
 # libqt6core6t64 >= the manifest's qt=. Does NOT install community-plugins.
@@ -36,12 +39,11 @@ set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 KEY_ONLY=0; [ "${1:-}" = --key ] && { KEY_ONLY=1; shift; }
 SRC=$(realpath "${1:-${OMX:-$BUILDDIR/src/omaxian}}")
-# Cache key: Omaxian commit (pins every manifest) + skip list + this builder
-# + our compat patches.
+# Cache key: Omaxian commit (pins every manifest) + skip list + this builder.
 ca_key() {
 	{ git -C "$SRC" rev-parse HEAD 2>/dev/null || cat "$SRC/version"
-	  echo "${COMMUNITY_APPS_SKIP:-}"
-	  cat "$0" "$TOPDIR"/patches/community-apps/*/*.patch 2>/dev/null; } | sha256sum | cut -c1-16
+	  echo "${COMMUNITY_APPS_SKIP:-}|${COMMUNITY_APPS_STALE_OK:-}"
+	  cat "$0"; } | sha256sum | cut -c1-16
 }
 if [ "$KEY_ONLY" = 1 ]; then ca_key; exit 0; fi
 APPS="$SRC/community-apps"
@@ -68,8 +70,6 @@ for a in disktree folio monologue omarchy-meeting-recorder signed; do
 done
 msg "community-apps: ${APPS_LIST[*]}"
 [ "$(uname -m)" = x86_64 ] || die "community-apps: pinned binaries are x86_64 only (host $(uname -m))"
-
-patched() { compgen -G "$TOPDIR/patches/community-apps/$1/*.patch" >/dev/null; }
 
 # --- 1. fetch + verify every pinned tarball ---
 mget() { awk -F= -v k="$2" '$1 == k { sub(/^[^=]*=/, ""); print; exit }' "$1"; }
@@ -111,52 +111,42 @@ chmod 755 "$CACHE/shim/curl"
 # --- 2. install each app from its pinned binary ---
 rm -rf "$OUT"
 mkdir -p "$OUT/.local" "$OUT/.config/i3/config.d"
-# Patched source build (Qt 6.8 compat). install.sh builds in-tree and sources
-# ../lib/prebuilt.sh, so build from a scratch copy of <app>/ next to lib/.
-build_patched() {
-	local name=$1 dir pf
-	command -v qmake6 >/dev/null || die "qmake6 required to build patched $name (Qt 6.8 dev packages)"
-	rm -rf "$CACHE/src"
-	mkdir -p "$CACHE/src"
-	cp -a "$APPS/lib" "$CACHE/src/lib"
-	cp -a "$APPS/$name" "$CACHE/src/$name"
-	dir="$CACHE/src/$name"
-	rm -rf "$dir/build"
-	# Build only the app target: upstream test targets use Qt >= 6.9 APIs.
-	if [ -f "$dir/bin/build" ]; then
-		sed -i -E 's|^(\s*cmake --build "\$BUILD_DIR" -j"\$JOBS")\s*$|\1 --target '"$name"'|' "$dir/bin/build"
-	fi
-	for pf in "$TOPDIR/patches/community-apps/$name"/*.patch; do
-		msg "community-apps: $name: patch $(basename "$pf")"
-		patch -d "$dir" -p1 --forward --batch < "$pf" >/dev/null \
-			|| die "community-apps: $(basename "$pf") no longer applies to $name (upstreamed? drop it)"
-	done
-	PATCHED_DIR=$dir
-}
+# Compiler blockers: a fallback to a source build must fail fast, not quietly
+# compile with whatever the build host has.
+for t in cmake qmake6 qmake cargo rustup cc gcc g++ c++; do
+	printf '#!/bin/sh\necho "community-apps: %s blocked (pinned pre-built binaries only)" >&2\nexit 97\n' "$t" \
+		> "$CACHE/shim/$t"
+	chmod 755 "$CACHE/shim/$t"
+done
 
-BUILT=()
+stale_ok() { case " ${COMMUNITY_APPS_STALE_OK:-} " in *" $1 "*) return 0 ;; esac; return 1; }
+BUILT=(); STALE_DIR=""
+trap '[ -z "$STALE_DIR" ] || rm -rf "$STALE_DIR"' EXIT
 for a in "${APPS_LIST[@]}"; do
 	log="$CACHE/${a}-install.log"
-	if patched "$a"; then
-		msg "community-apps: $a (source build + Qt 6.8 compat patches)"
-		build_patched "$a"; dir=$PATCHED_DIR; args=(--skip-apt --from-source)
-	else
-		msg "community-apps: $a (pre-built)"
-		dir="$APPS/$a"; args=(--skip-apt)
+	dir="$APPS/$a"
+	if stale_ok "$a"; then
+		warn "community-apps: $a: installing its pinned binary even if its sources changed since (COMMUNITY_APPS_STALE_OK)"
+		[ -n "$STALE_DIR" ] || STALE_DIR=$(mktemp -d /tmp/omaxian-ca-stale.XXXXXX)
+		rm -rf "${STALE_DIR:?}/$a"; mkdir -p "$STALE_DIR"
+		[ -d "$STALE_DIR/lib" ] || cp -a "$APPS/lib" "$STALE_DIR/lib"
+		cp -a "$APPS/$a" "$STALE_DIR/$a"
+		dir="$STALE_DIR/$a"
 	fi
+	msg "community-apps: $a (pre-built)"
 	# install.sh refuses root and uses $HOME; --skip-apt: runtime deps come
 	# from 55-community-apps.list / omaxian-session Depends.
 	( cd "$dir" && env -i PATH="$CACHE/shim:/usr/bin:/bin" HOME="$OUT" USER="${USER:-omaxian}" \
-		LANG=C.UTF-8 TMPDIR="${TMPDIR:-/tmp}" bash ./install.sh "${args[@]}" ) > "$log" 2>&1 \
-		|| { cat "$log"; die "$a install.sh failed"; }
-	# --- 3. an unpatched app must use its pin; a source build means it did not ---
-	if ! patched "$a" && { ! grep -q '^>> sha256 ok' "$log" || grep -qiE 'building from source|cmake --build|cargo build|>> bin/build' "$log"; }; then
+		LANG=C.UTF-8 TMPDIR="${TMPDIR:-/tmp}" bash ./install.sh --skip-apt ) > "$log" 2>&1 \
+		|| { cat "$log"; die "$a install.sh failed (a source-build fallback fails here by design)"; }
+	# --- 3. a source build here means the pin did not apply: fail ---
+	if ! grep -q '^>> sha256 ok' "$log" || grep -qiE 'building from source|cmake --build|cargo build|>> bin/build|blocked \(pinned' "$log"; then
 		cat "$log"; die "community-apps: $a did not install its pinned pre-built binary"
 	fi
 	BUILT+=("$a")
 done
-# build trees are large; the stage is what we keep
-[ "${COMMUNITY_APPS_KEEP_SRC:-0}" = 1 ] || rm -rf "$CACHE/src"
+[ -z "$STALE_DIR" ] || { rm -rf "$STALE_DIR"; STALE_DIR=""; }
+rm -rf "$CACHE/src" # leftover patched-build tree from v1.2.0 stages
 
 # Desktop files must not embed the staging absolute path (home-template is
 # copied into real $HOME). Prefer bare command names; ~/.local/bin is on PATH
@@ -205,6 +195,8 @@ for a in "${BUILT[@]}"; do
 	compgen -G "$OUT/.local/share/applications/*${a%%-*}*.desktop" >/dev/null \
 		|| die "community-apps: $a installed no desktop entry"
 done
-printf '%s\n' "${BUILT[@]}" > "$CACHE/installed.txt"
+for a in "${BUILT[@]}"; do
+	if stale_ok "$a"; then printf '%s\tstale-pin\n' "$a"; else printf '%s\n' "$a"; fi
+done > "$CACHE/installed.txt"
 ca_key > "$CACHE/stamp"
 ls -la "$OUT/.local/bin" || true

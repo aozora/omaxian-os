@@ -20,10 +20,10 @@ FM=$S/usr/bin/omaxian-default-file-manager
 	v=$(echo "OMAXIAN_${OMAXIAN_VERSION}_${OMAXIAN_CODENAME_TAG}_$f" | tr 'a-z.-' 'A-Z__' | cut -c1-32)
 	[ "$v" = "OMAXIAN_0_2_SPACE_CAT_$(echo $f | tr a-z A-Z)" ] || exit 1; done ) \
 	&& ok "ISO volume ids OMAXIAN_0_2_SPACE_CAT_{BASE,FULL} (not truncated)" || bad "volid"
-( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.0 ] && [ ${#OMAXIAN_SHELL_COMMIT} = 40 ] ) \
-	&& ok "Omaxian shell v1.2.0 pinned to a full commit" || bad "shell pin"
-[ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.0-1 ] \
-	&& ok "omaxian-session changelog 1.2.0-1" || bad "session version"
+( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.1 ] && [ ${#OMAXIAN_SHELL_COMMIT} = 40 ] ) \
+	&& ok "Omaxian shell v1.2.1 pinned to a full commit" || bad "shell pin"
+[ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.1-1 ] \
+	&& ok "omaxian-session changelog 1.2.1-1" || bad "session version"
 grep -q 'Space Cat\|space-cat' tools/diag/installvm.sh tools/diag/liveboot.sh && ! grep -rq 'trans-siberian' tools/diag/installvm.sh tools/diag/liveboot.sh \
 	&& ok "diag scripts use the 0.2 ISO names" || bad "diag ISO names"
 
@@ -42,10 +42,10 @@ grep -q 'XFCE_GONE=' scripts/build-rootfs.sh && grep -q 'XFCE desktop / Thunar p
 # 3 community apps
 grep -q 'find "$APPS" -mindepth 2 -maxdepth 2 -name install.sh' scripts/build-community-apps.sh \
 	&& ok "build-community-apps enumerates every community-apps/<id>/install.sh" || bad "apps not enumerated"
-for p in patches/community-apps/*/*.patch; do grep -q '^+++ b/' "$p" || bad "patch $p not -p1"; done; ok "compat patches are -p1"
 grep -q 'omaxian-prebuilt' scripts/build-community-apps.sh && grep -q "did not install its pinned pre-built binary" scripts/build-community-apps.sh \
-	&& ok "build-community-apps installs pinned pre-built binaries (source only for patched apps)" || bad "prebuilt path"
-[ -z "$(ls patches/community-apps/folio/*qt68-compat* 2>/dev/null)" ] && ok "folio QDir::mkpath patch dropped (upstream v1.2.0)" || bad "stale folio 0001 patch"
+	&& grep -q 'for t in cmake qmake6 qmake cargo rustup cc' scripts/build-community-apps.sh \
+	&& ok "build-community-apps: pinned pre-built binaries only, compilers blocked" || bad "prebuilt path"
+[ ! -e patches/community-apps ] && ok "no local community-app patches (Qt 6.8 fixes upstream in v1.2.1)" || bad "patches/community-apps still present"
 for d in qml6-module-qtquick-pdf qml6-module-qtquick-dialogs qml6-module-qtcore libarchive-tools udisks2 ffmpegthumbnailer libglib2.0-0t64 libturbojpeg0; do
 	grep -qx "$d" config/package-lists/55-community-apps.list && grep -q "$d" packages/omaxian-session/debian/control || bad "dep $d"
 done; ok "new app runtime deps in 55-community-apps.list and session Depends"
