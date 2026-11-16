@@ -1,3 +1,9 @@
+omaxian-base (0.2.1) excalibur; urgency=medium
+
+  * /etc/omaxian-release: OMAXIAN_SHELL="v1.2.0".
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 16 Nov 2026 12:45:48 +0100
+
 omaxian-base (0.2.0) excalibur; urgency=medium
 
   * Omaxian OS 0.2 "Space Cat": os-release / omaxian-release now say

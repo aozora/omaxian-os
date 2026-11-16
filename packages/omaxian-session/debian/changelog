@@ -1,3 +1,23 @@
+omaxian-session (1.2.0-1) excalibur; urgency=medium
+
+  * New upstream Omaxian shell v1.2.0 (tag v1.2.0 = main @ 71125373, "Merge
+    pull request #16"; fetch-omaxian.sh verifies the tag against the pinned
+    commit). Vendors Omarchy v4.5.0.
+  * The home template's community-apps now come from the binaries v1.2.0
+    pins in community-apps/<app>/.omaxian-prebuilt (sha256-verified, via each
+    app's own install.sh): disktree (tobi/disktree v0.11.0), omacalc, omacut,
+    omarchy-meeting-recorder, omawrite, plain, signed (Omaxian release
+    apps-93d0514). No local Rust or Qt builds for them any more.
+  * Folio and Monologue are still built from source with Qt 6.8 compat
+    patches: their apps-93d0514 binaries link on Qt 6.8 but the compiled-in
+    QML uses Qt >= 6.9 properties (Flickable.acceptedButtons,
+    VideoOutput.mirrored / endOfStreamPolicy) and fails to load. Folio's
+    QDir::mkpath compat patch is dropped (upstreamed in v1.2.0).
+  * Depends: libglib2.0-0t64 (Folio) and libturbojpeg0 (Monologue), newly
+    listed in v1.2.0's omaxian.deps.json.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 16 Nov 2026 12:45:48 +0100
+
 omaxian-session (1.1.3-1) excalibur; urgency=medium
 
   * New upstream Omaxian shell v1.1.3 (tag v1.1.3 = main @ 2ffd66d8, "Merge
