@@ -39,8 +39,8 @@ c_apps() {
 	timeout 10 su - $U -c "$H/.local/bin/disktree --version" >/dev/null 2>&1 || timeout 10 su - $U -c "$H/.local/bin/disktree --help" >/dev/null 2>&1 && echo "CLI_PASS disktree" || echo "CLI_FAIL disktree"
 	timeout 10 su - $U -c "$H/.local/bin/signed --help" >/dev/null 2>&1 && echo "CLI_PASS signed" || echo "CLI_FAIL signed"
 	for a in folio monologue omacalc omacut omawrite plain; do
-		timeout 12 su - $U -c "QT_QPA_PLATFORM=offscreen $H/.local/bin/$a" >/tmp/qml-$a.log 2>&1; rc=$?
-		# 124 = still running after 12 s (window up, no QML error) -> launch OK
+		timeout 30 su - $U -c "QT_QPA_PLATFORM=offscreen $H/.local/bin/$a" >/tmp/qml-$a.log 2>&1; rc=$?
+		# 124 = still running after 30 s (window up, no QML error) -> launch OK
 		if [ $rc = 124 ] && ! grep -qiE 'qrc:.*error|is not a type|module .* not installed|cannot load|non-existent property|unavailable|failed to load component|undefined symbol|error while loading' /tmp/qml-$a.log; then echo "QML_PASS $a"; else echo "QML_FAIL $a rc=$rc $(tail -3 /tmp/qml-$a.log | tr '\n' ' ')"; fi
 	done
 }

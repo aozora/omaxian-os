@@ -1,4 +1,5 @@
 #!/bin/bash
+# ACCEL=tcg QCPU=max (no KVM) and SLOW=<n> (scales every wait in the r18 scripts) for a box whose KVM is broken.
 # vm.sh <name> <base|full> <bios|uefi> <cd|disk> [ram_mb]: one KVM test VM (root), no network,
 # serial -> build/round18/<name>.serial.log, HMP monitor build/round18/<name>.mon,
 # disk build/round18/<name>.qcow2 (40G sparse), test media (R18TEST) on the 2nd IDE bus.
@@ -11,7 +12,7 @@ FW=(); if [ $FWM = uefi ]; then [ -e $D/vars-$N.fd ] || cp /usr/share/OVMF/OVMF_
 CD=(-drive file=$ISO,media=cdrom,if=none,id=cd0 -device ide-cd,drive=cd0,bus=ide.0,bootindex=1)
 [ $BOOT = disk ] && CD=()
 sudo rm -f $D/$N.mon
-sudo qemu-system-x86_64 -machine q35,accel=kvm -cpu host -m $RAM -smp 2 -vga virtio -display none "${FW[@]}" \
+sudo qemu-system-x86_64 -machine q35,accel=${ACCEL:-kvm} -cpu ${QCPU:-host} -m $RAM -smp 2 -vga virtio -display none "${FW[@]}" \
  -drive file=$D/$N.qcow2,if=virtio,format=qcow2,cache=unsafe,aio=threads "${CD[@]}" \
  -drive file=$D/test-media.iso,media=cdrom,if=none,id=cd1 -device ide-cd,drive=cd1,bus=ide.1 \
  -device qemu-xhci -device usb-tablet -nic none -serial file:$D/$N.serial.log \
