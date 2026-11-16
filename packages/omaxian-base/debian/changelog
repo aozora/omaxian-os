@@ -1,5 +1,7 @@
 omaxian-base (0.2.1) excalibur; urgency=medium
 
+  * Omaxian OS 0.2.1 "Space Cat": os-release / omaxian-release say
+    VERSION="0.2.1 (Space Cat)", VERSION_ID=0.2.1.
   * /etc/omaxian-release: OMAXIAN_SHELL="v1.2.2".
 
  -- Omaxian OS <dev@omaxian.org>  Mon, 16 Nov 2026 12:45:48 +0100

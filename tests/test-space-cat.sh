@@ -14,12 +14,12 @@ FM=$S/usr/bin/omaxian-default-file-manager
 
 # 1 version / codename
 ( . config/build.conf
-  [ "$OMAXIAN_VERSION" = 0.2 ] && [ "$OMAXIAN_CODENAME" = "Space Cat" ] && [ "$OMAXIAN_CODENAME_ID" = space-cat ] ) \
-	&& ok "build.conf: 0.2 \"Space Cat\" (space-cat)" || bad "build.conf version/codename"
+  [ "$OMAXIAN_VERSION" = 0.2.1 ] && [ "$OMAXIAN_CODENAME" = "Space Cat" ] && [ "$OMAXIAN_CODENAME_ID" = space-cat ] ) \
+	&& ok "build.conf: 0.2.1 \"Space Cat\" (space-cat)" || bad "build.conf version/codename"
 ( . config/build.conf; for f in base full; do
 	v=$(echo "OMAXIAN_${OMAXIAN_VERSION}_${OMAXIAN_CODENAME_TAG}_$f" | tr 'a-z.-' 'A-Z__' | cut -c1-32)
-	[ "$v" = "OMAXIAN_0_2_SPACE_CAT_$(echo $f | tr a-z A-Z)" ] || exit 1; done ) \
-	&& ok "ISO volume ids OMAXIAN_0_2_SPACE_CAT_{BASE,FULL} (not truncated)" || bad "volid"
+	[ "$v" = "OMAXIAN_0_2_1_SPACE_CAT_$(echo $f | tr a-z A-Z)" ] || exit 1; done ) \
+	&& ok "ISO volume ids OMAXIAN_0_2_1_SPACE_CAT_{BASE,FULL} (not truncated)" || bad "volid"
 ( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.2 ] && [ ${#OMAXIAN_SHELL_COMMIT} = 40 ] ) \
 	&& ok "Omaxian shell v1.2.2 pinned to a full commit" || bad "shell pin"
 [ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.2-1 ] \
