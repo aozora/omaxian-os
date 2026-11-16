@@ -34,7 +34,7 @@ grub-pc or grub-efi-amd64 to match the firmware.
   `scripts/build-community-apps.sh`): disktree, Folio, Monologue, Omacalc,
   Omacut, Meeting Recorder, Omawrite, Plain (the default editor), Signed.
   All of them install from the sha256-pinned pre-built binaries in each
-  app's `.omaxian-prebuilt` (Omaxian v1.2.1+); nothing is compiled, and the
+  app's `.omaxian-prebuilt` (Omaxian v1.2.2+); nothing is compiled, and the
   build fails if an app would build from source. community-plugins stay opt-in.
 - **File manager**: the installer's *File manager* page picks Strata (default)
   or Folio; both stay installed. The choice goes to `/etc/omaxian/file-manager`

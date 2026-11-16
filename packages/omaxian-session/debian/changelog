@@ -1,3 +1,16 @@
+omaxian-session (1.2.2-1) excalibur; urgency=medium
+
+  * New upstream Omaxian shell v1.2.2 (tag v1.2.2 = main @ b2e551e6, "Merge
+    pull request #22"). Vendors Omarchy v4.5.0.
+  * Folio and Monologue pinned from apps-027bd66: built from v1.2.1's
+    sources, so Folio has the Qt 6.8 band-drag fix. Every app's
+    .omaxian-prebuilt src= hash matches its tree, so the strict build installs
+    all nine community apps from their pinned binaries with nothing compiled
+    (no COMMUNITY_APPS_STALE_OK).
+  * Runtime dependencies unchanged.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 16 Nov 2026 14:43:45 +0100
+
 omaxian-session (1.2.1-1) excalibur; urgency=medium
 
   * New upstream Omaxian shell v1.2.1 (tag v1.2.1 = main @ 027bd662, "Merge

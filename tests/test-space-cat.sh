@@ -20,10 +20,10 @@ FM=$S/usr/bin/omaxian-default-file-manager
 	v=$(echo "OMAXIAN_${OMAXIAN_VERSION}_${OMAXIAN_CODENAME_TAG}_$f" | tr 'a-z.-' 'A-Z__' | cut -c1-32)
 	[ "$v" = "OMAXIAN_0_2_SPACE_CAT_$(echo $f | tr a-z A-Z)" ] || exit 1; done ) \
 	&& ok "ISO volume ids OMAXIAN_0_2_SPACE_CAT_{BASE,FULL} (not truncated)" || bad "volid"
-( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.1 ] && [ ${#OMAXIAN_SHELL_COMMIT} = 40 ] ) \
-	&& ok "Omaxian shell v1.2.1 pinned to a full commit" || bad "shell pin"
-[ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.1-1 ] \
-	&& ok "omaxian-session changelog 1.2.1-1" || bad "session version"
+( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.2 ] && [ ${#OMAXIAN_SHELL_COMMIT} = 40 ] ) \
+	&& ok "Omaxian shell v1.2.2 pinned to a full commit" || bad "shell pin"
+[ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.2-1 ] \
+	&& ok "omaxian-session changelog 1.2.2-1" || bad "session version"
 grep -q 'Space Cat\|space-cat' tools/diag/installvm.sh tools/diag/liveboot.sh && ! grep -rq 'trans-siberian' tools/diag/installvm.sh tools/diag/liveboot.sh \
 	&& ok "diag scripts use the 0.2 ISO names" || bad "diag ISO names"
 
