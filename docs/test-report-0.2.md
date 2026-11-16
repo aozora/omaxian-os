@@ -153,8 +153,10 @@ launch window raised from 12 s to 30 s); the box also showed virtio_balloon "Out
 pressure and wall-clock pauses, so TCG waits ran long.
 
 ## Not tested
-- **Full ISO install (ff) and its installed checks**: redo on KVM after a box reboot. The
-  Folio install path itself passed on the base ISO (bf), and the full ISO's live checks passed
-  under both UEFI (ff) and BIOS (fb).
+- **Full ISO install (ff) and its installed checks: not completed (skipped by decision).**
+  A KVM retry after the box reboot (19:36 CET) was lost when the box went down again ~19:45
+  (likely triggered by KVM guest work; unproven). Marcello chose to skip it and close 0.2.1.
+  The Folio install path itself passed on the base ISO (bf), and the full ISO's live checks
+  passed under both UEFI (ff) and BIOS (fb).
 - Real hardware, Secure Boot, BIOS *install*, online paths (as in 0.2).
 - KVM-speed timing of the installed bf boot and the BIOS / ff lives (TCG only).
