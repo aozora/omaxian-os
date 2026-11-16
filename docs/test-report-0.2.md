@@ -84,3 +84,77 @@ on first attempts, retries succeeded). Logs: /workspace/publog/r17.
   firstboot 0.3.0, fonts-nerd 3.5.1-1, session 1.1.3-1, strata 1.2.0-1, ydotool 1.0.4-1. Keyring identical.
 - **GitHub:** bundle of `main` for branch `omaxian-os-build` (fast-forward from d177fab), pushed via the owner's computer.
 - No website change.
+
+---
+
+# Omaxian OS 0.2.1 "Space Cat" — build + test report (round 18, 2026-11-16, CET)
+
+Local build only: nothing uploaded, no apt publish, no push.
+Shell: Omaxian v1.2.2 = b2e551e68dccbc76d6112a6318dffbc23dca1290 (tag verified by
+scripts/fetch-omaxian.sh). Every community app's `.omaxian-prebuilt` tree/src= matches its
+sources, so the strict build (COMMUNITY_APPS_STALE_OK unset) installed all nine apps from their
+sha256-verified pinned binaries; nothing compiled (compilers are blocked on install.sh's PATH).
+Base: Devuan 6 Excalibur + backports, fresh mmdebstrap rootfs (stamps removed).
+
+## Build
+
+tools/diag/r18/pipeline.sh, 15:07–15:43 CET, state in `.r18-state`; same limits as round 17
+(8 GiB swapfile, squashfs 4 threads / 1G, make -j4, image build through
+OMAXIAN_BUILD_HTTPS_PROXY 127.0.0.1:8791, Flatpak retry loop). Rebuilt only omaxian-base,
+omaxian-branding and omaxian-session; omaxian-calamares-settings 0.3.0, omaxian-firstboot 0.3.0,
+omaxian-fonts-nerd 3.5.1-1, omaxian-strata 1.2.0-1 and omaxian-ydotool 1.0.4-1 are the
+published 0.2 bytes (gpgv on build/r17/repo InRelease + SHA256 in its Packages);
+omaxian-voxtype 1.1.1-3 (ISO payload only) is the 0.2 build's .deb. Full rootfs: all 9
+Flatpaks preinstalled on the first try, 10 AppImages.
+
+## Artifacts (out/0.2.1)
+
+| File | Size | SHA-256 |
+|---|---|---|
+| omaxian-base-0.2.1-space-cat-amd64.iso | 3065556992 (2.9 GiB) | c39a5e25a3a3d096b77d1fc29b1901b49832325b5002367374d1a5ddbda4ee22 |
+| omaxian-full-0.2.1-space-cat-amd64.iso | 8966062080 (8.4 GiB) | 0404e1d251f10af521bf2c78b6f2718be9e5ca22b68c71e453fa8c4ec2f4e543 |
+
+Changed since 0.2: omaxian-base 0.2.0 → 0.2.1 (os-release 0.2.1, OMAXIAN_SHELL v1.2.2),
+omaxian-branding 0.3.0 → 0.3.1 (0.2.1 strings), omaxian-session 1.1.3-1 → 1.2.2-1 (v1.2.2,
+pinned community-app binaries; + libglib2.0-0t64, libturbojpeg0). All other 1920 of 1923
+packages identical to 0.2 (no Devuan update since 2026-11-15): linux-image-amd64
+7.2.12-1~bpo13+1 (unchanged), xserver-xlibre 1:7.8+5, quickshell 0.3.0-1~bpo13+1,
+pipewire 1.6.9-2~bpo13+1, calamares 3.3.14-1, i3-wm 4.24-1, sysvinit-core 3.14-4devuan1, eudev 3.2.14-4.
+
+## VM tests (3 GiB / 2 vCPU, no network, one VM at a time; tools/diag/r18)
+
+New checks in round 18 (tools/diag/r18/media): `/etc/omaxian-release` OMAXIAN_SHELL="v1.2.2",
+os-release VERSION_ID 0.2.1, and PINNED: every `~/.local/bin/<app>` is byte-identical
+(sha256) to the binary in its verified pinned tarball; QML launch check also fails on
+"non-existent property" / "unavailable" / "failed to load component".
+
+| VM | Accel | Test | Result |
+|---|---|---|---|
+| bs | KVM | base, UEFI live + offline install (Strata default) + installed checks | PASS: live 75/0, installed 81/0; Super+Shift+F opens Strata |
+| bf | KVM, then TCG | base, UEFI live + install choosing Folio; installed checks | PASS: live 75/0 (KVM), install "All done" (KVM); installed boot + checks 81/0 under TCG; file-manager=folio, inode/directory=folio.desktop, Super+Shift+F opens Folio |
+| bb | TCG | base, BIOS (SeaBIOS) live + live checks | PASS 75/0 |
+| fb | TCG | full, BIOS live + live checks | PASS 75/0 |
+| ff | TCG | full, UEFI live + install choosing Folio | live PASS 75/0; File manager page Folio selected; install started and progressing (17% after ~25 min), then stopped: under TCG it needed ~2.5 h more incl. installed checks. Not completed |
+
+Every passing log shows: RELEASE_SHELL (v1.2.2), OS_RELEASE_021, NOXFCE / NOTHUNAR /
+XSESSION_NOXFCE (only xfce4-power-manager + xfconf and their libxfce4ui/util deps),
+ONLYOFFICE_CONF (`[General] titlebar=system`, owned by the user), PINNED 9/9, QML_PASS for
+folio, monologue, omacalc, omacut, omawrite, plain; CLI disktree/signed; DPKG_AUDIT, APT_CONFIG.
+
+### Box KVM fault (host issue, not the ISO)
+
+At 16:31:53 the box's own kernel (6.12.113+) hit `kernel BUG at arch/x86/kvm/x86.c:689`
+(`kvm_spurious_fault` from `vmx_write_tsc_offset`) while bf's installed disk was booting, and
+killed qemu. Afterwards every KVM guest died the same way within seconds (16:32:21, 16:38:59,
+16:46:51; the box kernel is tainted [D]). This is the box's nested virtualization, not the
+guest: the same bf disk then booted and passed under TCG. Only a box reboot clears it (not done:
+shared machine). The remaining tests ran on TCG (`ACCEL=tcg QCPU=max SLOW=4`, offscreen QML
+launch window raised from 12 s to 30 s); the box also showed virtio_balloon "Out of puff"
+pressure and wall-clock pauses, so TCG waits ran long.
+
+## Not tested
+- **Full ISO install (ff) and its installed checks**: redo on KVM after a box reboot. The
+  Folio install path itself passed on the base ISO (bf), and the full ISO's live checks passed
+  under both UEFI (ff) and BIOS (fb).
+- Real hardware, Secure Boot, BIOS *install*, online paths (as in 0.2).
+- KVM-speed timing of the installed bf boot and the BIOS / ff lives (TCG only).
