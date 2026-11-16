@@ -33,8 +33,11 @@ grub-pc or grub-efi-amd64 to match the firmware.
   home on both ISOs (seeded from the omaxian-session home template, built by
   `scripts/build-community-apps.sh`): disktree, Folio, Monologue, Omacalc,
   Omacut, Meeting Recorder, Omawrite, Plain (the default editor), Signed.
-  Qt 6.8 (Excalibur) compat patches live in `patches/community-apps/<app>/`.
-  community-plugins stay opt-in.
+  Since Omaxian v1.2.0 they install from the sha256-pinned pre-built binaries
+  in each app's `.omaxian-prebuilt`; Folio and Monologue are still built from
+  source with the Qt 6.8 (Excalibur) compat patches in
+  `patches/community-apps/<app>/`, because their pinned binaries' QML needs
+  Qt >= 6.9. community-plugins stay opt-in.
 - **File manager**: the installer's *File manager* page picks Strata (default)
   or Folio; both stay installed. The choice goes to `/etc/omaxian/file-manager`
   and the user's `~/.config/mimeapps.list` (`inode/directory`), which the

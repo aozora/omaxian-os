@@ -1,7 +1,10 @@
 # Runtime Depends of ALL default community-apps (union of each app's
-# omaxian.deps.json "apt"; also in omaxian-session Depends). Apps: disktree,
-# folio, monologue, omacalc, omacut, omarchy-meeting-recorder, omawrite, plain,
-# signed. Seeded into every home via the omaxian-session home template; not optional.
+# omaxian.deps.json "apt" at the pinned Omaxian tag; also in omaxian-session
+# Depends). Apps: disktree, folio, monologue, omacalc, omacut,
+# omarchy-meeting-recorder, omawrite, plain, signed — installed from their
+# pinned pre-built binaries (Omaxian v1.2.0+), seeded into every home via the
+# omaxian-session home template; not optional. v1.2.0 adds libglib2.0-0t64
+# (Folio) and libturbojpeg0 (Monologue).
 ffmpeg
 ffmpegthumbnailer
 fonts-noto-core
@@ -11,6 +14,7 @@ libadwaita-1-0
 libarchive-tools
 libfontconfig1
 libfreetype6
+libglib2.0-0t64
 libgtk-4-1
 libnss3
 libpoppler-qt6-3t64
@@ -18,6 +22,7 @@ libpulse0
 libqpdf30
 libqt6multimedia6
 libqt6printsupport6
+libturbojpeg0
 libvulkan1
 libwayland-client0
 libx11-6
