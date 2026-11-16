@@ -233,6 +233,14 @@ sudo OMAXIAN_APPIMAGE_ONLY=shotcut omaxian-appimage-fetch /var/lib/omaxian/appim
 OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/.local/state/omaxian/user-firstrun.log)
 ```
 
+### 0.2.1 "Space Cat" (round 18, published 2026-11-16)
+
+Omaxian shell v1.2.2: all nine community apps installed from sha256-pinned
+pre-built binaries (no source builds). ISOs on
+https://download.omaxian.org/releases/0.2.1/; signed apt on apt.omaxian.org
+(base 0.2.1, branding 0.3.1, session 1.2.2-1; calamares-settings 0.3.0,
+firstboot 0.3.0 unchanged). Tests and publish details: `docs/test-report-0.2.md`.
+
 ### 0.2 "Space Cat" (round 17, published 2026-11-15)
 
 Omaxian shell v1.1.3, all community apps, installer file-manager page

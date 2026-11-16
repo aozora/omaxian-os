@@ -89,7 +89,7 @@ on first attempts, retries succeeded). Logs: /workspace/publog/r17.
 
 # Omaxian OS 0.2.1 "Space Cat" — build + test report (round 18, 2026-11-16, CET)
 
-Local build only: nothing uploaded, no apt publish, no push.
+Built and tested locally; published 2026-11-16 20:28–21:05 CET (see "Publish round 18" at the end).
 Shell: Omaxian v1.2.2 = b2e551e68dccbc76d6112a6318dffbc23dca1290 (tag verified by
 scripts/fetch-omaxian.sh). Every community app's `.omaxian-prebuilt` tree/src= matches its
 sources, so the strict build (COMMUNITY_APPS_STALE_OK unset) installed all nine apps from their
@@ -160,3 +160,34 @@ pressure and wall-clock pauses, so TCG waits ran long.
   passed under both UEFI (ff) and BIOS (fb).
 - Real hardware, Secure Boot, BIOS *install*, online paths (as in 0.2).
 - KVM-speed timing of the installed bf boot and the BIOS / ff lives (TCG only).
+
+## Publish round 18 (2026-11-16, 20:28–21:05 CET)
+
+Approved by the owner (2026-11-16 20:27: upload, apt publish, push). Same method as round 17
+(rclone R2 S3, 64M chunks, concurrency 4, size check after upload; the usual harmless R2
+`501 NotImplemented` on first attempts, retries succeeded). Uploaded from out/0.2.1 (hardlinks of
+the safety copy /workspace/iso-keep/0.2.1, sha256 re-verified after both box restarts).
+Logs: /workspace/publog/r18.
+
+- **ISOs (s3://omaxian-iso/releases/0.2.1/ → https://download.omaxian.org/releases/0.2.1/)**:
+  Content-Length = local size, sha256 of the HTTPS download = local, `.sha256` sidecars and
+  `SHA256SUMS` identical to local; `rclone check --download` (ISOs + sidecars): 0 differences (4 matching).
+  - base: 3065556992 bytes, `c39a5e25a3a3d096b77d1fc29b1901b49832325b5002367374d1a5ddbda4ee22` ✔
+  - full: 8966062080 bytes, `0404e1d251f10af521bf2c78b6f2718be9e5ca22b68c71e453fa8c4ec2f4e543` ✔
+    (the first streamed check was cut off by `curl: (56) Connection timed out`, giving a hash of
+    a partial body; re-downloaded with resume and re-hashed: match)
+- **apt (s3://omaxian-apt ← build/r18pub/repo):** build/ was lost in the box restart, so the repo
+  was rebuilt with scripts/make-repo.sh from the 0.2.1 debs (/workspace/iso-keep/0.2.1/debs, the
+  ones built for the ISOs; the five unchanged debs are byte-identical to the published pool),
+  signed with subkey `5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75`. Pool copied (add-only), then dists,
+  then keyring. Superseded pool objects removed afterwards, as in round 17: base 0.2.0,
+  branding 0.3.0, session 1.1.3-1. `rclone check --download`: 0 differences (8 pool + 6 dists).
+- **HTTPS (apt.omaxian.org):** InRelease GOODSIG/VALIDSIG subkey
+  `5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75` with the published keyring (unchanged, identical to
+  keys/public); Packages and Packages.gz sha256 match InRelease; all 8 debs' sha256 over HTTPS
+  match Packages: base 0.2.1, branding 0.3.1, calamares-settings 0.3.0, firstboot 0.3.0,
+  fonts-nerd 3.5.1-1, session 1.2.2-1, strata 1.2.0-1, ydotool 1.0.4-1. Isolated apt root
+  `apt-get update` rc=0; candidates base 0.2.1, branding 0.3.1, session 1.2.2-1.
+- **GitHub:** bundle of `main` (/workspace/omaxian-os-r18.bundle, d5f5e1d..main) for branch
+  `omaxian-os-build`, pushed from the owner's computer.
+- No website change.
