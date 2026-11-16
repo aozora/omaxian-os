@@ -1,6 +1,6 @@
 omaxian-base (0.2.1) excalibur; urgency=medium
 
-  * /etc/omaxian-release: OMAXIAN_SHELL="v1.2.0".
+  * /etc/omaxian-release: OMAXIAN_SHELL="v1.2.1".
 
  -- Omaxian OS <dev@omaxian.org>  Mon, 16 Nov 2026 12:45:48 +0100
 

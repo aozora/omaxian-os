@@ -1,3 +1,15 @@
+omaxian-session (1.2.1-1) excalibur; urgency=medium
+
+  * New upstream Omaxian shell v1.2.1 (tag v1.2.1 = main @ 027bd662, "Merge
+    pull request #19"). Vendors Omarchy v4.5.0.
+  * All nine community-apps now come from their pinned pre-built binaries:
+    Folio and Monologue are re-pinned (apps-02b9db3) with QML that loads on
+    Qt 6.8, so the local Qt 6.8 compat patches and source builds are gone;
+    the build fails if any app would compile locally.
+  * Runtime dependencies unchanged from 1.2.0-1.
+
+ -- Omaxian OS <dev@omaxian.org>  Mon, 16 Nov 2026 14:12:24 +0100
+
 omaxian-session (1.2.0-1) excalibur; urgency=medium
 
   * New upstream Omaxian shell v1.2.0 (tag v1.2.0 = main @ 71125373, "Merge
