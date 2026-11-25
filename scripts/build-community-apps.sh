@@ -157,10 +157,12 @@ done
 [ -z "$STALE_DIR" ] || { rm -rf "$STALE_DIR"; STALE_DIR=""; }
 rm -rf "$CACHE/src"
 
-if [ -d "$OUT/.local/share/applications" ]; then
-	find "$OUT/.local/share/applications" -name '*.desktop' -print0 \
-		| xargs -0 -r sed -i -E "s|$OUT/.local/bin/||g"
-fi
+# Desktop files, dbus services and anything else install.sh wrote must not
+# embed the staging home. ~/.local/bin is on PATH, so a bare command is enough.
+while read -r f; do
+	[ -n "$f" ] || continue
+	sed -i "s|$OUT/.local/bin/||g" "$f"
+done < <(grep -rIl -F "$OUT/.local/bin/" "$OUT" 2>/dev/null || true)
 if grep -rIl --exclude-dir=themes "$OUT" "$OUT" 2>/dev/null | head -5 | grep -q .; then
 	grep -rIl --exclude-dir=themes "$OUT" "$OUT" | head
 	die "community-apps stage still contains staging path $OUT"
