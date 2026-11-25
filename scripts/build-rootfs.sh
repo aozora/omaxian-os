@@ -149,8 +149,12 @@ s_live()    { inst 90-live.list
 }
 
 s_upgrade() { # apply pins (backports kernel/pipewire/quickshell) and drop older kernels
-	# A resumed build has had its apt lists wiped by finalize. Refresh before
-	# dist-upgrade / reinstall, or apt reports the local repo as undownloadable.
+	# A resumed build has had its apt lists wiped by finalize, and finalize put
+	# apt.omaxian.org back. Park that source again so update only sees the
+	# build mirror and the local repo; finalize unparks it.
+	if [ -e "$R$OMX_SRC" ] && ! CH dpkg-divert --list "$OMX_SRC" | grep -q .; then
+		park_omaxian_sources
+	fi
 	CH apt-get update
 	CH $APT dist-upgrade
 	# Our own packages may be rebuilt under an unchanged (unpublished) version; dist-upgrade
