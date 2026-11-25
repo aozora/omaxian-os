@@ -95,4 +95,18 @@ c_v03() {
 	command -v rustic >/dev/null && echo RUSTIC_BIN_PASS || echo RUSTIC_BIN_FAIL
 	grep -q "^$U:" /etc/subuid && grep -q "^$U:" /etc/subgid && echo SUBUID_PASS || echo SUBUID_FAIL
 	strata --version 2>&1 | head -1 | grep -q 1.2.2 && echo STRATA_122_PASS || echo STRATA_122_FAIL
+	# OpenRA game content is on the full ISO only (payload/openra). A full
+	# image is the one with system Flatpaks; the base image must not ship it.
+	local P=/usr/share/omaxian/payload/openra g
+	if [ -n "$(find /var/lib/flatpak/app -mindepth 1 -maxdepth 1 -type d 2>/dev/null | head -1)" ]; then
+		for g in cnc d2k ra; do
+			[ -n "$(find "$P/Content/$g" -type f 2>/dev/null | head -1)" ] && echo "OPENRA_CONTENT_PASS $g" || echo "OPENRA_CONTENT_FAIL $g"
+			[ -d "$P/maps/$g" ] && echo "OPENRA_MAPS_PASS $g" || echo "OPENRA_MAPS_FAIL $g"
+		done
+		for g in settings.yaml logs replays player.oraid; do
+			[ ! -e "$P/$g" ] && echo "OPENRA_STRIP_PASS $g" || echo "OPENRA_STRIP_FAIL $g"
+		done
+	else
+		[ ! -e "$P" ] && echo OPENRA_BASE_ABSENT_PASS || echo OPENRA_BASE_FAIL
+	fi
 }
