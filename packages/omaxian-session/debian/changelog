@@ -1,3 +1,11 @@
+omaxian-session (1.2.4-2) excalibur; urgency=medium
+
+  * Keep omarchy-local-ai's command symlinks relative to the home. The
+    pinned installer records the build-time home, which does not exist
+    on the installed system.
+
+ -- Omaxian OS <dev@omaxian.org>  Wed, 25 Nov 2026 12:05:00 +0100
+
 omaxian-session (1.2.4-1) excalibur; urgency=medium
 
   * New upstream Omaxian shell v1.2.4 (tag v1.2.4 = main @ bdf53757,

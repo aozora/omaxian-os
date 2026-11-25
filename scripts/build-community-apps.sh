@@ -163,6 +163,17 @@ while read -r f; do
 	[ -n "$f" ] || continue
 	sed -i "s|$OUT/.local/bin/||g" "$f"
 done < <(grep -rIl -F "$OUT/.local/bin/" "$OUT" 2>/dev/null || true)
+# Symlinks (omarchy-local-ai and its aliases) must be relative. An absolute
+# target under the staging home breaks once the tree is copied into a real home.
+while IFS= read -r -d '' l; do
+	t=$(readlink "$l")
+	case "$t" in
+		"$OUT"/*)
+			rel=$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], os.path.dirname(sys.argv[2])))' "$t" "$l")
+			ln -sfn "$rel" "$l"
+			;;
+	esac
+done < <(find "$OUT" -type l -print0)
 if grep -rIl --exclude-dir=themes "$OUT" "$OUT" 2>/dev/null | head -5 | grep -q .; then
 	grep -rIl --exclude-dir=themes "$OUT" "$OUT" | head
 	die "community-apps stage still contains staging path $OUT"
