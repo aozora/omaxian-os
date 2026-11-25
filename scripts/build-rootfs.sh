@@ -149,6 +149,9 @@ s_live()    { inst 90-live.list
 }
 
 s_upgrade() { # apply pins (backports kernel/pipewire/quickshell) and drop older kernels
+	# A resumed build has had its apt lists wiped by finalize. Refresh before
+	# dist-upgrade / reinstall, or apt reports the local repo as undownloadable.
+	CH apt-get update
 	CH $APT dist-upgrade
 	# Our own packages may be rebuilt under an unchanged (unpublished) version; dist-upgrade
 	# skips those, so always reinstall them from repo-local to pick up the current build.
@@ -164,10 +167,11 @@ s_upgrade() { # apply pins (backports kernel/pipewire/quickshell) and drop older
 		| awk -v s="-${keep#linux-image-}" '/ installed$/ && substr($1, length($1)-length(s)+1) != s {print $1}')
 	[ -z "$old" ] || CH $APT purge $old
 	CH dpkg-query -W -f '${Package} ${Version}\n' linux-image-amd64 pipewire wireplumber quickshell mesa-libgallium
-	local kv; kv=$(CH dpkg-query -W -f '${Version}' linux-image-amd64)
+	local kv mesa
+	kv=$(CH dpkg-query -W -f '${Version}' linux-image-amd64)
 	case $kv in 7.*) ;; *) die "linux-image-amd64 is $kv, need 7.x from backports" ;; esac
-	local mesa_origin; mesa_origin=$(CH apt-cache policy mesa-libgallium | awk '/\*\*\*/{getline; print}')
-	echo "$mesa_origin" | grep -q backports || die "mesa-libgallium is not from backports ($mesa_origin)"
+	mesa=$(CH dpkg-query -W -f '${Version}' mesa-libgallium)
+	case $mesa in *bpo*) ;; *) die "mesa-libgallium is $mesa, need the excalibur-backports build" ;; esac
 }
 
 s_configure() {
