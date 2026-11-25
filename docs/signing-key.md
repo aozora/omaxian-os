@@ -65,9 +65,19 @@ Never commit anything under `keys/` (it's in .gitignore).
 
 ## Re-signing a repo built with the test key
 
-`scripts/resign-repo.sh` imports `OMAXIAN_SIGNING_KEY` (armored signing subkey;
-`OMAXIAN_SIGNING_PASSPHRASE` only if the key has one) into `keys/private/gnupg`,
-checks the fingerprint, and re-exports the local repo. It does not upload.
-Round 19: `LOCALREPO=build/r19/repo bash scripts/resign-repo.sh`. The debs and
-ISOs keep the keyring they were built with, so rebuild `omaxian-base` and the
-ISOs with the real public keyring before publishing.
+The only file that must be signed is `dists/excalibur/Release`. Everything else
+in `dists/` is named and hashed by that file. On the machine that holds the
+signing subkey (do not copy the secret key onto the build machine):
+
+```sh
+gpg --batch --local-user '5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75!' \
+  --clearsign --output dists/excalibur/InRelease dists/excalibur/Release
+gpg --batch --local-user '5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75!' \
+  --detach-sign --output dists/excalibur/Release.gpg dists/excalibur/Release
+```
+
+`scripts/resign-repo.sh` is the alternative that imports `OMAXIAN_SIGNING_KEY`
+(armored signing subkey; `OMAXIAN_SIGNING_PASSPHRASE` only if the key has one)
+into `keys/private/gnupg` and re-exports the local repo. It does not upload.
+Round 19's unsigned tree is `build/r19/repo-unsigned` (pool, unsigned `Release`,
+real `omaxian-archive-keyring.pgp`; no `InRelease`, no `Release.gpg`).

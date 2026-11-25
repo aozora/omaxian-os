@@ -95,6 +95,9 @@ c_v03() {
 	command -v rustic >/dev/null && echo RUSTIC_BIN_PASS || echo RUSTIC_BIN_FAIL
 	grep -q "^$U:" /etc/subuid && grep -q "^$U:" /etc/subgid && echo SUBUID_PASS || echo SUBUID_FAIL
 	strata --version 2>&1 | head -1 | grep -q 1.2.2 && echo STRATA_122_PASS || echo STRATA_122_FAIL
+	echo '99988abed6c067e96e7fdc10c12a78c59193a8dff75b79bf3638ed5e2f264358  /usr/share/keyrings/omaxian-archive-keyring.pgp' | sha256sum -c --status \
+		&& echo KEYRING_SHA_PASS || echo KEYRING_SHA_FAIL
+	! grep -a -q 'DO NOT TRUST' /usr/share/keyrings/omaxian-archive-keyring.pgp && echo KEYRING_NOT_TEST_PASS || echo KEYRING_NOT_TEST_FAIL
 	# OpenRA game content is on the full ISO only (payload/openra). A full
 	# image is the one with system Flatpaks; the base image must not ship it.
 	local P=/usr/share/omaxian/payload/openra g

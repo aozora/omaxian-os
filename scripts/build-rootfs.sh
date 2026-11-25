@@ -59,6 +59,22 @@ unpark_omaxian_sources() {
 		msg "omaxian.sources: $(grep -m1 '^Enabled:' "$R$OMX_SRC")"
 	fi
 }
+# The image ships keys/public (the real archive key). The local build repo may
+# still be signed by the throwaway key; that public key is trusted only from a
+# file s_finalize deletes, so it never lands in the ISO.
+write_omaxian_build_list() {
+	local shipped="$TOPDIR/keys/public/omaxian-archive-keyring.pgp"
+	local repo="$LOCALREPO/omaxian-archive-keyring.pgp"
+	local signed_by=/usr/share/keyrings/omaxian-archive-keyring.pgp
+	install -m644 "$shipped" "$R$signed_by"
+	if [ -f "$repo" ] && ! cmp -s "$shipped" "$repo"; then
+		install -m644 "$repo" "$R/usr/share/keyrings/omaxian-build-keyring.pgp"
+		signed_by=/usr/share/keyrings/omaxian-build-keyring.pgp
+	fi
+	cat > "$R/etc/apt/sources.list.d/omaxian-build.list" <<EOS
+deb [signed-by=$signed_by] http://127.0.0.1:$REPO_PORT $OMAXIAN_APT_SUITE main
+EOS
+}
 
 serve_repo() { # local Omaxian repo over http, reachable from inside the chroot
 	[ -d "$LOCALREPO/dists" ] || die "no local repo: run scripts/make-repo.sh"
@@ -90,15 +106,13 @@ s_apt_setup() {
 	park_omaxian_sources
 	install -m644 "$TOPDIR"/config/apt/preferences.d/*.pref "$R/etc/apt/preferences.d/"
 	install -m644 "$TOPDIR"/config/apt/apt.conf.d/* "$R/etc/apt/apt.conf.d/"
-	install -m644 "$TOPDIR/config/apt/keys/NexusSfan.pgp" "$TOPDIR/keys/public/omaxian-archive-keyring.pgp" "$R/usr/share/keyrings/"
+	install -m644 "$TOPDIR/config/apt/keys/NexusSfan.pgp" "$R/usr/share/keyrings/"
+	write_omaxian_build_list
 	install -m644 "$TOPDIR/packages/omaxian-base/files/etc/apt/sources.list.d/xlibre-debian.sources" "$R/etc/apt/sources.list.d/"
 	if [ ! -s "$R/etc/apt/sources.list" ]; then # re-run after finalize: back to the build mirror
 		rm -f "$R/etc/apt/sources.list.d/devuan.sources"
 		for s in "" -updates -security -backports; do echo "deb $BUILD_MIRROR $DEVUAN_SUITE$s $DEVUAN_COMPONENTS"; done > "$R/etc/apt/sources.list"
 	fi
-	cat > "$R/etc/apt/sources.list.d/omaxian-build.list" <<EOS
-deb [signed-by=/usr/share/keyrings/omaxian-archive-keyring.pgp] http://127.0.0.1:$REPO_PORT $OMAXIAN_APT_SUITE main
-EOS
 	printf 'Package: *\nPin: release o=apt.omaxian.org\nPin-Priority: 700\n' > "$R/etc/apt/preferences.d/41-omaxian-build.pref"
 	echo 'Acquire::https::Pipeline-Depth "0";' > "$R/etc/apt/apt.conf.d/91omaxian-build"
 	if [ -n "${OMAXIAN_BUILD_HTTPS_PROXY:-}" ]; then
@@ -157,9 +171,7 @@ s_upgrade() { # apply pins (backports kernel/pipewire/quickshell) and drop older
 	fi
 	# finalize also removes the build-only local repo line.
 	if [ ! -f "$R/etc/apt/sources.list.d/omaxian-build.list" ]; then
-		cat > "$R/etc/apt/sources.list.d/omaxian-build.list" <<EOS
-deb [signed-by=/usr/share/keyrings/omaxian-archive-keyring.pgp] http://127.0.0.1:$REPO_PORT $OMAXIAN_APT_SUITE main
-EOS
+		write_omaxian_build_list
 	fi
 	CH apt-get update
 	CH $APT dist-upgrade
@@ -365,7 +377,11 @@ EOS
 	unpark_omaxian_sources
 	dpkg_hygiene
 	keep_manual
-	rm -f "$R/usr/sbin/policy-rc.d" "$R/tmp/preseed.cfg"
+	rm -f "$R/usr/sbin/policy-rc.d" "$R/tmp/preseed.cfg" \
+		"$R/usr/share/keyrings/omaxian-build-keyring.pgp"
+	if grep -a -q 'DO NOT TRUST' "$R"/usr/share/keyrings/* 2>/dev/null; then
+		die "throwaway archive key left in the image"
+	fi
 	CH apt-get clean
 	strip_excluded
 	rm -rf "$R"/var/lib/apt/lists/* "$R"/var/cache/apt/*.bin "$R"/tmp/* "$R"/root/.cache
