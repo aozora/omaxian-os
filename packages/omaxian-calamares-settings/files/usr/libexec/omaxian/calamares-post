@@ -39,6 +39,9 @@ fi
 # The image already has these marks (build-rootfs.sh); this covers an image
 # built without them.
 /usr/libexec/omaxian/keep-manual >/dev/null 2>&1 || true
+# rootless Podman (omarchy-local-ai): the user created just above needs a
+# subordinate id range. useradd on some shadows skips it.
+[ -x /usr/libexec/omaxian/ensure-subids ] && /usr/libexec/omaxian/ensure-subids || true
 # make sure the first-boot provisioning runs on the installed system
 rm -f /var/lib/omaxian/firstboot.done
 update-rc.d omaxian-firstboot defaults >/dev/null 2>&1 || true

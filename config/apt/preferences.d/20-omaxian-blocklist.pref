@@ -18,3 +18,10 @@ Pin-Priority: -1
 Package: firefox firefox-esr firefox-l10n-* firefox-esr-l10n-*
 Pin: release *
 Pin-Priority: -1
+
+# Removed in 0.3: VLC (videos and music go to OmaView / MyGo Music), imv and
+# nsxiv (images go to OmaView). They are not on the package lists; the pin
+# stops a Recommends from pulling them back.
+Package: vlc vlc-* imv nsxiv
+Pin: release *
+Pin-Priority: -1

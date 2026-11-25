@@ -1,0 +1,7 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+# upstream binary, already stripped
+override_dh_strip:
+override_dh_dwz:
+override_dh_auto_test:

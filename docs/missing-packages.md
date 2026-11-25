@@ -6,6 +6,9 @@
 | `fontmanager` | renamed | `font-manager` |
 | `qemu-kvm` | virtual | `qemu-system-x86` |
 | `witr` | not packaged anywhere in Debian/Devuan | left out; TODO: package from upstream into apt.omaxian.org |
+| `chezmoi` | not in excalibur (sid has it) | upstream glibc .deb, sha256-pinned, in the local repo |
+| `rustic` | not packaged in Debian/Devuan | upstream x86_64 binary packaged as `rustic` (sha256-pinned tarball) |
+| MyGo Music | not packaged; https://music.egoist.dev/ is the project page | upstream `mygo-music` .deb (native player, not a web wrapper) |
 | `xkb-switch` | not in excalibur | left out (Omaxian uses its own layout switcher) |
 | `firefox`, `firefox-esr` | pinned -1 by policy | Brave + LibreWolf via extrepo |
 | `systemd`, `pulseaudio`, `xserver-xorg-core` | pinned -1 | elogind, PipeWire, XLibre (`xserver-xlibre-core` *provides* `xserver-xorg-core`, so the -1 pin is on the real Xorg package only) |

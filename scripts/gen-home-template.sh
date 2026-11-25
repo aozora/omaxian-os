@@ -14,10 +14,9 @@ env -i PATH=/usr/bin:/bin HOME="$T/home" USER=omaxian XDG_RUNTIME_DIR="$T/run" L
 	bash "$SRC/scripts/install.sh" > "$T/install.log" 2>&1 || { cat "$T/install.log"; die "install.sh failed"; }
 env -i PATH=/usr/bin:/bin HOME="$T/home" USER=omaxian XDG_RUNTIME_DIR="$T/run" LANG=C.UTF-8 TERM=dumb \
 	bash "$SRC/scripts/deploy.sh" > "$T/deploy.log" 2>&1 || { cat "$T/deploy.log"; die "deploy.sh failed"; }
-# Default community-apps: ALL of Omaxian's community-apps/ (disktree, folio,
-# monologue, omacalc, omacut, omarchy-meeting-recorder, omawrite, plain,
-# signed in v1.1.3). Built/fetched by scripts/build-community-apps.sh into
-# build/cache/community-apps/home. community-plugins are intentionally NOT seeded.
+# Default community-apps: every community-apps/<id>/install.sh. Built by
+# scripts/build-community-apps.sh into build/cache/community-apps/home.
+# Every community plugin is seeded and enabled below.
 CA="$BUILDDIR/cache/community-apps/home"
 # Rebuild when the stage is missing or was built from another Omaxian commit /
 # builder / patch set (a stale 4-app stage from 0.1 must not be reused).
@@ -49,6 +48,77 @@ fi
 # written per user (omaxian-default-file-manager). Folio/disktree register for
 # inode/directory, so drop any default an app's installer wrote.
 [ -f "$T/home/$MA" ] && sed -i '/^[[:space:]]*inode\/directory[[:space:]]*=/d' "$T/home/$MA"
+# Community plugins: copy every port and enable it the way omarchy-plugin-enable
+# does (bar widgets onto their default section, other kinds into plugins[]).
+# The PulseAudio speaker calibrator is copied but not enabled: this session is
+# PipeWire, and the two calibrators refuse to be enabled together.
+msg "seeding community plugins"
+python3 - "$SRC/community-plugins" "$T/home" <<'PY'
+import json, os, shutil, sys
+src, home = sys.argv[1], sys.argv[2]
+dst = os.path.join(home, ".config", "omarchy", "plugins")
+os.makedirs(dst, exist_ok=True)
+shell_path = os.path.join(home, ".config", "omarchy", "shell.json")
+if not os.path.isfile(shell_path):
+    alt = os.path.join(home, ".local", "share", "omarchy", "shell.json")
+    shutil.copy(alt, shell_path)
+shell = json.load(open(shell_path))
+layout = shell.setdefault("bar", {}).setdefault("layout", {})
+for sec in ("left", "centerBegin", "center", "centerEnd", "right", "tray"):
+    layout.setdefault(sec, [])
+plugins = shell.setdefault("plugins", [])
+seen = set()
+for sec, entries in layout.items():
+    for e in entries:
+        if isinstance(e, dict) and e.get("id"):
+            seen.add(e["id"])
+for e in plugins:
+    if isinstance(e, dict) and e.get("id"):
+        seen.add(e["id"])
+n = 0
+for name in sorted(os.listdir(src)):
+    man = os.path.join(src, name, "manifest.json")
+    if not os.path.isfile(man):
+        continue
+    m = json.load(open(man))
+    pid = m["id"]
+    target = os.path.join(dst, pid)
+    if os.path.isdir(target):
+        shutil.rmtree(target)
+    shutil.copytree(os.path.join(src, name), target, symlinks=True)
+    n += 1
+    if name == "omaxian-speaker-pulseaudio-calibrator" or pid in seen:
+        continue
+    kinds = m.get("kinds") or []
+    if "bar-widget" in kinds:
+        section = (m.get("barWidget") or {}).get("defaultSection") or ""
+        if section == "center" or section not in layout:
+            section = "centerEnd"
+        layout[section].append({"id": pid})
+    else:
+        plugins.append({"id": pid})
+    seen.add(pid)
+json.dump(shell, open(shell_path, "w"), indent=2)
+open(shell_path, "a").write("\n")
+print(f"seeded {n} community plugins")
+PY
+# OmaView is the default for every image and video type its desktop file
+# claims. It drops PDF on purpose (playlist.cpp: a document, not a picture),
+# so document types are not associated with it. Audio types go to MyGo Music,
+# the native player added in 0.3 (its own desktop file only claims a scheme).
+OMA_DESK="$T/home/.local/share/applications/omaview.desktop"
+if [ -f "$OMA_DESK" ]; then
+	mime=$(awk -F= '/^MimeType=/{print substr($0, index($0,"=")+1)}' "$OMA_DESK")
+	IFS=';' 
+	for t in $mime; do
+		[ -n "$t" ] || continue
+		case $t in
+			audio/*|application/ogg) "$INI" "$T/home/$MA" "Default Applications" "$t" mygo-music.desktop ;;
+			*) "$INI" "$T/home/$MA" "Default Applications" "$t" omaview.desktop ;;
+		esac
+	done
+	unset IFS
+fi
 # OnlyOffice (base AppImage) uses the system title bar (also in /etc/skel).
 "$INI" "$T/home/.config/onlyoffice/DesktopEditors.conf" General titlebar system
 # hardcoded build paths would break on the target

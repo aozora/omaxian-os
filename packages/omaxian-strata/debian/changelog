@@ -1,3 +1,11 @@
+omaxian-strata (1.2.2-1) excalibur; urgency=medium
+
+  * New upstream stable v1.2.2 (latest non-nightly tag). Signed manifest
+    verified with the same release key as 1.2.0. Remains the default file
+    manager (inode/directory).
+
+ -- Omaxian OS <dev@omaxian.org>  Wed, 25 Nov 2026 11:20:00 +0100
+
 omaxian-strata (1.2.0-1) excalibur; urgency=medium
 
   * New upstream stable v1.2.0; signed manifest and archive verified with pinned key.

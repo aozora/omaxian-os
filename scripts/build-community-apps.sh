@@ -1,62 +1,74 @@
 #!/bin/bash
 # Stage ALL Omaxian community-apps (every community-apps/<id>/ that ships an
 # install.sh) into build/cache/community-apps/home (a partial home: .local/…
-# and .config/i3/config.d/…), from the pinned PRE-BUILT binaries only.
+# and .config/i3/config.d/…).
 #
-# Since Omaxian v1.2.0 every app carries <app>/.omaxian-prebuilt (url, sha256,
-# tree, bin, arch, qt): Omaxian's CI release apps-<sha7> for the Qt/Rust apps,
-# tobi/disktree's upstream release for disktree.
+# Apps with <app>/.omaxian-prebuilt install that sha256-pinned binary. Nothing
+# else is compiled: compilers on that install.sh's PATH fail the build.
 #
-# Nothing is compiled here: no Qt dev packages, no cargo, no local compat
-# patches. Since v1.2.1 Folio and Monologue's pinned binaries load on Qt 6.8
-# too (upstream's CI lints QML against Qt 6.8), so patches/community-apps/ is
-# gone; an app that tries to build from source fails the build.
+# The shell CI does not publish pins for flowtunes, fantasi or
+# omarchy-local-ai (CI_APPS in .github/scripts/prebuilt-plan.sh). Those three
+# are included on purpose:
+#   * flowtunes, fantasi — compiled once here, on Debian trixie Qt 6.8, and
+#     the resulting binaries are what the image ships (the installed system
+#     does not compile them);
+#   * omarchy-local-ai — a Python engine. install.sh copies it; there is no
+#     binary to pin.
+# A pin that appears upstream wins over this exception.
 #
-#   1. read each manifest, download the tarball into build/cache/community-apps/dl
-#      and check its sha256 (cached across runs; re-verified every run);
-#   2. run the app's own install.sh --skip-apt with a curl shim that serves the
-#      verified tarball, so install.sh's own prebuilt_fetch re-checks the same
-#      bytes and installs the desktop file, icons, i3 rules and plugins from the
-#      pinned tree;
-#   3. fail if any install.sh fell back to a source build (and keep compilers
-#      shims on install.sh's PATH make cmake, qmake6, cargo, rustup and cc fail);
-#   4. ldd every staged ELF (no unresolved libraries on this host) and load each
-#      Qt app's QML offscreen.
+# The stage runs on Debian trixie / Devuan excalibur (Qt 6.8). On any other
+# host it re-enters a trixie chroot (scripts/ensure-build-chroot.sh).
 #
 #   build-community-apps.sh [omaxian-src]
-#   COMMUNITY_APPS_SKIP="omacut plain" build-community-apps.sh   # opt out
-#   COMMUNITY_APPS_STALE_OK="monologue" build-community-apps.sh  # see below
-#
-# install.sh refuses a pin whose tree= is older than the app's current
-# sources (it would compile instead, which fails here). COMMUNITY_APPS_STALE_OK
-# lists apps whose pinned binary is installed anyway (from a copy outside
-# git, so upstream's stale check cannot run); each one is warned about and
-# marked "stale-pin" in installed.txt. Default: empty (strict).
-#
-# Run on a Debian trixie / Devuan excalibur host (Qt 6.8): install.sh checks
-# libqt6core6t64 >= the manifest's qt=. Does NOT install community-plugins.
+#   COMMUNITY_APPS_SKIP="omacut plain" build-community-apps.sh
+#   COMMUNITY_APPS_STALE_OK="monologue" build-community-apps.sh
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 KEY_ONLY=0; [ "${1:-}" = --key ] && { KEY_ONLY=1; shift; }
 SRC=$(realpath "${1:-${OMX:-$BUILDDIR/src/omaxian}}")
-# Cache key: Omaxian commit (pins every manifest) + skip list + this builder.
+# Cache key: Omaxian commit + skip list + this builder.
 ca_key() {
 	{ git -C "$SRC" rev-parse HEAD 2>/dev/null || cat "$SRC/version"
 	  echo "${COMMUNITY_APPS_SKIP:-}|${COMMUNITY_APPS_STALE_OK:-}"
 	  cat "$0"; } | sha256sum | cut -c1-16
 }
 if [ "$KEY_ONLY" = 1 ]; then ca_key; exit 0; fi
+
+# Pinned binaries and the Qt 6.8 source builds need libqt6core6t64.
+if [ "${OMAXIAN_CA_HOST:-}" != 1 ] && ! dpkg-query -W -f '${Status}' libqt6core6t64 2>/dev/null | grep -q 'install ok installed'; then
+	[ "$(id -u)" -eq 0 ] || exec sudo bash "$0" "$@"
+	bash "$TOPDIR/scripts/ensure-build-chroot.sh" "$SRC"
+	CHROOT=${OMAXIAN_TRIXIE_CHROOT:-/var/lib/omaxian-trixie}
+	mkdir -p "$CHROOT/workspace" "$CHROOT/tmp"
+	mountpoint -q "$CHROOT/proc" || mount -t proc proc "$CHROOT/proc"
+	mountpoint -q "$CHROOT/dev" || mount --bind /dev "$CHROOT/dev"
+	mountpoint -q "$CHROOT/workspace" || mount --bind "$TOPDIR" "$CHROOT/workspace"
+	cp /etc/resolv.conf "$CHROOT/etc/resolv.conf"
+	exec chroot "$CHROOT" /usr/bin/env -i \
+		HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+		OMAXIAN_CA_HOST=1 \
+		SUDO_UID="${SUDO_UID:-}" SUDO_GID="${SUDO_GID:-}" \
+		COMMUNITY_APPS_SKIP="${COMMUNITY_APPS_SKIP:-}" \
+		COMMUNITY_APPS_STALE_OK="${COMMUNITY_APPS_STALE_OK:-}" \
+		COMMUNITY_APPS_SMOKE="${COMMUNITY_APPS_SMOKE:-1}" \
+		bash /workspace/scripts/build-community-apps.sh /workspace/build/src/omaxian
+fi
+
 APPS="$SRC/community-apps"
 OUT="$BUILDDIR/cache/community-apps/home"
 CACHE="$BUILDDIR/cache/community-apps"
 DL="$CACHE/dl"
+# Shell CI does not build these. A .omaxian-prebuilt file still wins.
+SOURCE_APPS="flowtunes fantasi"
+COPY_APPS="omarchy-local-ai"
 
 die() { echo "error: $*" >&2; exit 1; }
 need_dir() { [ -d "$1" ] || die "missing $1 (need Omaxian v1.2.0+ community-apps)"; }
+in_list() { case " $2 " in *" $1 "*) return 0 ;; esac; return 1; }
+has_pin() { [ -f "$APPS/$1/.omaxian-prebuilt" ]; }
 
 need_dir "$APPS"
 [ -f "$APPS/lib/prebuilt.sh" ] || die "$APPS/lib/prebuilt.sh missing (need Omaxian v1.2.0+ pre-built pins)"
-# Every app dir with an install.sh is a default app (enumerated, not hardcoded).
 mapfile -t ALL_APPS < <(find "$APPS" -mindepth 2 -maxdepth 2 -name install.sh -printf '%h\n' \
 	| xargs -r -n1 basename | sort)
 APPS_LIST=()
@@ -64,20 +76,39 @@ for a in "${ALL_APPS[@]}"; do
 	case " ${COMMUNITY_APPS_SKIP:-} " in *" $a "*) warn "community-apps: skipping $a (COMMUNITY_APPS_SKIP)"; continue ;; esac
 	APPS_LIST+=("$a")
 done
-# Must exist: the installer offers Folio, and the 0.1 apps must not vanish.
 for a in disktree folio monologue omarchy-meeting-recorder signed; do
 	need_dir "$APPS/$a"
 done
 msg "community-apps: ${APPS_LIST[*]}"
 [ "$(uname -m)" = x86_64 ] || die "community-apps: pinned binaries are x86_64 only (host $(uname -m))"
 
+if [ "$(id -u)" -eq 0 ]; then
+	id builder >/dev/null 2>&1 || useradd --create-home --shell /bin/bash builder
+	RUN_AS=(su -s /bin/bash builder -c)
+else
+	RUN_AS=()
+fi
+run_user() { # $1 = shell command
+	if [ ${#RUN_AS[@]} -gt 0 ]; then "${RUN_AS[@]}" "$1"; else bash -c "$1"; fi
+}
+
 # --- 1. fetch + verify every pinned tarball ---
 mget() { awk -F= -v k="$2" '$1 == k { sub(/^[^=]*=/, ""); print; exit }' "$1"; }
 mkdir -p "$DL" "$CACHE/shim"
 : > "$CACHE/shim/urls"
 for a in "${APPS_LIST[@]}"; do
+	if ! has_pin "$a"; then
+		if in_list "$a" "$SOURCE_APPS"; then
+			warn "community-apps: $a has no .omaxian-prebuilt; it will be compiled once on Qt 6.8"
+			continue
+		fi
+		if in_list "$a" "$COPY_APPS"; then
+			warn "community-apps: $a has no .omaxian-prebuilt; install.sh copies it (no binary to pin)"
+			continue
+		fi
+		die "community-apps: $a has no pinned pre-built binary ($APPS/$a/.omaxian-prebuilt); the OS build does not compile apps"
+	fi
 	m="$APPS/$a/.omaxian-prebuilt"
-	[ -f "$m" ] || die "community-apps: $a has no pinned pre-built binary ($m); the OS build does not compile apps"
 	url=$(mget "$m" url); sha=$(mget "$m" sha256); arch=$(mget "$m" arch)
 	case $url in https://*) ;; *) die "$m: url= must be https" ;; esac
 	[[ $sha =~ ^[0-9a-f]{64}$ ]] || die "$m: bad sha256="
@@ -92,9 +123,6 @@ for a in "${APPS_LIST[@]}"; do
 	printf '%s\t%s\n' "$url" "$f" >> "$CACHE/shim/urls"
 	msg "community-apps: $a pinned binary ok ($(mget "$m" tree | cut -c1-7), sha256 ${sha:0:12}…)"
 done
-# curl shim: install.sh's prebuilt_fetch downloads with `curl … -o FILE URL`;
-# serve the verified cached tarball for pinned URLs, refuse anything else
-# (no network surprises, no rustup/cargo/apt fallbacks from inside install.sh).
 cat > "$CACHE/shim/curl" <<SHIM
 #!/bin/bash
 out=""; url=""
@@ -108,11 +136,12 @@ exec cp "\$f" "\$out"
 SHIM
 chmod 755 "$CACHE/shim/curl"
 
-# --- 2. install each app from its pinned binary ---
+# --- 2. install each app ---
 rm -rf "$OUT"
 mkdir -p "$OUT/.local" "$OUT/.config/i3/config.d"
 # Compiler blockers: a fallback to a source build must fail fast, not quietly
-# compile with whatever the build host has.
+# compile with whatever the build host has. Source-allowlisted apps do not
+# use this PATH.
 for t in cmake qmake6 qmake cargo rustup cc gcc g++ c++; do
 	printf '#!/bin/sh\necho "community-apps: %s blocked (pinned pre-built binaries only)" >&2\nexit 97\n' "$t" \
 		> "$CACHE/shim/$t"
@@ -125,7 +154,11 @@ trap '[ -z "$STALE_DIR" ] || rm -rf "$STALE_DIR"' EXIT
 for a in "${APPS_LIST[@]}"; do
 	log="$CACHE/${a}-install.log"
 	dir="$APPS/$a"
-	if stale_ok "$a"; then
+	mode=pin
+	if ! has_pin "$a" && in_list "$a" "$SOURCE_APPS"; then mode=source
+	elif ! has_pin "$a" && in_list "$a" "$COPY_APPS"; then mode=copy
+	fi
+	if [ "$mode" = pin ] && stale_ok "$a"; then
 		warn "community-apps: $a: installing its pinned binary even if its sources changed since (COMMUNITY_APPS_STALE_OK)"
 		[ -n "$STALE_DIR" ] || STALE_DIR=$(mktemp -d /tmp/omaxian-ca-stale.XXXXXX)
 		rm -rf "${STALE_DIR:?}/$a"; mkdir -p "$STALE_DIR"
@@ -133,32 +166,63 @@ for a in "${APPS_LIST[@]}"; do
 		cp -a "$APPS/$a" "$STALE_DIR/$a"
 		dir="$STALE_DIR/$a"
 	fi
-	msg "community-apps: $a (pre-built)"
-	# install.sh refuses root and uses $HOME; --skip-apt: runtime deps come
-	# from 55-community-apps.list / omaxian-session Depends.
-	( cd "$dir" && env -i PATH="$CACHE/shim:/usr/bin:/bin" HOME="$OUT" USER="${USER:-omaxian}" \
-		LANG=C.UTF-8 TMPDIR="${TMPDIR:-/tmp}" bash ./install.sh --skip-apt ) > "$log" 2>&1 \
-		|| { cat "$log"; die "$a install.sh failed (a source-build fallback fails here by design)"; }
-	# --- 3. a source build here means the pin did not apply: fail ---
-	if ! grep -q '^>> sha256 ok' "$log" || grep -qiE 'building from source|cmake --build|cargo build|>> bin/build|blocked \(pinned' "$log"; then
-		cat "$log"; die "community-apps: $a did not install its pinned pre-built binary"
+	src_copy=""
+	case $mode in
+		pin)
+			msg "community-apps: $a (pre-built)"
+			path="$CACHE/shim:/usr/bin:/bin"; args="--skip-apt" ;;
+		source)
+			msg "community-apps: $a (compiled once on this Qt; no upstream pin)"
+			src_copy=$(mktemp -d /tmp/omaxian-ca-src.XXXXXX)
+			mkdir -p "$src_copy"
+			cp -a "$APPS/lib" "$src_copy/lib"
+			cp -a "$APPS/$a" "$src_copy/$a"
+			dir="$src_copy/$a"
+			path="/usr/bin:/bin"; args="--from-source --skip-apt" ;;
+		copy)
+			msg "community-apps: $a (copied; no binary pin)"
+			path="/usr/bin:/bin"; args="--skip-apt" ;;
+	esac
+	who=${USER:-omaxian}
+	if [ "$(id -u)" -eq 0 ]; then
+		who=builder
+		chown -R builder:builder "$OUT" ${src_copy:+"$src_copy"}
 	fi
+	run_user "cd $(printf %q "$dir") && env -i PATH=$(printf %q "$path") HOME=$(printf %q "$OUT") USER=$who LANG=C.UTF-8 TMPDIR=${TMPDIR:-/tmp} bash ./install.sh $args" \
+		> "$log" 2>&1 \
+		|| { cat "$log"; [ -n "$src_copy" ] && rm -rf "$src_copy"; die "$a install.sh failed"; }
+	[ -z "$src_copy" ] || rm -rf "$src_copy"
+	case $mode in
+		pin)
+			if ! grep -q '^>> sha256 ok' "$log" || grep -qiE 'building from source|cmake --build|cargo build|>> bin/build|blocked \(pinned' "$log"; then
+				cat "$log"; die "community-apps: $a did not install its pinned pre-built binary"
+			fi ;;
+		source)
+			if grep -q 'blocked (pinned' "$log"; then cat "$log"; die "community-apps: $a source build was blocked"; fi
+			[ -e "$OUT/.local/bin/$a" ] || { cat "$log"; die "community-apps: $a source build produced no binary"; }
+			;;
+		copy)
+			for n in omarchy-local-ai omarchy-agent-local omarchy-models; do
+				[ -e "$OUT/.local/bin/$n" ] || { cat "$log"; die "community-apps: $a did not install $n"; }
+			done
+			;;
+	esac
 	BUILT+=("$a")
 done
 [ -z "$STALE_DIR" ] || { rm -rf "$STALE_DIR"; STALE_DIR=""; }
-rm -rf "$CACHE/src" # leftover patched-build tree from v1.2.0 stages
+rm -rf "$CACHE/src"
 
-# Desktop files must not embed the staging absolute path (home-template is
-# copied into real $HOME). Prefer bare command names; ~/.local/bin is on PATH
-# via omaxian-session / .xsessionrc.
 if [ -d "$OUT/.local/share/applications" ]; then
 	find "$OUT/.local/share/applications" -name '*.desktop' -print0 \
 		| xargs -0 -r sed -i -E "s|$OUT/.local/bin/||g"
 fi
-# Guard: no leftover staging path
 if grep -rIl --exclude-dir=themes "$OUT" "$OUT" 2>/dev/null | head -5 | grep -q .; then
 	grep -rIl --exclude-dir=themes "$OUT" "$OUT" | head
 	die "community-apps stage still contains staging path $OUT"
+fi
+chmod -R a+rX "$OUT" "$CACHE" 2>/dev/null || true
+if [ -n "${SUDO_UID:-}" ]; then
+	chown -R "$SUDO_UID:${SUDO_GID:-$SUDO_UID}" "$OUT" "$CACHE" 2>/dev/null || true
 fi
 msg "community-apps stage: $(du -sh "$OUT" | cut -f1)"
 
@@ -171,15 +235,17 @@ while IFS= read -r -d '' f; do
 done < <(find "$OUT/.local/bin" "$OUT/.local/libexec" -type f -perm -u+x -print0 2>/dev/null)
 msg "community-apps: all binaries resolve their libraries (ldd)"
 
+is_qml() { jq -e '.apt // [] | index("qml6-module-qtquick")' "$APPS/$1/omaxian.deps.json" >/dev/null 2>&1; }
+
 # --- 4b. QML smoke test (offscreen): catch QML that fails on Qt 6.8 ---
 if [ "${COMMUNITY_APPS_SMOKE:-1}" = 1 ]; then
 	SM=$(mktemp -d /tmp/omaxian-ca-smoke.XXXXXX)
 	mkdir -m700 "$SM/run"
 	for a in "${BUILT[@]}"; do
-		case $a in disktree|omarchy-meeting-recorder) continue ;; esac
-		arg=(); [ "$a" = signed ] && arg=(open)
+		is_qml "$a" || continue
+		mapfile -t arg < <(jq -r '.start_args // [] | .[]' "$APPS/$a/omaxian.deps.json" 2>/dev/null || true)
 		env -i PATH="/usr/bin:/bin" HOME="$SM" XDG_RUNTIME_DIR="$SM/run" LANG=C.UTF-8 \
-			QT_QPA_PLATFORM=offscreen timeout 8 "$OUT/.local/bin/$a" "${arg[@]}" \
+			QT_QPA_PLATFORM=offscreen timeout 20 "$OUT/.local/bin/$a" "${arg[@]}" \
 			> "$CACHE/$a-smoke.log" 2>&1 || true
 		if grep -E 'non-existent property|failed to load component|is not a type|module "[^"]+" is not installed|Type [A-Za-z]+ unavailable|error while loading shared libraries|undefined symbol' \
 			"$CACHE/$a-smoke.log"; then
@@ -189,14 +255,16 @@ if [ "${COMMUNITY_APPS_SMOKE:-1}" = 1 ]; then
 	done
 	rm -rf "$SM"
 fi
-# Every app must have produced a launcher + desktop entry.
 for a in "${BUILT[@]}"; do
+	in_list "$a" "$COPY_APPS" && continue
 	[ -e "$OUT/.local/bin/$a" ] || die "community-apps: $a produced no ~/.local/bin/$a"
 	compgen -G "$OUT/.local/share/applications/*${a%%-*}*.desktop" >/dev/null \
 		|| die "community-apps: $a installed no desktop entry"
 done
 for a in "${BUILT[@]}"; do
-	if stale_ok "$a"; then printf '%s\tstale-pin\n' "$a"; else printf '%s\n' "$a"; fi
+	if in_list "$a" "$SOURCE_APPS" && ! has_pin "$a"; then printf '%s\tsource-build\n' "$a"
+	elif stale_ok "$a"; then printf '%s\tstale-pin\n' "$a"
+	else printf '%s\n' "$a"; fi
 done > "$CACHE/installed.txt"
 ca_key > "$CACHE/stamp"
 ls -la "$OUT/.local/bin" || true

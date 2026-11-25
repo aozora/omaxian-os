@@ -1,0 +1,16 @@
+Source: rustic
+Section: utils
+Priority: optional
+Maintainer: Omaxian OS <dev@omaxian.org>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://github.com/rustic-rs/rustic
+Rules-Requires-Root: no
+
+Package: rustic
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: fast, encrypted, deduplicated backups (upstream binary)
+ rustic 0.12.0, the restic-compatible backup tool, from the upstream
+ x86_64-unknown-linux-gnu release tarball (sha256-pinned in
+ config/build.conf). Not packaged in Devuan Excalibur.

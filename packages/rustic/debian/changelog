@@ -1,0 +1,6 @@
+rustic (0.12.0-1) excalibur; urgency=medium
+
+  * Package the upstream v0.12.0 x86_64-unknown-linux-gnu binary
+    (sha256 8995d790…). rustic is not in Devuan Excalibur.
+
+ -- Omaxian OS <dev@omaxian.org>  Wed, 25 Nov 2026 11:20:00 +0100

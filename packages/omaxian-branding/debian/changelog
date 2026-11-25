@@ -1,3 +1,10 @@
+omaxian-branding (0.3.2) excalibur; urgency=medium
+
+  * 0.3 "Space Cat": GRUB theme, Plymouth and Calamares branding strings
+    say 0.3.
+
+ -- Omaxian OS <dev@omaxian.org>  Wed, 25 Nov 2026 11:20:00 +0100
+
 omaxian-branding (0.3.1) excalibur; urgency=medium
 
   * 0.2.1 "Space Cat": GRUB theme, Plymouth and Calamares branding strings

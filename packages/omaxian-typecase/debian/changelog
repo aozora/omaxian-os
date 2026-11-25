@@ -1,0 +1,8 @@
+omaxian-typecase (0~git3119bed-1) excalibur; urgency=medium
+
+  * Package Typecase at commit 3119bed (main, 2026-11-25). No upstream
+    release tags. Launcher, Python server and static/ installed under
+    /usr/lib/omaxian/typecase, with /usr/bin/typecase and a menu entry.
+  * Depends on chromium: the upstream launcher opens a Chromium app window.
+
+ -- Omaxian OS <dev@omaxian.org>  Wed, 25 Nov 2026 11:20:00 +0100

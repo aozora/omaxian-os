@@ -1,22 +1,22 @@
 # Omaxian OS
 
-**Release 0.2 "Space Cat"** (os-release `VERSION="0.2 (Space Cat)"`,
-`VERSION_CODENAME=space-cat`; previous release 0.1 "Trans-Siberian Shaman"; the Devuan base codename is in
+**Release 0.3 "Space Cat"** (os-release `VERSION="0.3 (Space Cat)"`,
+`VERSION_CODENAME=space-cat`; previous release 0.2.1 "Space Cat"; the Devuan base codename is in
 `DEVUAN_CODENAME=excalibur` / `DEBIAN_CODENAME=trixie`, apt keeps using its own
-sources).
+sources). The codename is unchanged: 0.3 was not given a new one.
 
 A Devuan 6 "Excalibur" based live/installable distribution with the
-[Omaxian](https://github.com/aozora/omaxian) desktop (v1.1.3, Omarchy v4.5.0
-vendored) as the only session (no XFCE desktop and no Thunar since 0.2; only
+[Omaxian](https://github.com/aozora/omaxian) desktop (v1.2.3, tag
+`19250aaa43a264ae60f9b27899657985505764ed`) as the only session (no XFCE desktop and no Thunar since 0.2; only
 xfce4-power-manager + xfconf, which the Omaxian shell runs). No systemd: sysvinit + eudev
-+ elogind, XLibre X server, PipeWire per user, kernel 7.2 from excalibur-backports.
++ elogind, XLibre X server, PipeWire per user, Linux 7.x and Mesa from excalibur-backports.
 
 Two images are made:
 
 | ISO | Contents |
 |---|---|
-| `omaxian-base-0.2-space-cat-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Flatpaks Telegram / Discord / Packet / Gear Lever, Containers, Virtualization, AppImages LocalSend / ElecWhat / Obsidian / MarkText, all ticked by default) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot (the picked ones), except ONLYOFFICE (AppImage bundled, in `~/AppImages` with a menu entry from the first login) |
-| `omaxian-full-0.2-space-cat-amd64.iso` | same plus an offline pool for the optional groups and a 7th, unselected group **Voice dictation (VoxType)** (full ISO only, docs/voxtype.md), Flatpaks preinstalled (Telegram, Discord, Packet, Gear Lever too; removed on first boot when unticked) and `payload/` (10 AppImages, OpenRA content) bundled for offline install |
+| `omaxian-base-0.3-space-cat-amd64.iso` | desktop + core apps; the optional app groups (Chromium, Thunderbird, Graphics, Flatpaks Telegram / Discord / Packet / Gear Lever, Containers, Virtualization, AppImages LocalSend / ElecWhat / Obsidian / MarkText, all ticked by default) are picked on the installer's Applications page and installed from the network, or by the first-boot service when offline; Flatpaks and AppImages are fetched on first boot (the picked ones), except ONLYOFFICE (AppImage bundled, in `~/AppImages` with a menu entry from the first login). Chromium is also in the base image because Typecase needs it |
+| `omaxian-full-0.3-space-cat-amd64.iso` | same plus an offline pool for the optional groups and a 7th, unselected group **Voice dictation (VoxType)** (full ISO only, docs/voxtype.md), Flatpaks preinstalled (Telegram, Discord, Packet, Gear Lever too; removed on first boot when unticked) and `payload/` (AppImages, OpenRA content when supplied) bundled for offline install |
 
 The live image has no man pages/docs and only en/it translations (dpkg
 path-excludes, live only); installed systems get the normal dpkg policy back,
@@ -27,15 +27,25 @@ session (live-boot + live-config-sysvinit, user `omaxian`) and install with
 Calamares (branding `omaxian`), which removes the live packages and installs
 grub-pc or grub-efi-amd64 to match the firmware.
 
-### Apps and defaults (0.2)
+### Apps and defaults (0.3)
 
 - **Community apps**: every app in Omaxian's `community-apps/` is in every
   home on both ISOs (seeded from the omaxian-session home template, built by
-  `scripts/build-community-apps.sh`): disktree, Folio, Monologue, Omacalc,
-  Omacut, Meeting Recorder, Omawrite, Plain (the default editor), Signed.
-  All of them install from the sha256-pinned pre-built binaries in each
-  app's `.omaxian-prebuilt` (Omaxian v1.2.2+); nothing is compiled, and the
-  build fails if an app would build from source. community-plugins stay opt-in.
+  `scripts/build-community-apps.sh`). Apps that ship `.omaxian-prebuilt`
+  install that sha256-pinned binary, and the build fails if one of those
+  would compile from source. flowtunes and fantasi have no shell-CI pin, so
+  the image build compiles them once on Qt 6.8 and ships the binaries.
+  omarchy-local-ai is a Python/Podman engine and is copied, not compiled.
+- **Community plugins**: every port in `community-plugins/` is seeded and
+  enabled (bar widgets on the bar, services in `shell.json`). The PulseAudio
+  speaker calibrator is seeded but not enabled; the session is PipeWire.
+- **Viewers**: OmaView is the default for the image and video types its
+  desktop file claims. OmaView refuses PDF, so document types are not
+  associated with it. Audio types go to MyGo Music. vlc, imv and nsxiv are
+  not installed.
+- **Also installed**: chezmoi, rustic, xsecurelock, shellcheck, slop,
+  heif-thumbnailer, qt6-image-formats-plugins (the last two were already
+  pulled in for 0.2.1), Typecase (Chromium app window), MyGo Music.
 - **File manager**: the installer's *File manager* page picks Strata (default)
   or Folio; both stay installed. The choice goes to `/etc/omaxian/file-manager`
   and the user's `~/.config/mimeapps.list` (`inode/directory`), which the
@@ -74,9 +84,11 @@ config/            build.conf, apt sources/prefs/keys, package-lists/*.list,
 packages/          debian packaging of the Omaxian OS packages
   omaxian-base               apt sources/pins/keyrings, os defaults, groups
   omaxian-branding           Plymouth "omaxian", GRUB theme, LightDM gtk-greeter theme, wallpapers
-  omaxian-session            Omaxian v1.1.3 + Omarchy (vendored), session + home template
-                             (seeds all community-apps), default file manager /
-                             OnlyOffice per-user defaults
+  omaxian-session            Omaxian v1.2.3 + Omarchy (vendored), session + home template
+                             (seeds all community-apps and community-plugins),
+                             default file manager / OmaView / OnlyOffice defaults
+  omaxian-typecase           Typecase font canvas (pinned commit; needs chromium)
+  rustic                     rustic backup tool (upstream binary; not in Excalibur)
   omaxian-strata             Strata file manager (signed release), default for inode/directory
   omaxian-firstboot          firstboot init script: flathub + flatpaks, AppImage refresh;
                              per-user first run: OpenRA content, Gear Lever integration;
@@ -232,6 +244,15 @@ sudo omaxian-optional-appimage select shotcut     # extra apps only
 sudo OMAXIAN_APPIMAGE_ONLY=shotcut omaxian-appimage-fetch /var/lib/omaxian/appimages
 OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/.local/state/omaxian/user-firstrun.log)
 ```
+
+### 0.3 "Space Cat" (round 19)
+
+Omaxian shell v1.2.3 (`19250aaa`). Strata 1.2.2 stays the default file
+manager. Kernel 7.x and Mesa come from excalibur-backports (unpinned within
+that suite, so the build takes whatever is current). Community apps are
+pre-built except flowtunes and fantasi, which the image build compiles once,
+and omarchy-local-ai, which is copied. Every community plugin is installed.
+Build and VM results: `docs/test-report-0.3.md`. Not published.
 
 ### 0.2.1 "Space Cat" (round 18, published 2026-11-16)
 

@@ -1,3 +1,10 @@
+omaxian-calamares-settings (0.3.1) excalibur; urgency=medium
+
+  * calamares-post runs omaxian-base's ensure-subids so the user Calamares
+    just created has subordinate ids for rootless Podman.
+
+ -- Omaxian OS <dev@omaxian.org>  Wed, 25 Nov 2026 11:20:00 +0100
+
 omaxian-calamares-settings (0.3.0) excalibur; urgency=medium
 
   * New installer page "File manager" (packagechooser@filemanager): Strata

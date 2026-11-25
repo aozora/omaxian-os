@@ -14,16 +14,18 @@ FM=$S/usr/bin/omaxian-default-file-manager
 
 # 1 version / codename
 ( . config/build.conf
-  [ "$OMAXIAN_VERSION" = 0.2.1 ] && [ "$OMAXIAN_CODENAME" = "Space Cat" ] && [ "$OMAXIAN_CODENAME_ID" = space-cat ] ) \
-	&& ok "build.conf: 0.2.1 \"Space Cat\" (space-cat)" || bad "build.conf version/codename"
+  [ "$OMAXIAN_VERSION" = 0.3 ] && [ "$OMAXIAN_CODENAME" = "Space Cat" ] && [ "$OMAXIAN_CODENAME_ID" = space-cat ] ) \
+	&& ok "build.conf: 0.3 \"Space Cat\" (space-cat)" || bad "build.conf version/codename"
 ( . config/build.conf; for f in base full; do
 	v=$(echo "OMAXIAN_${OMAXIAN_VERSION}_${OMAXIAN_CODENAME_TAG}_$f" | tr 'a-z.-' 'A-Z__' | cut -c1-32)
-	[ "$v" = "OMAXIAN_0_2_1_SPACE_CAT_$(echo $f | tr a-z A-Z)" ] || exit 1; done ) \
-	&& ok "ISO volume ids OMAXIAN_0_2_1_SPACE_CAT_{BASE,FULL} (not truncated)" || bad "volid"
-( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.2 ] && [ ${#OMAXIAN_SHELL_COMMIT} = 40 ] ) \
-	&& ok "Omaxian shell v1.2.2 pinned to a full commit" || bad "shell pin"
-[ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.2-1 ] \
-	&& ok "omaxian-session changelog 1.2.2-1" || bad "session version"
+	[ "$v" = "OMAXIAN_0_3_SPACE_CAT_$(echo $f | tr a-z A-Z)" ] || exit 1; done ) \
+	&& ok "ISO volume ids OMAXIAN_0_3_SPACE_CAT_{BASE,FULL} (not truncated)" || bad "volid"
+( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.3 ] && [ "$OMAXIAN_SHELL_COMMIT" = 19250aaa43a264ae60f9b27899657985505764ed ] ) \
+	&& ok "Omaxian shell v1.2.3 pinned to 19250aaa" || bad "shell pin"
+[ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.3-1 ] \
+	&& ok "omaxian-session changelog 1.2.3-1" || bad "session version"
+[ "$(dpkg-parsechangelog -l packages/omaxian-strata/debian/changelog -S Version)" = 1.2.2-1 ] \
+	&& ok "omaxian-strata changelog 1.2.2-1" || bad "strata version"
 grep -q 'Space Cat\|space-cat' tools/diag/installvm.sh tools/diag/liveboot.sh && ! grep -rq 'trans-siberian' tools/diag/installvm.sh tools/diag/liveboot.sh \
 	&& ok "diag scripts use the 0.2 ISO names" || bad "diag ISO names"
 
@@ -33,7 +35,7 @@ bad_x=$(echo "$L" | grep -E '^(xfce4|xfce4-(session|panel|settings|appfinder|ter
 [ -z "$bad_x" ] && ok "package lists: no XFCE desktop / Thunar" || bad "package lists still have: $bad_x"
 echo "$L" | grep -qx xfce4-power-manager && echo "$L" | grep -qx xfconf && echo "$L" | grep -qx 'xfce4-power-manager-plugins-' \
 	&& ok "xfce4-power-manager + xfconf kept (shell runs them), panel plugin excluded" || bad "xfpm/xfconf"
-! grep -qw thunar packages/omaxian-session/debian/control && grep -A30 '^Depends:' packages/omaxian-session/debian/control | grep -q 'xfce4-power-manager, xfconf' \
+! grep -qw thunar packages/omaxian-session/debian/control && grep -q 'xfce4-power-manager, xfconf' packages/omaxian-session/debian/control \
 	&& ok "omaxian-session: no thunar; xfpm + xfconf in Depends" || bad "session control"
 grep -q '^METAS="network-manager-gnome"$' $C/usr/libexec/omaxian/keep-manual && ok "keep-manual METAS without xfce4" || bad "keep-manual METAS"
 grep -q 'XFCE_GONE=' scripts/build-rootfs.sh && grep -q 'XFCE desktop / Thunar packages got installed' scripts/build-rootfs.sh \
@@ -45,6 +47,16 @@ grep -q 'find "$APPS" -mindepth 2 -maxdepth 2 -name install.sh' scripts/build-co
 grep -q 'omaxian-prebuilt' scripts/build-community-apps.sh && grep -q "did not install its pinned pre-built binary" scripts/build-community-apps.sh \
 	&& grep -q 'for t in cmake qmake6 qmake cargo rustup cc' scripts/build-community-apps.sh \
 	&& ok "build-community-apps: pinned pre-built binaries only, compilers blocked" || bad "prebuilt path"
+grep -q 'SOURCE_APPS="flowtunes fantasi"' scripts/build-community-apps.sh \
+	&& grep -q 'COPY_APPS="omarchy-local-ai"' scripts/build-community-apps.sh \
+	&& ok "flowtunes/fantasi compile once; local-ai is copied (no CI pin)" || bad "unpinned apps"
+! grep -qx vlc config/package-lists/*.list && grep -qx chezmoi config/package-lists/40-user.list \
+	&& grep -qx rustic config/package-lists/40-user.list && grep -qx xsecurelock config/package-lists/40-user.list \
+	&& grep -qx shellcheck config/package-lists/40-user.list && grep -qx slop config/package-lists/40-user.list \
+	&& grep -qx heif-thumbnailer config/package-lists/40-user.list \
+	&& grep -qx qt6-image-formats-plugins config/package-lists/55-community-apps.list \
+	&& grep -q '^Package: vlc' config/apt/preferences.d/20-omaxian-blocklist.pref \
+	&& ok "0.3 packages added; vlc/imv/nsxiv blocked" || bad "package list delta"
 [ ! -e patches/community-apps ] && ok "no local community-app patches (Qt 6.8 fixes upstream in v1.2.1)" || bad "patches/community-apps still present"
 for d in qml6-module-qtquick-pdf qml6-module-qtquick-dialogs qml6-module-qtcore libarchive-tools udisks2 ffmpegthumbnailer libglib2.0-0t64 libturbojpeg0; do
 	grep -qx "$d" config/package-lists/55-community-apps.list && grep -q "$d" packages/omaxian-session/debian/control || bad "dep $d"

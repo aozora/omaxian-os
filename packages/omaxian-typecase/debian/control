@@ -1,0 +1,18 @@
+Source: omaxian-typecase
+Section: fonts
+Priority: optional
+Maintainer: Omaxian OS <dev@omaxian.org>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://github.com/iretonsean/typecase
+Rules-Requires-Root: no
+
+Package: omaxian-typecase
+Architecture: all
+Depends: ${misc:Depends}, python3, chromium, fontconfig, curl, ca-certificates
+Description: font manager and typesetting canvas (Typecase)
+ Typecase browses installed fonts, installs fonts from a link, and opens a
+ small typesetting canvas. It is a local Python server plus a Chromium
+ app window (github.com/iretonsean/typecase). This package vendors the
+ pinned commit from config/build.conf; nothing is fetched at run time
+ except what the user asks Typecase to install.

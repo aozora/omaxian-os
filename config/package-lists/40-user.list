@@ -44,7 +44,6 @@ gucharmap
 btop
 flameshot
 keepassxc
-vlc
 qbittorrent
 filezilla
 otpclient
@@ -73,6 +72,15 @@ ymuse
 seahorse
 power-profiles-daemon
 yt-dlp
-# extras
+# extras (0.3). heif-thumbnailer was already on this list.
+# chezmoi, rustic and mygo-music are pinned upstream packages in the local
+# repo (not in Excalibur). chromium is the runtime for Typecase.
+chezmoi
+rustic
+mygo-music
+xsecurelock
+shellcheck
+slop
+chromium
 extrepo
 flatpak

@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: typecase
+Source: https://github.com/iretonsean/typecase
+
+Files: *
+Copyright: Sean Ireton
+License: MIT
+ MIT. The vendored HarfBuzz wasm build under static/vendor/harfbuzz/
+ keeps its own MIT licence.

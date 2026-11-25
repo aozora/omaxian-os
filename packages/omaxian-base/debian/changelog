@@ -1,3 +1,14 @@
+omaxian-base (0.3) excalibur; urgency=medium
+
+  * Omaxian OS 0.3 "Space Cat": os-release / omaxian-release say
+    VERSION="0.3 (Space Cat)", VERSION_ID=0.3. Codename unchanged.
+  * /etc/omaxian-release: OMAXIAN_SHELL="v1.2.3".
+  * ensure-subids: human users get subordinate uid/gid ranges for rootless
+    Podman (live-config hook, adduser.local, Calamares post). apt pin -1
+    on vlc, imv and nsxiv.
+
+ -- Omaxian OS <dev@omaxian.org>  Wed, 25 Nov 2026 11:20:00 +0100
+
 omaxian-base (0.2.1) excalibur; urgency=medium
 
   * Omaxian OS 0.2.1 "Space Cat": os-release / omaxian-release say

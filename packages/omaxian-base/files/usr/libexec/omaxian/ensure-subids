@@ -1,0 +1,23 @@
+#!/bin/sh
+# Give every human account a subordinate uid and gid range so rootless
+# Podman (omarchy-local-ai) can start. Idempotent.
+set -u
+MIN=100000
+COUNT=65536
+command -v usermod >/dev/null || exit 0
+next() {
+	awk -F: -v min="$MIN" 'NF >= 3 { e = $2 + $3; if (e > m) m = e } END { if (m < min) m = min; print m + 0 }' "$1" 2>/dev/null || echo "$MIN"
+}
+uids=$(next /etc/subuid)
+gids=$(next /etc/subgid)
+for u in $(awk -F: '$3 >= 1000 && $3 < 65534 { print $1 }' /etc/passwd); do
+	if ! grep -q "^${u}:" /etc/subuid 2>/dev/null; then
+		usermod --add-subuids "${uids}-$((uids + COUNT - 1))" "$u" || exit 1
+		uids=$((uids + COUNT))
+	fi
+	if ! grep -q "^${u}:" /etc/subgid 2>/dev/null; then
+		usermod --add-subgids "${gids}-$((gids + COUNT - 1))" "$u" || exit 1
+		gids=$((gids + COUNT))
+	fi
+done
+exit 0

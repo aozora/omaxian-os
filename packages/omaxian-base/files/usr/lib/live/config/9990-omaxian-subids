@@ -1,0 +1,5 @@
+#!/bin/sh
+# live-config component: subordinate ids for the live user (rootless Podman).
+if [ -x /usr/libexec/omaxian/ensure-subids ]; then
+	/usr/libexec/omaxian/ensure-subids || true
+fi

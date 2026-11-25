@@ -1,0 +1,5 @@
+upstream/typecase usr/lib/omaxian/typecase/
+upstream/typecase.py usr/lib/omaxian/typecase/
+upstream/static usr/lib/omaxian/typecase/
+files/typecase.desktop usr/share/applications/
+upstream/static/icon.svg usr/share/icons/hicolor/scalable/apps/typecase.svg

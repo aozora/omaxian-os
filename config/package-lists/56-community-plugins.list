@@ -1,0 +1,37 @@
+# Runtime packages of every community-plugins/ port (union of omaxian.deps.json
+# "apt"). The plugin trees are seeded into every home and enabled (bar widgets
+# on the bar, services in shell.json plugins[]). The PulseAudio speaker
+# calibrator is seeded but not enabled: the session is PipeWire, and the two
+# calibrators are mutually exclusive.
+bluez
+bubblewrap
+cargo
+curl
+ffmpeg
+file
+git
+iproute2
+jq
+libsecret-tools
+lsp-plugins-lv2
+mpv
+pipewire
+pipewire-pulse
+pulseaudio-utils
+python3
+python3-dbus
+python3-gi
+python3-numpy
+python3-scipy
+qml6-module-qtmultimedia
+rustc
+socat
+util-linux
+v4l-utils
+wireplumber
+xclip
+xdg-user-dirs
+xdg-utils
+xdotool
+yt-dlp
+zenity

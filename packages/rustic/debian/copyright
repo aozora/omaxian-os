@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: rustic
+Source: https://github.com/rustic-rs/rustic
+
+Files: *
+Copyright: rustic contributors
+License: MIT OR Apache-2.0
+ The upstream binary is the official release tarball. rustic is dual
+ licensed MIT or Apache-2.0; see the upstream repository.

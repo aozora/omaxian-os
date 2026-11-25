@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Typecase
+Comment=Install, browse and compare fonts
+Exec=typecase
+Icon=typecase
+Terminal=false
+Categories=Graphics;Utility;
+StartupWMClass=Typecase

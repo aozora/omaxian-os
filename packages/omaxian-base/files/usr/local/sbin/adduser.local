@@ -1,0 +1,4 @@
+#!/bin/sh
+# adduser hook: the new account needs a subordinate id range for rootless Podman.
+[ -x /usr/libexec/omaxian/ensure-subids ] && /usr/libexec/omaxian/ensure-subids || true
+exit 0

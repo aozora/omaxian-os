@@ -135,7 +135,7 @@ s_fonts()   { # fonts without Recommends (they drag in the Noto extra packs)
 	CH $APT install --no-install-recommends $pk
 }
 s_user()    { inst 40-user.list; }
-s_omaxian() { CH apt-get update; inst 50-omaxian.list 55-community-apps.list; }
+s_omaxian() { CH apt-get update; inst 50-omaxian.list 55-community-apps.list 56-community-plugins.list; }
 s_extrepo() {
 	CH extrepo enable brave_release
 	CH extrepo enable librewolf
@@ -163,7 +163,11 @@ s_upgrade() { # apply pins (backports kernel/pipewire/quickshell) and drop older
 	old=$( { CH dpkg-query -W -f '${Package} ${Status}\n' 'linux-image-[0-9]*' 'linux-modules-[0-9]*' 'linux-headers-[0-9]*' 2>/dev/null || true; } \
 		| awk -v s="-${keep#linux-image-}" '/ installed$/ && substr($1, length($1)-length(s)+1) != s {print $1}')
 	[ -z "$old" ] || CH $APT purge $old
-	CH dpkg-query -W -f '${Package} ${Version}\n' linux-image-amd64 pipewire wireplumber quickshell
+	CH dpkg-query -W -f '${Package} ${Version}\n' linux-image-amd64 pipewire wireplumber quickshell mesa-libgallium
+	local kv; kv=$(CH dpkg-query -W -f '${Version}' linux-image-amd64)
+	case $kv in 7.*) ;; *) die "linux-image-amd64 is $kv, need 7.x from backports" ;; esac
+	local mesa_origin; mesa_origin=$(CH apt-cache policy mesa-libgallium | awk '/\*\*\*/{getline; print}')
+	echo "$mesa_origin" | grep -q backports || die "mesa-libgallium is not from backports ($mesa_origin)"
 }
 
 s_configure() {
@@ -192,7 +196,7 @@ EOC
 	local inst_games; inst_games=$(CH dpkg-query -W -f '${Package} ${Status}\n' $games 2>/dev/null | awk '/ installed$/{print $1}' || true)
 	[ -n "$inst_games" ] && CH $APT purge $inst_games
 	# no Firefox, no systemd, no PulseAudio, no Xorg server
-	for p in firefox firefox-esr systemd systemd-sysv pulseaudio xserver-xorg-core; do
+	for p in firefox firefox-esr systemd systemd-sysv pulseaudio xserver-xorg-core vlc imv nsxiv; do
 		if CH dpkg-query -W -f '${Status}' "$p" 2>/dev/null | grep -q ' installed'; then die "$p got installed"; fi
 	done
 	# no XFCE desktop / Thunar since 0.2 (only xfce4-power-manager + xfconf,
