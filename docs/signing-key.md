@@ -62,3 +62,12 @@ Then:
 4. Set `Enabled: yes` in `omaxian.sources` once the real repo is live (done in omaxian-base 0.1.7).
 
 Never commit anything under `keys/` (it's in .gitignore).
+
+## Re-signing a repo built with the test key
+
+`scripts/resign-repo.sh` imports `OMAXIAN_SIGNING_KEY` (armored signing subkey;
+`OMAXIAN_SIGNING_PASSPHRASE` only if the key has one) into `keys/private/gnupg`,
+checks the fingerprint, and re-exports the local repo. It does not upload.
+Round 19: `LOCALREPO=build/r19/repo bash scripts/resign-repo.sh`. The debs and
+ISOs keep the keyring they were built with, so rebuild `omaxian-base` and the
+ISOs with the real public keyring before publishing.
