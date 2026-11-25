@@ -155,12 +155,22 @@ s_upgrade() { # apply pins (backports kernel/pipewire/quickshell) and drop older
 	if [ -e "$R$OMX_SRC" ] && ! CH dpkg-divert --list "$OMX_SRC" | grep -q .; then
 		park_omaxian_sources
 	fi
+	# finalize also removes the build-only local repo line.
+	if [ ! -f "$R/etc/apt/sources.list.d/omaxian-build.list" ]; then
+		cat > "$R/etc/apt/sources.list.d/omaxian-build.list" <<EOS
+deb [signed-by=/usr/share/keyrings/omaxian-archive-keyring.pgp] http://127.0.0.1:$REPO_PORT $OMAXIAN_APT_SUITE main
+EOS
+	fi
 	CH apt-get update
 	CH $APT dist-upgrade
 	# Our own packages may be rebuilt under an unchanged (unpublished) version; dist-upgrade
 	# skips those, so always reinstall them from repo-local to pick up the current build.
 	local own; own=$(CH dpkg-query -W -f '${Package} ${Status}\n' 'omaxian-*' | awk '/ installed$/{print $1}')
 	[ -z "$own" ] || CH $APT install --reinstall $own
+	local sess repo_sess
+	sess=$(CH dpkg-query -W -f '${Version}' omaxian-session)
+	repo_sess=$(dpkg-deb -f "$OUTDIR"/debs/omaxian-session_*.deb Version | tail -1)
+	[ "$sess" = "$repo_sess" ] || die "omaxian-session in the image is $sess, out/debs has $repo_sess"
 	# keep only the kernel the linux-image-amd64 metapackage depends on (a
 	# backports point release otherwise leaves the previous one installed,
 	# ~200 MB more squashfs plus a second initrd)
