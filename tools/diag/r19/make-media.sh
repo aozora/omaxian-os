@@ -1,8 +1,7 @@
 #!/bin/bash
 # make-media.sh: build/round19/test-media.iso (label R19TEST) = media/ + pinned.sha256.
-# Pinned apps: sha256 of the binary inside the verified tarball.
-# flowtunes, fantasi, omarchy-local-ai: sha256 of the binary the image build
-# staged (compiled once, or copied). The guest check is the same byte compare.
+# sha256 of every community app's binary inside its verified pinned tarball.
+# v1.2.4 pins flowtunes, fantasi and omarchy-local-ai the same way.
 set -euo pipefail
 cd /workspace
 D=build/round19

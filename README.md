@@ -6,8 +6,7 @@
 sources). The codename is unchanged: 0.3 was not given a new one.
 
 A Devuan 6 "Excalibur" based live/installable distribution with the
-[Omaxian](https://github.com/aozora/omaxian) desktop (v1.2.3, tag
-`19250aaa43a264ae60f9b27899657985505764ed`) as the only session (no XFCE desktop and no Thunar since 0.2; only
+[Omaxian](https://github.com/aozora/omaxian) desktop (v1.2.4) as the only session (no XFCE desktop and no Thunar since 0.2; only
 xfce4-power-manager + xfconf, which the Omaxian shell runs). No systemd: sysvinit + eudev
 + elogind, XLibre X server, PipeWire per user, Linux 7.x and Mesa from excalibur-backports.
 
@@ -31,11 +30,10 @@ grub-pc or grub-efi-amd64 to match the firmware.
 
 - **Community apps**: every app in Omaxian's `community-apps/` is in every
   home on both ISOs (seeded from the omaxian-session home template, built by
-  `scripts/build-community-apps.sh`). Apps that ship `.omaxian-prebuilt`
-  install that sha256-pinned binary, and the build fails if one of those
-  would compile from source. flowtunes and fantasi have no shell-CI pin, so
-  the image build compiles them once on Qt 6.8 and ships the binaries.
-  omarchy-local-ai is a Python/Podman engine and is copied, not compiled.
+  `scripts/build-community-apps.sh`). Every app installs the sha256-pinned
+  binary from its `.omaxian-prebuilt` (shell v1.2.4 CI, including flowtunes,
+  fantasi and omarchy-local-ai). The build fails if an app would compile
+  from source.
 - **Community plugins**: every port in `community-plugins/` is seeded and
   enabled (bar widgets on the bar, services in `shell.json`). The PulseAudio
   speaker calibrator is seeded but not enabled; the session is PipeWire.
@@ -84,7 +82,7 @@ config/            build.conf, apt sources/prefs/keys, package-lists/*.list,
 packages/          debian packaging of the Omaxian OS packages
   omaxian-base               apt sources/pins/keyrings, os defaults, groups
   omaxian-branding           Plymouth "omaxian", GRUB theme, LightDM gtk-greeter theme, wallpapers
-  omaxian-session            Omaxian v1.2.3 + Omarchy (vendored), session + home template
+  omaxian-session            Omaxian v1.2.4 + Omarchy (vendored), session + home template
                              (seeds all community-apps and community-plugins),
                              default file manager / OmaView / OnlyOffice defaults
   omaxian-typecase           Typecase font canvas (pinned commit; needs chromium)
@@ -247,11 +245,11 @@ OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/
 
 ### 0.3 "Space Cat" (round 19)
 
-Omaxian shell v1.2.3 (`19250aaa`). Strata 1.2.2 stays the default file
-manager. Kernel 7.x and Mesa come from excalibur-backports (unpinned within
-that suite, so the build takes whatever is current). Community apps are
-pre-built except flowtunes and fantasi, which the image build compiles once,
-and omarchy-local-ai, which is copied. Every community plugin is installed.
+Omaxian shell v1.2.4. Strata 1.2.2 stays the default file manager. Kernel
+7.x and Mesa come from excalibur-backports (unpinned within that suite, so
+the build takes whatever is current). Every community app, including
+flowtunes, fantasi and omarchy-local-ai, is installed from the shell CI's
+pinned pre-built binary. Every community plugin is installed.
 Build and VM results: `docs/test-report-0.3.md`. Not published.
 
 ### 0.2.1 "Space Cat" (round 18, published 2026-11-16)

@@ -1,8 +1,7 @@
 # Runtime Depends of ALL default community-apps (union of each app's
 # omaxian.deps.json "apt" at the pinned Omaxian tag; also in omaxian-session
-# Depends). Installed into every home from pinned pre-built binaries, except
-# flowtunes and fantasi (compiled once at image-build time; the shell CI
-# publishes no pin) and omarchy-local-ai (Python engine, copied, not compiled).
+# Depends). Every app, including flowtunes, fantasi and omarchy-local-ai,
+# is installed from the sha256-pinned pre-built binary in shell v1.2.4.
 aardvark-dns
 crun
 ffmpeg

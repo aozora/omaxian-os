@@ -6,7 +6,7 @@ c_versions() {
 	dpkg-query -W eudev linux-image-amd64 omaxian-base omaxian-branding omaxian-firstboot omaxian-session omaxian-strata 'pipewire:amd64' quickshell sysvinit-core 2>&1
 	grep -E '^(PRETTY_NAME|VERSION|VERSION_CODENAME)=' /etc/os-release
 	cat /etc/omaxian-release
-	grep -qx 'OMAXIAN_SHELL="v1.2.3"' /etc/omaxian-release && echo RELEASE_SHELL_PASS || echo RELEASE_SHELL_FAIL
+	grep -qx 'OMAXIAN_SHELL="v1.2.4"' /etc/omaxian-release && echo RELEASE_SHELL_PASS || echo RELEASE_SHELL_FAIL
 	grep -qx 'VERSION_ID="0.3"' /etc/os-release && echo OS_RELEASE_03_PASS || echo OS_RELEASE_03_FAIL
 	strata --version 2>&1 | head -1
 }

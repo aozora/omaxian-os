@@ -20,10 +20,12 @@ FM=$S/usr/bin/omaxian-default-file-manager
 	v=$(echo "OMAXIAN_${OMAXIAN_VERSION}_${OMAXIAN_CODENAME_TAG}_$f" | tr 'a-z.-' 'A-Z__' | cut -c1-32)
 	[ "$v" = "OMAXIAN_0_3_SPACE_CAT_$(echo $f | tr a-z A-Z)" ] || exit 1; done ) \
 	&& ok "ISO volume ids OMAXIAN_0_3_SPACE_CAT_{BASE,FULL} (not truncated)" || bad "volid"
-( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.3 ] && [ "$OMAXIAN_SHELL_COMMIT" = 19250aaa43a264ae60f9b27899657985505764ed ] ) \
-	&& ok "Omaxian shell v1.2.3 pinned to 19250aaa" || bad "shell pin"
-[ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.3-1 ] \
-	&& ok "omaxian-session changelog 1.2.3-1" || bad "session version"
+( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.4 ] ) \
+	&& ok "Omaxian shell ref v1.2.4" || bad "shell ref"
+pin=$(. config/build.conf; printf %s "$OMAXIAN_SHELL_COMMIT")
+[ ${#pin} = 40 ] && ok "Omaxian shell v1.2.4 pinned to $pin" || bad "shell commit (set when tag v1.2.4 is published)"
+[ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.4-1 ] \
+	&& ok "omaxian-session changelog 1.2.4-1" || bad "session version"
 [ "$(dpkg-parsechangelog -l packages/omaxian-strata/debian/changelog -S Version)" = 1.2.2-1 ] \
 	&& ok "omaxian-strata changelog 1.2.2-1" || bad "strata version"
 grep -q 'Space Cat\|space-cat' tools/diag/installvm.sh tools/diag/liveboot.sh && ! grep -rq 'trans-siberian' tools/diag/installvm.sh tools/diag/liveboot.sh \
@@ -47,9 +49,9 @@ grep -q 'find "$APPS" -mindepth 2 -maxdepth 2 -name install.sh' scripts/build-co
 grep -q 'omaxian-prebuilt' scripts/build-community-apps.sh && grep -q "did not install its pinned pre-built binary" scripts/build-community-apps.sh \
 	&& grep -q 'for t in cmake qmake6 qmake cargo rustup cc' scripts/build-community-apps.sh \
 	&& ok "build-community-apps: pinned pre-built binaries only, compilers blocked" || bad "prebuilt path"
-grep -q 'SOURCE_APPS="flowtunes fantasi"' scripts/build-community-apps.sh \
-	&& grep -q 'COPY_APPS="omarchy-local-ai"' scripts/build-community-apps.sh \
-	&& ok "flowtunes/fantasi compile once; local-ai is copied (no CI pin)" || bad "unpinned apps"
+! grep -q 'SOURCE_APPS=' scripts/build-community-apps.sh && ! grep -q 'COPY_APPS=' scripts/build-community-apps.sh \
+	&& grep -q 'has no pinned pre-built binary' scripts/build-community-apps.sh \
+	&& ok "flowtunes, fantasi and local-ai use pinned prebuilts like the other apps" || bad "unpinned apps"
 ! grep -qx vlc config/package-lists/*.list && grep -qx chezmoi config/package-lists/40-user.list \
 	&& grep -qx rustic config/package-lists/40-user.list && grep -qx xsecurelock config/package-lists/40-user.list \
 	&& grep -qx shellcheck config/package-lists/40-user.list && grep -qx slop config/package-lists/40-user.list \

@@ -1,4 +1,6 @@
 #!/bin/sh
 # adduser hook: the new account needs a subordinate id range for rootless Podman.
+# Installed via a symlink at /usr/local/sbin/adduser.local (postinst). Debian
+# packages do not ship files under /usr/local.
 [ -x /usr/libexec/omaxian/ensure-subids ] && /usr/libexec/omaxian/ensure-subids || true
 exit 0

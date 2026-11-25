@@ -3,21 +3,14 @@
 # install.sh) into build/cache/community-apps/home (a partial home: .local/…
 # and .config/i3/config.d/…).
 #
-# Apps with <app>/.omaxian-prebuilt install that sha256-pinned binary. Nothing
-# else is compiled: compilers on that install.sh's PATH fail the build.
-#
-# The shell CI does not publish pins for flowtunes, fantasi or
-# omarchy-local-ai (CI_APPS in .github/scripts/prebuilt-plan.sh). Those three
-# are included on purpose:
-#   * flowtunes, fantasi — compiled once here, on Debian trixie Qt 6.8, and
-#     the resulting binaries are what the image ships (the installed system
-#     does not compile them);
-#   * omarchy-local-ai — a Python engine. install.sh copies it; there is no
-#     binary to pin.
-# A pin that appears upstream wins over this exception.
+# Every app installs its sha256-pinned .omaxian-prebuilt binary, including
+# flowtunes, fantasi and omarchy-local-ai (shell v1.2.4 CI). Compilers on
+# install.sh's PATH fail the build, so a missing or stale pin cannot fall
+# back to a source build.
 #
 # The stage runs on Debian trixie / Devuan excalibur (Qt 6.8). On any other
-# host it re-enters a trixie chroot (scripts/ensure-build-chroot.sh).
+# host it re-enters a trixie chroot (scripts/ensure-build-chroot.sh) so ldd
+# and the offscreen QML check see the same Qt the binaries were built for.
 #
 #   build-community-apps.sh [omaxian-src]
 #   COMMUNITY_APPS_SKIP="omacut plain" build-community-apps.sh
@@ -34,7 +27,7 @@ ca_key() {
 }
 if [ "$KEY_ONLY" = 1 ]; then ca_key; exit 0; fi
 
-# Pinned binaries and the Qt 6.8 source builds need libqt6core6t64.
+# Pinned binaries need libqt6core6t64 (Qt 6.8).
 if [ "${OMAXIAN_CA_HOST:-}" != 1 ] && ! dpkg-query -W -f '${Status}' libqt6core6t64 2>/dev/null | grep -q 'install ok installed'; then
 	[ "$(id -u)" -eq 0 ] || exec sudo bash "$0" "$@"
 	bash "$TOPDIR/scripts/ensure-build-chroot.sh" "$SRC"
@@ -58,14 +51,9 @@ APPS="$SRC/community-apps"
 OUT="$BUILDDIR/cache/community-apps/home"
 CACHE="$BUILDDIR/cache/community-apps"
 DL="$CACHE/dl"
-# Shell CI does not build these. A .omaxian-prebuilt file still wins.
-SOURCE_APPS="flowtunes fantasi"
-COPY_APPS="omarchy-local-ai"
 
 die() { echo "error: $*" >&2; exit 1; }
 need_dir() { [ -d "$1" ] || die "missing $1 (need Omaxian v1.2.0+ community-apps)"; }
-in_list() { case " $2 " in *" $1 "*) return 0 ;; esac; return 1; }
-has_pin() { [ -f "$APPS/$1/.omaxian-prebuilt" ]; }
 
 need_dir "$APPS"
 [ -f "$APPS/lib/prebuilt.sh" ] || die "$APPS/lib/prebuilt.sh missing (need Omaxian v1.2.0+ pre-built pins)"
@@ -97,18 +85,8 @@ mget() { awk -F= -v k="$2" '$1 == k { sub(/^[^=]*=/, ""); print; exit }' "$1"; }
 mkdir -p "$DL" "$CACHE/shim"
 : > "$CACHE/shim/urls"
 for a in "${APPS_LIST[@]}"; do
-	if ! has_pin "$a"; then
-		if in_list "$a" "$SOURCE_APPS"; then
-			warn "community-apps: $a has no .omaxian-prebuilt; it will be compiled once on Qt 6.8"
-			continue
-		fi
-		if in_list "$a" "$COPY_APPS"; then
-			warn "community-apps: $a has no .omaxian-prebuilt; install.sh copies it (no binary to pin)"
-			continue
-		fi
-		die "community-apps: $a has no pinned pre-built binary ($APPS/$a/.omaxian-prebuilt); the OS build does not compile apps"
-	fi
 	m="$APPS/$a/.omaxian-prebuilt"
+	[ -f "$m" ] || die "community-apps: $a has no pinned pre-built binary ($m); the OS build does not compile apps"
 	url=$(mget "$m" url); sha=$(mget "$m" sha256); arch=$(mget "$m" arch)
 	case $url in https://*) ;; *) die "$m: url= must be https" ;; esac
 	[[ $sha =~ ^[0-9a-f]{64}$ ]] || die "$m: bad sha256="
@@ -140,8 +118,7 @@ chmod 755 "$CACHE/shim/curl"
 rm -rf "$OUT"
 mkdir -p "$OUT/.local" "$OUT/.config/i3/config.d"
 # Compiler blockers: a fallback to a source build must fail fast, not quietly
-# compile with whatever the build host has. Source-allowlisted apps do not
-# use this PATH.
+# compile with whatever the build host has.
 for t in cmake qmake6 qmake cargo rustup cc gcc g++ c++; do
 	printf '#!/bin/sh\necho "community-apps: %s blocked (pinned pre-built binaries only)" >&2\nexit 97\n' "$t" \
 		> "$CACHE/shim/$t"
@@ -154,11 +131,7 @@ trap '[ -z "$STALE_DIR" ] || rm -rf "$STALE_DIR"' EXIT
 for a in "${APPS_LIST[@]}"; do
 	log="$CACHE/${a}-install.log"
 	dir="$APPS/$a"
-	mode=pin
-	if ! has_pin "$a" && in_list "$a" "$SOURCE_APPS"; then mode=source
-	elif ! has_pin "$a" && in_list "$a" "$COPY_APPS"; then mode=copy
-	fi
-	if [ "$mode" = pin ] && stale_ok "$a"; then
+	if stale_ok "$a"; then
 		warn "community-apps: $a: installing its pinned binary even if its sources changed since (COMMUNITY_APPS_STALE_OK)"
 		[ -n "$STALE_DIR" ] || STALE_DIR=$(mktemp -d /tmp/omaxian-ca-stale.XXXXXX)
 		rm -rf "${STALE_DIR:?}/$a"; mkdir -p "$STALE_DIR"
@@ -166,47 +139,19 @@ for a in "${APPS_LIST[@]}"; do
 		cp -a "$APPS/$a" "$STALE_DIR/$a"
 		dir="$STALE_DIR/$a"
 	fi
-	src_copy=""
-	case $mode in
-		pin)
-			msg "community-apps: $a (pre-built)"
-			path="$CACHE/shim:/usr/bin:/bin"; args="--skip-apt" ;;
-		source)
-			msg "community-apps: $a (compiled once on this Qt; no upstream pin)"
-			src_copy=$(mktemp -d /tmp/omaxian-ca-src.XXXXXX)
-			mkdir -p "$src_copy"
-			cp -a "$APPS/lib" "$src_copy/lib"
-			cp -a "$APPS/$a" "$src_copy/$a"
-			dir="$src_copy/$a"
-			path="/usr/bin:/bin"; args="--from-source --skip-apt" ;;
-		copy)
-			msg "community-apps: $a (copied; no binary pin)"
-			path="/usr/bin:/bin"; args="--skip-apt" ;;
-	esac
+	msg "community-apps: $a (pre-built)"
+	path="$CACHE/shim:/usr/bin:/bin"
 	who=${USER:-omaxian}
 	if [ "$(id -u)" -eq 0 ]; then
 		who=builder
-		chown -R builder:builder "$OUT" ${src_copy:+"$src_copy"}
+		chown -R builder:builder "$OUT"
 	fi
-	run_user "cd $(printf %q "$dir") && env -i PATH=$(printf %q "$path") HOME=$(printf %q "$OUT") USER=$who LANG=C.UTF-8 TMPDIR=${TMPDIR:-/tmp} bash ./install.sh $args" \
+	run_user "cd $(printf %q "$dir") && env -i PATH=$(printf %q "$path") HOME=$(printf %q "$OUT") USER=$who LANG=C.UTF-8 TMPDIR=${TMPDIR:-/tmp} bash ./install.sh --skip-apt" \
 		> "$log" 2>&1 \
-		|| { cat "$log"; [ -n "$src_copy" ] && rm -rf "$src_copy"; die "$a install.sh failed"; }
-	[ -z "$src_copy" ] || rm -rf "$src_copy"
-	case $mode in
-		pin)
-			if ! grep -q '^>> sha256 ok' "$log" || grep -qiE 'building from source|cmake --build|cargo build|>> bin/build|blocked \(pinned' "$log"; then
-				cat "$log"; die "community-apps: $a did not install its pinned pre-built binary"
-			fi ;;
-		source)
-			if grep -q 'blocked (pinned' "$log"; then cat "$log"; die "community-apps: $a source build was blocked"; fi
-			[ -e "$OUT/.local/bin/$a" ] || { cat "$log"; die "community-apps: $a source build produced no binary"; }
-			;;
-		copy)
-			for n in omarchy-local-ai omarchy-agent-local omarchy-models; do
-				[ -e "$OUT/.local/bin/$n" ] || { cat "$log"; die "community-apps: $a did not install $n"; }
-			done
-			;;
-	esac
+		|| { cat "$log"; die "$a install.sh failed (a source-build fallback fails here by design)"; }
+	if ! grep -q '^>> sha256 ok' "$log" || grep -qiE 'building from source|cmake --build|cargo build|>> bin/build|blocked \(pinned' "$log"; then
+		cat "$log"; die "community-apps: $a did not install its pinned pre-built binary"
+	fi
 	BUILT+=("$a")
 done
 [ -z "$STALE_DIR" ] || { rm -rf "$STALE_DIR"; STALE_DIR=""; }
@@ -256,15 +201,14 @@ if [ "${COMMUNITY_APPS_SMOKE:-1}" = 1 ]; then
 	rm -rf "$SM"
 fi
 for a in "${BUILT[@]}"; do
-	in_list "$a" "$COPY_APPS" && continue
 	[ -e "$OUT/.local/bin/$a" ] || die "community-apps: $a produced no ~/.local/bin/$a"
-	compgen -G "$OUT/.local/share/applications/*${a%%-*}*.desktop" >/dev/null \
-		|| die "community-apps: $a installed no desktop entry"
+	if find "$APPS/$a" -name '*.desktop' -print -quit | grep -q .; then
+		compgen -G "$OUT/.local/share/applications/*${a%%-*}*.desktop" >/dev/null \
+			|| die "community-apps: $a installed no desktop entry"
+	fi
 done
 for a in "${BUILT[@]}"; do
-	if in_list "$a" "$SOURCE_APPS" && ! has_pin "$a"; then printf '%s\tsource-build\n' "$a"
-	elif stale_ok "$a"; then printf '%s\tstale-pin\n' "$a"
-	else printf '%s\n' "$a"; fi
+	if stale_ok "$a"; then printf '%s\tstale-pin\n' "$a"; else printf '%s\n' "$a"; fi
 done > "$CACHE/installed.txt"
 ca_key > "$CACHE/stamp"
 ls -la "$OUT/.local/bin" || true

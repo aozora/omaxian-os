@@ -3,6 +3,7 @@ set -e
 if [ "$1" = remove ] || [ "$1" = purge ] || [ "$1" = abort-install ] || [ "$1" = disappear ]; then
 	dpkg-divert --package omaxian-base --remove --rename \
 		--divert /usr/lib/os-release.devuan /usr/lib/os-release
+	rm -f /usr/local/sbin/adduser.local
 fi
 #DEBHELPER#
 exit 0

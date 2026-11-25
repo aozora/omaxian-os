@@ -1,7 +1,10 @@
 #!/bin/sh
 set -e
 chmod 755 /usr/libexec/omaxian/ensure-subids \
-	/usr/lib/live/config/9990-omaxian-subids \
-	/usr/local/sbin/adduser.local 2>/dev/null || true
+	/usr/libexec/omaxian/adduser.local \
+	/usr/lib/live/config/9990-omaxian-subids 2>/dev/null || true
+# adduser looks in /usr/local/sbin, which a package must not own as a file.
+mkdir -p /usr/local/sbin
+ln -sfn /usr/libexec/omaxian/adduser.local /usr/local/sbin/adduser.local
 #DEBHELPER#
 exit 0

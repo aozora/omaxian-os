@@ -21,8 +21,6 @@ for name in os.listdir(apps):
         continue
     d = json.load(open(p))
     want.update(d.get("apt") or [])
-    if name in ("flowtunes", "fantasi"):
-        want.update(d.get("apt_build") or [])
 for w in sorted(want):
     print(w)
 PY

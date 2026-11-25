@@ -1,19 +1,19 @@
-omaxian-session (1.2.3-1) excalibur; urgency=medium
+omaxian-session (1.2.4-1) excalibur; urgency=medium
 
-  * New upstream Omaxian shell v1.2.3 (tag v1.2.3 = 19250aaa, release
-    https://github.com/aozora/omaxian/releases/tag/v1.2.3). Vendors the
-    Omarchy ref that shell pins.
-  * Home template seeds every community app. Apps with a .omaxian-prebuilt
-    pin install that binary. flowtunes and fantasi have no shell-CI pin, so
-    the image build compiles them once against Qt 6.8 and ships the binaries.
-    omarchy-local-ai is the Python Podman engine (copied, not compiled).
+  * New upstream Omaxian shell v1.2.4. Vendors the Omarchy ref that shell
+    pins. The tag commit is recorded in config/build.conf once the release
+    is published.
+  * Home template seeds every community app from its sha256-pinned
+    pre-built binary, including flowtunes, fantasi and omarchy-local-ai
+    (v1.2.4 adds them to the shell CI). The image build does not compile
+    community apps.
   * Every community plugin is seeded and enabled (PipeWire speaker
     calibrator on the bar; the PulseAudio calibrator is seeded only).
   * OmaView is the default handler for the image and video types its
     desktop file claims. It refuses PDF, so document types are not pointed
     at it. Audio types go to MyGo Music.
   * Depends: WebKitGTK (Aether), Qt Quick 3D (Checkmate), the Podman stack
-    (local-ai), and the rest of the v1.2.3 app and plugin runtime lists.
+    (local-ai), and the rest of the v1.2.4 app and plugin runtime lists.
 
  -- Omaxian OS <dev@omaxian.org>  Wed, 25 Nov 2026 11:20:00 +0100
 
