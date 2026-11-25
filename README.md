@@ -6,7 +6,8 @@
 sources). The codename is unchanged: 0.3 was not given a new one.
 
 A Devuan 6 "Excalibur" based live/installable distribution with the
-[Omaxian](https://github.com/aozora/omaxian) desktop (v1.2.4) as the only session (no XFCE desktop and no Thunar since 0.2; only
+[Omaxian](https://github.com/aozora/omaxian) desktop (v1.2.4, tag
+`bdf53757b9916a631ac2f270a64f8f7fcc00d395`) as the only session (no XFCE desktop and no Thunar since 0.2; only
 xfce4-power-manager + xfconf, which the Omaxian shell runs). No systemd: sysvinit + eudev
 + elogind, XLibre X server, PipeWire per user, Linux 7.x and Mesa from excalibur-backports.
 
@@ -245,7 +246,7 @@ OMAXIAN_FIRSTRUN_ONLY=shotcut omaxian-user-firstrun  # into ~/AppImages (log: ~/
 
 ### 0.3 "Space Cat" (round 19)
 
-Omaxian shell v1.2.4. Strata 1.2.2 stays the default file manager. Kernel
+Omaxian shell v1.2.4 (`bdf53757`). Strata 1.2.2 stays the default file manager. Kernel
 7.x and Mesa come from excalibur-backports (unpinned within that suite, so
 the build takes whatever is current). Every community app, including
 flowtunes, fantasi and omarchy-local-ai, is installed from the shell CI's

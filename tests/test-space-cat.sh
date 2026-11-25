@@ -23,7 +23,8 @@ FM=$S/usr/bin/omaxian-default-file-manager
 ( . config/build.conf; [ "$OMAXIAN_SHELL_REF" = v1.2.4 ] ) \
 	&& ok "Omaxian shell ref v1.2.4" || bad "shell ref"
 pin=$(. config/build.conf; printf %s "$OMAXIAN_SHELL_COMMIT")
-[ ${#pin} = 40 ] && ok "Omaxian shell v1.2.4 pinned to $pin" || bad "shell commit (set when tag v1.2.4 is published)"
+[ "$pin" = bdf53757b9916a631ac2f270a64f8f7fcc00d395 ] \
+	&& ok "Omaxian shell v1.2.4 pinned to bdf53757" || bad "shell commit"
 [ "$(dpkg-parsechangelog -l packages/omaxian-session/debian/changelog -S Version)" = 1.2.4-1 ] \
 	&& ok "omaxian-session changelog 1.2.4-1" || bad "session version"
 [ "$(dpkg-parsechangelog -l packages/omaxian-strata/debian/changelog -S Version)" = 1.2.2-1 ] \
