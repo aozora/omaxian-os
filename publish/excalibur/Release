@@ -2,19 +2,19 @@ Origin: apt.omaxian.org
 Label: Omaxian OS
 Suite: excalibur
 Codename: excalibur
-Date: Wed, 25 Nov 2026 15:06:13 UTC
+Date: Thu, 26 Nov 2026 16:06:53 UTC
 Architectures: amd64
 Components: main
 Description: Omaxian OS packages for Devuan excalibur
 MD5Sum:
- eb4e55b4acafc21bb090d77054d570ca 12861 main/binary-amd64/Packages
- 6e6ba683580701180117e1fa754cecdb 5396 main/binary-amd64/Packages.gz
+ f6b4e54d2521246f3edd97307d61adaf 12861 main/binary-amd64/Packages
+ 8d5b156c8d371478b31cbef8965c58df 5392 main/binary-amd64/Packages.gz
  eb6b912df26e28537f8e29aff11d7fab 151 main/binary-amd64/Release
 SHA1:
- 03434c6c08f75bde5c93ce82a400ff99f3d9839b 12861 main/binary-amd64/Packages
- 7c8f80d6620d654ea9c7a164408e0582fb85d012 5396 main/binary-amd64/Packages.gz
+ 64d8507212eebc5550f51acdf10862ce5c9cb152 12861 main/binary-amd64/Packages
+ 64315920cba502091aac33843a9d1eaef6b94734 5392 main/binary-amd64/Packages.gz
  e3b9ee68b804a662cfaf8a2df474e8c0a457f925 151 main/binary-amd64/Release
 SHA256:
- 671157da9c1319fdf2a8d3c239d774833e019de9a49d15d07fe668a07ab2097e 12861 main/binary-amd64/Packages
- 0f533ad5b13761d7fa7023c182a75c3380d5a1b545d2b2f10123145646050c84 5396 main/binary-amd64/Packages.gz
+ fe0aca49185652374fc01437f047251be167d4ff76624b6e0fddbc4ed975099d 12861 main/binary-amd64/Packages
+ 18ada6e10d9c9be9e7d8a0bbb253681193d337e4af5417e9ad03c3d1355cb6ff 5392 main/binary-amd64/Packages.gz
  beabd23b8e75297df55590191d2318aa811cda6b210861da37f253e63712f6ab 151 main/binary-amd64/Release
