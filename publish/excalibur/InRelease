@@ -1,0 +1,30 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: apt.omaxian.org
+Label: Omaxian OS
+Suite: excalibur
+Codename: excalibur
+Date: Wed, 25 Nov 2026 15:06:13 UTC
+Architectures: amd64
+Components: main
+Description: Omaxian OS packages for Devuan excalibur
+MD5Sum:
+ eb4e55b4acafc21bb090d77054d570ca 12861 main/binary-amd64/Packages
+ 6e6ba683580701180117e1fa754cecdb 5396 main/binary-amd64/Packages.gz
+ eb6b912df26e28537f8e29aff11d7fab 151 main/binary-amd64/Release
+SHA1:
+ 03434c6c08f75bde5c93ce82a400ff99f3d9839b 12861 main/binary-amd64/Packages
+ 7c8f80d6620d654ea9c7a164408e0582fb85d012 5396 main/binary-amd64/Packages.gz
+ e3b9ee68b804a662cfaf8a2df474e8c0a457f925 151 main/binary-amd64/Release
+SHA256:
+ 671157da9c1319fdf2a8d3c239d774833e019de9a49d15d07fe668a07ab2097e 12861 main/binary-amd64/Packages
+ 0f533ad5b13761d7fa7023c182a75c3380d5a1b545d2b2f10123145646050c84 5396 main/binary-amd64/Packages.gz
+ beabd23b8e75297df55590191d2318aa811cda6b210861da37f253e63712f6ab 151 main/binary-amd64/Release
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYKAB0WIQRc1MLbcuGMQttZ/Yf4mazQr0xOdQUCawgC+AAKCRD4mazQr0xO
+dSCuAQDA88U9VVy++kFO05NMDw+on+oxwFVZnMSv8Dsku1SRYwEAx2oC26uvL1sV
+t0w//AYGyd6mHiYT5QQY4dpNTTvm1A4=
+=LjSu
+-----END PGP SIGNATURE-----
