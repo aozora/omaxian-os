@@ -377,6 +377,15 @@ EOS
 	unpark_omaxian_sources
 	dpkg_hygiene
 	keep_manual
+	# LCOS-style fail-the-build "present" checks (scripts/check-present.sh).
+	bash "$TOPDIR/scripts/check-present.sh" "$R" "$FLAVOR"
+	# Package source list while apt lists still exist (exact suites).
+	# The full image's lists were copied before s_optional_pool deleted them.
+	ps_lists=()
+	if [ -d "$BUILDDIR/rootfs-$FLAVOR.apt-lists" ] && compgen -G "$BUILDDIR/rootfs-$FLAVOR.apt-lists/*_Packages" >/dev/null; then
+		ps_lists=(--lists "$BUILDDIR/rootfs-$FLAVOR.apt-lists")
+	fi
+	bash "$TOPDIR/tools/package-sources.sh" --rootfs "$R" --flavor "$FLAVOR" --docs "${ps_lists[@]}"
 	rm -f "$R/usr/sbin/policy-rc.d" "$R/tmp/preseed.cfg" \
 		"$R/usr/share/keyrings/omaxian-build-keyring.pgp"
 	if grep -a -q 'DO NOT TRUST' "$R"/usr/share/keyrings/* 2>/dev/null; then
@@ -400,6 +409,13 @@ s_full_from_base() {
 	CH dpkg-query -W -f '${Package}\t${Version}\n' > "$OUTDIR/omaxian-full.before-upgrade.packages"
 	s_upgrade
 	CH dpkg-query -W -f '${Package}\t${Version}\n' > "$OUTDIR/omaxian-full.after-upgrade.packages"
+	# s_optional_pool later deletes apt lists; keep a copy so package-sources.sh
+	# can still name exact suites (excalibur / updates / security / backports).
+	mkdir -p "$BUILDDIR/rootfs-full.apt-lists"
+	find "$BUILDDIR/rootfs-full.apt-lists" -mindepth 1 -delete
+	if [ -d "$R/var/lib/apt/lists" ]; then
+		find "$R/var/lib/apt/lists" -maxdepth 1 -type f -name '*_Packages' -exec cp -a {} "$BUILDDIR/rootfs-full.apt-lists/" \;
+	fi
 	# Flatpaks preinstalled system-wide (firstboot only updates them)
 	CH flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 	# One app at a time, via BW: "extra-data" apps (Zoom) run apply_extra under

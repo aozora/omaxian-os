@@ -5,13 +5,14 @@
 #   make base        # rootfs + ISO: out/omaxian-base-*.iso
 #   make full        # rootfs + ISO: out/omaxian-full-*.iso (needs payload/)
 #   make test-base   # QEMU (TCG) boot test, screenshots in shots/
+#   make package-sources  # docs/package-sources-<version>.md from a packages file or rootfs
 #   make publish-dry # show what publish-r2.sh would upload (no upload)
 SHELL := /bin/bash
 SUDO  ?= sudo -E
 FW    ?= uefi
 SECS  ?= 900
 
-.PHONY: all keys fetch packages repo rootfs-base rootfs-full base full iso-base iso-full test-base test-full publish-dry clean distclean
+.PHONY: all keys fetch packages repo rootfs-base rootfs-full base full iso-base iso-full test-base test-full package-sources publish-dry clean distclean
 all: base
 
 keys:
@@ -39,6 +40,9 @@ test-base:
 	bash scripts/boot-test.sh out/omaxian-base-*-amd64.iso $(FW) $(SECS) base-$(FW)
 test-full:
 	bash scripts/boot-test.sh out/omaxian-full-*-amd64.iso $(FW) $(SECS) full-$(FW)
+# From a built rootfs (preferred) or out/omaxian-*.packages + config/pins.
+package-sources:
+	bash tools/package-sources.sh
 publish-dry:
 	DRY_RUN=1 bash scripts/publish-r2.sh apt
 	DRY_RUN=1 bash scripts/publish-r2.sh iso
