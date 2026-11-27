@@ -2,7 +2,7 @@ Origin: apt.omaxian.org
 Label: Omaxian OS
 Suite: excalibur
 Codename: excalibur
-Date: Thu, 26 Nov 2026 16:06:53 UTC
+Date: Fri, 27 Nov 2026 08:16:58 UTC
 Architectures: amd64
 Components: main
 Description: Omaxian OS packages for Devuan excalibur
