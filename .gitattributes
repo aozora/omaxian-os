@@ -1,0 +1,3 @@
+publish/excalibur/Release -text
+publish/excalibur/InRelease -text
+publish/excalibur/Release.gpg -text

@@ -94,11 +94,14 @@ packages/          debian packaging of the Omaxian OS packages
                              omaxian-optional (add optional groups/apps later)
   omaxian-calamares-settings Calamares settings/modules, post-install script
 scripts/           fetch-*, build-packages, make-repo (reprepro), build-rootfs,
-                   build-iso, boot-test (QEMU), publish-r2, gen-test-key, mirror-xlibre
-tools/             qmon.py (QEMU monitor: screenshots/keys), prefetch-debs.sh, devuan-redirect-proxy.py
+                   build-iso, boot-test (QEMU), publish-r2, gen-test-key, mirror-xlibre,
+                   check-present (fail the rootfs if must-have paths did not land)
+tools/             qmon.py (QEMU monitor: screenshots/keys), prefetch-debs.sh, devuan-redirect-proxy.py,
+                   package-sources.sh (per-release package source list)
 payload/           (git-ignored) appimages/*.AppImage, openra/{Content,maps}
 ci/github/         GitHub Actions sketch
-docs/              signing-key.md, missing-packages.md, netinstall-TODO.md, voxtype.md
+docs/              signing-key.md, missing-packages.md, netinstall-TODO.md, voxtype.md,
+                   package-sources-<version>.md, test-report-*.md
 ```
 
 ## Build
@@ -121,7 +124,13 @@ resumes there. Useful environment variables: `BUILD_MIRROR` (local cache/proxy),
 `ACCEL=kvm|tcg`, `RAM`, `DISK=<qcow2>` (install test).
 
 `build-rootfs.sh` refuses an image that ended up with firefox, systemd,
-pulseaudio or the real Xorg server.
+pulseaudio or the real Xorg server. `scripts/check-present.sh` (run at
+finalize, LCOS-style) fails the build if must-have paths are missing:
+grub-install and BIOS/EFI GRUB modules, the Omaxian Plymouth theme and
+default, LightDM + greeter, `qs`/`quickshell`, the Omaxian session and
+shell tree, Strata, ydotool, and the live installer stack. The same
+finalize step writes `docs/package-sources-<version>.md` (and a copy next
+to the ISO) listing every installed package with version and origin.
 
 ## Apt repository
 

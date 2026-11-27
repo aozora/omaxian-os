@@ -15,8 +15,10 @@ Packages: `/workspace/out/0.3/debs/`. Local signed apt repo: `/workspace/build/r
 
 | File | Size | SHA-256 |
 |---|---|---|
-| omaxian-base-0.3-space-cat-amd64.iso | 3610511360 (3.4 GiB) | a65dc356fade58bdefcb54effc9f399a4e8e61c360eaec8c9e6ae0e4b96f0d68 |
-| omaxian-full-0.3-space-cat-amd64.iso | 9343782912 (8.7 GiB) | 682d63d36ce8a8d5634bc5906ffff3a22d4588449b9e5b110932f79ec1d90466 |
+| omaxian-base-0.3-space-cat-amd64.iso | 3610105856 (3.4 GiB) | dd5a0955ef0c64762f45365253c7a7e23203f6be66c31e0a492e2bcd4463af06 |
+| omaxian-full-0.3-space-cat-amd64.iso | 9343377408 (8.7 GiB) | 7fb092798cbb2e99e6f696b8d4cf2af35eb8a1be61340d1aa444d2b48118921c |
+
+These hashes are the rebuild that embeds the published archive keyring. The earlier images (base `a65dc356…`, full `682d63d3…`) contained the throwaway test key and are discarded.
 
 Volume ids: `OMAXIAN_0_3_SPACE_CAT_BASE`, `OMAXIAN_0_3_SPACE_CAT_FULL`.
 
@@ -67,6 +69,8 @@ Extracted tree:
 
 ## VM tests
 
+These four installs were of the first 0.3 images, which still carried the throwaway archive key. The rebuild with the published keyring is in "Archive keyring rebuild" below.
+
 KVM, 3 GiB / 2 vCPU, no network, one VM at a time (`tools/diag/r19`). Offline install, file manager left on the default (Strata). Test media label `R19TEST`.
 
 | VM | Test | Result |
@@ -81,6 +85,41 @@ KVM, 3 GiB / 2 vCPU, no network, one VM at a time (`tools/diag/r19`). Offline in
 | fb | full, BIOS install to "All done", then installed boot | PASS (161 checks, 0 FAIL), OpenRA checks PASS |
 
 The OpenRA assertions were added to the test media after the base UEFI installed check. That install still has no `payload/openra` (confirmed on the base rootfs). The base BIOS install and both full installs ran the assertion.
+
+## Archive keyring rebuild
+
+`keys/public` is gitignored, so it is not in the `omaxian-os-build` tree. The copy on this machine before the rebuild was the throwaway test key (275 bytes, sha256 `77bace2d6f6b3748aa0e89b733d40a9b1550875dcc91fb0f7151aff97e5d6a74`, fingerprint `45EA168194BBC7F8E2F07F8AC3E85DE24E22ECF6`, uid "DO NOT TRUST"). It differs from the owner's public keyring.
+
+The keyring published with 0.2.1 at https://apt.omaxian.org/omaxian-archive-keyring.pgp is byte-identical to the public keyring supplied for this rebuild: 559 bytes, sha256 `99988abed6c067e96e7fdc10c12a78c59193a8dff75b79bf3638ed5e2f264358`, primary `1D8DE9AD3AFA60790333639EF45C7450C45D49A0`, signing subkey `5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75`.
+
+`omaxian-base` 0.3 was rebuilt with that keyring and installed into both rootfs trees. No file under either rootfs keyring directory contains the test uid. Both squashfs images (LBA 7070) contain `/usr/share/keyrings/omaxian-archive-keyring.pgp` with that sha256. `gpg --show-keys` on the extracted file shows the primary and the signing subkey above, and the file does not contain "DO NOT TRUST". The full squashfs still lists OpenRA `Content/{cnc,d2k,ra}` and `maps/{cnc,d2k,ra}`.
+
+`tests/test-space-cat.sh`: 36 passed, 0 failed.
+
+VM installs of these ISOs (KVM, offline, Strata left as the default):
+
+| VM | Test | Result |
+|---|---|---|
+| bu | base, UEFI live | PASS (149 checks, 0 FAIL), `KEYRING_SHA_PASS`, `KEYRING_NOT_TEST_PASS` |
+| bu | base, UEFI install, then installed boot | PASS (154 checks, 0 FAIL), same keyring checks. The graphical scanout dropped after Strata opened; the checks were completed from tty2. |
+| bb | base, BIOS live | PASS (149 checks, 0 FAIL), keyring checks PASS |
+| bb | base, BIOS install, then installed boot | PASS (154 checks, 0 FAIL), keyring checks PASS |
+| fu / fb | full, UEFI and BIOS | Not completed. After the base installs, KVM hit `kernel BUG at arch/x86/kvm/x86.c` (`kvm_spurious_fault`) while creating a vCPU. A TCG boot of the full ISO reaches the UEFI DVD line and then stays there at 100% CPU, so the full install was not run under TCG. The full image's keyring and OpenRA tree were verified from the squashfs. |
+
+## Unsigned apt repo
+
+`build/r19/repo` stays signed by the throwaway key so a resumed image build can still install packages. It is not the publish tree. `build/r19/repo-unsigned` has the same pool (including rebuilt `omaxian-base_0.3_all.deb`, sha256 `64ebd035039fbc390dcf80dbd0f66a21a86af700d143ad430091915e323222b7`), `dists/excalibur/Release` and the Packages files it hashes, and the real `omaxian-archive-keyring.pgp`. It has no `InRelease` and no `Release.gpg`.
+
+The only file the owner must sign is `dists/excalibur/Release`, with subkey `5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75`:
+
+```sh
+gpg --batch --local-user '5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75!' \
+  --clearsign --output dists/excalibur/InRelease dists/excalibur/Release
+gpg --batch --local-user '5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75!' \
+  --detach-sign --output dists/excalibur/Release.gpg dists/excalibur/Release
+```
+
+No private key was generated here, and nothing was uploaded.
 
 ## Not tested
 

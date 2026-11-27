@@ -6,6 +6,9 @@ omaxian-base (0.3) excalibur; urgency=medium
   * ensure-subids: human users get subordinate uid/gid ranges for rootless
     Podman (live-config hook, adduser.local, Calamares post). apt pin -1
     on vlc, imv and nsxiv.
+  * Archive keyring is the published Omaxian key (primary
+    1D8DE9AD3AFA60790333639EF45C7450C45D49A0, signing subkey
+    5CD4C2DB72E18C42DB59FD87F899ACD0AF4C4E75).
 
  -- Omaxian OS <dev@omaxian.org>  Wed, 25 Nov 2026 11:20:00 +0100
 

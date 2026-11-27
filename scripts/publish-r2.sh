@@ -1,7 +1,9 @@
 #!/bin/bash
 # Publish to Cloudflare R2 (S3 API).  NOT run by the build; run it by hand or in CI.
 #   publish-r2.sh apt   -> $LOCALREPO/{dists,pool,omaxian-archive-keyring.pgp} -> s3://omaxian-apt  (https://apt.omaxian.org)
-#   publish-r2.sh iso   -> $OUTDIR/*.iso{,.sha256}                              -> s3://omaxian-iso  (https://download.omaxian.org/releases/<version>/)
+#   publish-r2.sh iso   -> $OUTDIR/*.iso, each .sha256, and SHA256SUMS       -> s3://omaxian-iso  (https://download.omaxian.org/releases/<version>/)
+# Round 19 keeps the artifacts at OUTDIR=$TOPDIR/out/0.3 and
+# LOCALREPO=$TOPDIR/build/r19/repo (tools/diag/r19/pipeline.sh). Set both.
 # Credentials come ONLY from the environment:
 #   R2_ACCESS_KEY_ID  R2_SECRET_ACCESS_KEY  R2_ENDPOINT (https://<account-id>.r2.cloudflarestorage.com)
 # Options: DRY_RUN=1 (default!) prints what would be uploaded; set DRY_RUN=0 to upload.
@@ -33,12 +35,13 @@ r2_plan() {
 	while [ $# -gt 0 ]; do case $1 in --cache-control) cc=$2; shift 2 ;; --delete) del=" (+delete remote extras)"; shift ;; *) shift ;; esac; done
 	if [ ! -e "$src" ]; then warn "(plan) MISSING $src -> $dst (a real publish would fail)"; PLAN_MISSING=$(( ${PLAN_MISSING:-0} + 1 )); return 0; fi
 	if [ "$op" = sync ]; then
-		local n sz; n=$(find "$src" -type f | wc -l); sz=$(du -sh "$src" | cut -f1)
-		printf '(plan) sync %s -> %s  [%s files, %s; cache-control: %s]%s\n' "$src" "$dst" "$n" "$sz" "$cc" "$del"
-		find "$src" -type f -printf '         %P\n' | sort | head -20
-		[ "$n" -gt 20 ] && echo "         ... $((n-20)) more"
+		local n sz; n=$(find "$src" -type f | wc -l); sz=$(du -sb "$src" | cut -f1)
+		printf '(plan) sync %s -> %s  [%s files, %s bytes; cache-control: %s]%s\n' "$src" "$dst" "$n" "$sz" "$cc" "$del"
+		find "$src" -type f -printf '%s\t%P\n' | sort -t "$(printf '\t')" -k2 | while IFS="$(printf '\t')" read -r bytes rel; do
+			printf '         %s  %s bytes\n' "$rel" "$bytes"
+		done
 	else
-		printf '(plan) upload %s -> %s  [%s; cache-control: %s]\n' "$src" "$dst" "$(du -h "$src" | cut -f1)" "${cc:-default}"
+		printf '(plan) upload %s -> %s  [%s bytes; cache-control: %s]\n' "$src" "$dst" "$(stat -c %s "$src")" "${cc:-default}"
 	fi
 	return 0
 }
@@ -59,9 +62,12 @@ iso)
 	V=$(echo "$OMAXIAN_VERSION" | tr '~' '-')
 	for f in "$OUTDIR"/omaxian-*-"$V"-*.iso; do
 		[ -e "$f" ] || die "no ISOs for $V in $OUTDIR"
+		[ -f "$f.sha256" ] || die "missing sidecar $f.sha256"
 		"${S3[@]}" cp "${DR[@]}" "$f"        "s3://$ISO_BUCKET/releases/$V/$(basename "$f")"
 		"${S3[@]}" cp "${DR[@]}" "$f.sha256" "s3://$ISO_BUCKET/releases/$V/$(basename "$f").sha256"
 	done
+	[ -f "$OUTDIR/SHA256SUMS" ] || die "no SHA256SUMS in $OUTDIR"
+	"${S3[@]}" cp "${DR[@]}" "$OUTDIR/SHA256SUMS" "s3://$ISO_BUCKET/releases/$V/SHA256SUMS"
 	;;
 *) die "usage: $0 apt|iso" ;;
 esac
